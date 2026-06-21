@@ -1,0 +1,11 @@
+[build]
+  command   = "npm run build"
+  publish   = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  # Tells next.config.js this is NOT the NYC agency server, so basePath and
+  # agency analytics scripts are disabled for this Netlify deployment.
+  IS_AGENCY_DEPLOY = "false"
