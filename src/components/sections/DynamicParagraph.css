@@ -1,0 +1,50 @@
+.data-summary-markdown {
+    color: var(--text-body, var(--gray-700));
+}
+  /* Base chip */
+  .data-summary-markdown .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    margin: .15rem .1rem;
+    padding: .3rem .4rem;
+    border-radius: 10px;
+    /* border: 1px solid var(--chip-border, var(--portal-section-border)); */
+    background: var(--chip-bg, var(--portal-section-bg));
+    color: var(--trend-highlight-color, var(--portal-section-fg));
+    line-height: 1.5;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .data-summary-markdown .chip__value {
+    font-variant-numeric: tabular-nums;
+  }
+  
+  /* Normalize ALL variants to the same gray */
+  .data-summary-markdown .chip--date,
+  .data-summary-markdown .chip--virus,
+  .data-summary-markdown .chip--adenovirus,
+  .data-summary-markdown .chip--human-coronavirus,
+  .data-summary-markdown .chip--enterovirus-rhinovirus,
+  .data-summary-markdown .chip--human-metapneumovirus,
+  .data-summary-markdown .chip--influenza,
+  .data-summary-markdown .chip--parainfluenza,
+  .data-summary-markdown .chip--respiratory-syncytial-virus {
+    --chip-bg: var(--portal-section-bg);
+    --chip-border: var(--portal-section-border);
+    --chip-fg: var(--portal-section-fg);
+  }
+  
+ /* make sure this is loaded after any global typography CSS */
+ .data-summary-markdown .dp-sentence .chip.chip--virus .chip__label {
+  text-transform: capitalize !important;
+}
+
+  
+
+
+  @media (max-width: 768px) {
+    .data-summary-markdown {
+        font-size: var(--font-size-sm);
+    }
+}

@@ -1,0 +1,49 @@
+/*
+ * OverviewGrid.css — minimal residual styles
+ *
+ * Retains only:
+ *  1. .overview-grid .info-card-link — cross-component sizing for InfoCard
+ *     links (flex item width/height rules targeting a child component class).
+ *  2. .overview-grid .info-card — fills link height (child component class).
+ *  3. Tablet (≤1119px) overrides for card-link sizing + InfoCard typography
+ *     clamps (target child component classes, cannot be expressed on OverviewGrid).
+ *  4. @media prefers-reduced-motion — targets .info-card (child component).
+ *
+ * Container, title, and grid wrapper layout are handled via Tailwind in
+ * OverviewGrid.jsx.
+ */
+
+/* ── Card link: flex item sizing ────────────────────────────────────────── */
+.overview-grid .info-card-link {
+  display: flex;
+  text-decoration: none;
+  color: inherit;
+  flex: 0 1 320px;
+  max-width: 360px;
+  min-width: 260px;
+  height: auto;
+}
+
+/* Card fills the link's box */
+.overview-grid .info-card {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: auto;
+}
+
+/* ── Tablet: two-up cards ───────────────────────────────────────────────── */
+@media (max-width: 1119px) {
+  .overview-grid .info-card-link {
+    flex: 1 1 calc(50% - var(--spacing-lg));
+    max-width: calc(50% - var(--spacing-lg));
+    min-width: 300px;
+  }
+  .info-card-title { font-size: clamp(18px, 2.1vw, 20px); }
+  .info-card-description { font-size: clamp(14px, 1.8vw, 16px); line-height: 1.45; }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .info-card { transition: none; }
+}
