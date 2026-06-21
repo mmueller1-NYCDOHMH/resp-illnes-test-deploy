@@ -1,0 +1,54 @@
+{
+  "provider-info": [
+    {
+      "id": "covid",
+      "title": "COVID-19",
+      "description": "Learn about COVID-19 disease and prevention",
+      "link": "https://www.nyc.gov/site/doh/covid/covid-19-main.page",
+      "icon": "./assets/covid-vector.svg",
+      "externalIcon": "./assets/external-link-icon.png"
+    },
+    {
+      "id": "flu",
+      "title": "Influenza",
+      "description": "Learn about flu disease and prevention",
+      "link": "https://www.nyc.gov/flu",
+      "icon": "./assets/flu-vector.svg",
+      "externalIcon": "./assets/external-link-icon.png"
+    },
+    {
+      "id": "rsv",
+      "title": "RSV",
+      "description": "Learn about RSV disease and prevention",
+      "link": "https://www.nyc.gov/rsv",
+      "icon": "./assets/rsv-vector.svg",
+      "externalIcon": "./assets/external-link-icon.png"
+    }
+  ],
+  "additional-resources": [
+    {
+      "id": "github",
+      "title": "Respiratory Illness GitHub Repository",
+      "description": "Download and explore respiratory illness data",
+      "link": "https://github.com/nychealth/respiratory-illness-data",
+      "icon": "./assets/github-logo.png",
+      "externalIcon": "./assets/external-link-icon.png"
+    },
+    {
+      "id": "nys-wastewater",
+      "title": "NYS Wastewater Surveillance Data",
+      "description": "Explore NYS wastewater surveillance data",
+      "link": "https://coronavirus.health.ny.gov/covid-19-wastewater-surveillance",
+      "icon": "./assets/nys-logo.svg",
+      "externalIcon": "./assets/external-link-icon.png"
+    },
+    {
+      "id": "nys-respiratory",
+      "title": "NYS Respiratory Surveillance Reports",
+      "description": "Explore additional NYS respiratory illnesses data",
+      "link": "https://www.health.ny.gov/statistics/",
+      "icon": "./assets/nys-logo.svg",
+      "externalIcon": "./assets/external-link-icon.png"
+    }
+  ]
+}

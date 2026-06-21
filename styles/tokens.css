@@ -1,0 +1,433 @@
+:root {
+  /* Typography */
+  --font-body: 'Inter', sans-serif;
+  --font-heading: 'Inter', sans-serif;
+  --font-sans: "Inter", sans-serif;
+  --font-bold: "Inter-Bold", sans-serif;
+
+  /* Font Sizes */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-2xl: 20px;
+  --font-size-xl: 30px;
+  --font-size-mobile-header: 20px;
+
+  --line-height-lg: 1.5;
+
+  /* Colors - Base */
+  --white: #FFFFFF;
+  --black: #000000;
+
+  /* Grayscale */
+  --gray-100: #F9FAFB;
+  --gray-200: #F3F4F6;
+  --gray-300: #E5E7EB;
+  --gray-400: #D1D5DB;
+  --gray-500: #9CA3AF;
+  --gray-600: #6B7280;
+  --gray-700: #4B5563;
+  --gray-800: #374151;
+  --gray-900: #1F2937;
+  --gray-transparent: rgba(0, 0, 0, 0);
+  --footnote-gray: #536070;   /* was #687482 — darkened to meet WCAG AA 4.5:1 on white */
+  --body-text: var(--gray-800);
+
+  /* Colors - Brand */
+  --blue-primary: #1E40AF;
+  --blue-secondary: #2563EB;
+  --blue-accent: #0075FF;
+
+  --purple-primary: #5B21B6;
+  --purple-accent: #7C3AED;
+
+  --green-primary: #065F46;
+  --green-accent: #139D72;
+  --green-muted: #059669;
+  --green-trend: #057A55;
+  --orange-text: #91401A;
+  --orange-primary: #FF6600;
+  --orange-accent: #B36C31;
+  --orange-muted: #FF6C0B;
+
+  --red-primary: #B91C1C;
+  --red-accent: #DC2626;
+  --red-muted: #F87171;
+
+  /* Backgrounds */
+  --bg-light-blue: #08519C26;
+  --bg-light-green: #00441A26;
+  --bg-light-orange: #F4C4A5;
+  --bg-light-purple: #4A148624;
+  --bg-muted-pink: #F4C4A5;
+  --bg-muted-purple: #F5F3FF;
+  --bg-muted-gray: #ADAEBC;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 80px;
+  --spacing-3xl: 64px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  /* === Semantic Aliases === */
+
+  /* Footer */
+  --footer-bg: var(--gray-900);
+  --footer-text: var(--gray-400);
+  --footer-link: var(--gray-400);
+  --footer-link-hover: var(--gray-200);
+  --footer-border: var(--gray-800);
+  --footer-logo-filter: brightness(0) invert(1);
+
+  /* Header */
+  --header-bg: linear-gradient(90deg, var(--blue-primary), var(--blue-secondary));
+  --header-title-color: var(--white);
+  --header-subtitle-color: var(--white);
+  --header-button-border: var(--white);
+  --header-button-text: var(--white);
+  --header-button-active-bg: var(--white);
+  --header-button-active-text: var(--blue-primary);
+
+  --modal-bg: var(--white);
+  --modal-text: var(--gray-800);
+  --modal-title-color: var(--gray-900);
+  --modal-close: var(--gray-600);
+  --modal-close-hover: var(--gray-900);
+
+
+  --top-bar-bg: var(--white);
+  --top-bar-text: var(--blue-primary);
+  --top-bar-border: var(--gray-300);
+  --top-bar-select-bg: var(--white);
+  --top-bar-select-text: var(--blue-primary);
+  --top-bar-select-border: var(--gray-300);
+  --top-bar-logo-filter: none;
+  --top-bar-toggle-label: var(--gray-400);
+  --top-bar-slider-bg: #c0c7c9;
+  --top-bar-slider-knob: #ffffff;
+  --top-bar-slider-checked-bg: var(--blue-primary);
+  --top-bar-slider-knob-checked: #302e2e;
+
+    /* Stat card / dashboard component aliases */
+    --card-bg: var(--gray-100);
+    --card-title-color: var(--gray-900);
+    --card-divider: var(--gray-600);
+    --card-label-color: var(--gray-700);
+    --card-trend-color: var(--gray-800);
+    --card-date-color: var(--gray-600);
+
+    --overview-bg: var(--white);
+    --overview-title-color: var(--gray-900);
+    --overview-column-title-color: var(--gray-900);
+    --overview-text-color: var(--gray-700);
+    --overview-padding: var(--spacing-xl);
+    --overview-title-size: var(--font-size-xl);
+    --overview-title-font: var(--font-heading);
+    --overview-column-gap: var(--spacing-3xl);
+
+        /* Trend chips (general purpose) */
+      --chip-inc-text: #d97706;
+      --chip-inc-bg: #fff7ed;
+
+      --chip-dec-text: #16a34a;
+      --chip-dec-bg: #f0fdf4;
+
+      --chip-neutral-text: #6B6B6B;
+      --chip-neutral-bg: var(--gray-100);
+
+      /* Trend direction chips (disease context: up=bad=red, down=good=green) */
+      --trend-chip-inc-bg:       #FCEBEB;
+      --trend-chip-inc-text:     #A32D2D;
+      --trend-chip-dec-bg:       #E1F5EE;
+      --trend-chip-dec-text:     #0F6E56;
+      --trend-chip-neutral-bg:   #F1EFE8;
+      --trend-chip-neutral-text: #444441;
+      --portal-section-bg: #F3F4F6;      
+      
+
+        /* Info box */
+      --info-bg: #f9fafb;
+      --info-title: #1f2937;
+      --info-text: #4b5563;
+      --info-shadow: 0px 1px 3px rgba(0,0,0,0.05);
+    /* Data Explorer */
+
+    --explorer-bg: var(--white);
+    --explorer-padding: var(--spacing-xl);
+    --explorer-container-padding: var(--spacing-2xl);
+  
+    --explorer-title-color: var(--gray-900);
+    --explorer-title-size: var(--font-size-xl);
+    --explorer-title-font: var(--font-heading);
+  
+    --explorer-description-color: var(--gray-700);
+    --explorer-description-size: var(--font-size-lg);
+    --explorer-description-font: var(--font-body);
+
+    --overview-page-bg: var(--gray-100);
+    --overview-section-bg: var(--white);
+    --overview-subtitle-color: var(--gray-700);
+    --overview-divider-color: var(--gray-300);
+    --overview-highlight-bg: var(--gray-100);
+    --overview-block-bg: var(--white);
+
+
+  /* Chart Container*/
+  --chart-bg: var(--white);
+  --chart-title-color: var(--gray-900);
+  --chart-subtitle-color: var(--gray-700);
+  --chart-title-size: 24px; /* or create a new font-size token like --font-size-xl-compact */
+  --chart-subtitle-size: var(--font-size-md);
+
+
+  --content-bg: var(--white);
+  --content-title-color: var(--gray-900);
+  --content-subtitle-color: var(--gray-700);
+  --content-title-size: var(--font-size-lg);
+  --content-subtitle-size: var(--font-size-md);
+  
+  --trend-up-color: var(--red-primary);
+  --trend-down-color: var(--green-trend);
+  --trend-neutral-color: var(--gray-900);
+  --trend-bg: var(--gray-300);
+  --trend-highlight-color: var(--gray-800);
+
+/* About Page*/
+  --about-padding: var(--spacing-2xl);
+--about-section-gap: var(--spacing-3xl);
+--about-title-size: var(--font-size-xl);
+--about-subtitle-size: var(--font-size-lg);
+--info-card-bg: var(--gray-100);
+--info-card-padding: var(--spacing-xl);
+
+
+--trend-summary-bg: var(--white);
+--trend-summary-padding: var(--spacing-md);
+--trend-title-color: var(--gray-900);
+--trend-date-color: var(--gray-700);
+--trend-status-color: var(--gray-800);
+--trend-title-size: var(--font-size-lg);
+--trend-date-size: var(--font-size-md);
+--trend-status-size: var(--font-size-md);
+--trend-title-font: var(--font-heading);
+--trend-arrow-size: 18px;
+
+--vgtt-bg: #ffffff;
+--vgtt-fg: #111827;
+--vgtt-border: #E5E7EB;
+--vgtt-shadow: 0 10px 30px rgba(0,0,0,.08);
+
+
+--img-on-light-filter: none;
+--img-on-light-shadow: none;
+--img-filter: brightness(0) saturate(100%) contrast(200%);
+--footer-img-filter: none;
+}
+
+
+
+
+
+
+[data-theme="dark"] {
+  /* =========================
+     BASE SURFACES
+  ========================= */
+  --white: #335983;        /* app background */
+  --black: #E5E7EB;
+
+  /* Surface hierarchy (FIXED contrast system) */
+  --gray-100: #111827;     /* base surface (pages, cards) */
+  --gray-200: #1F2937;     /* elevated cards / panels */
+  --gray-300: #273244;     /* borders / dividers */
+  --gray-400: #374151;
+  --gray-500: #4B5563;
+
+  /* TEXT HIERARCHY (critical fix) */
+  --gray-600: #9CA3AF;     /* secondary text */
+  --gray-700: #D1D5DB;     /* body text */
+  --gray-800: #E5E7EB;     /* headings */
+  --gray-900: #F9FAFB;     /* high emphasis */
+
+  --gray-transparent: rgba(255, 255, 255, 0.06);
+
+  /* =========================
+     BRAND COLORS (DARK ADJUSTED)
+  ========================= */
+  --blue-primary: #93C5FD;
+  --blue-secondary: #60A5FA;
+  --blue-accent: #3B82F6;
+
+  --purple-primary: #C084FC;
+  --purple-accent: #A855F7;
+
+  --green-primary: #34D399;
+  --green-accent: #10B981;
+  --green-muted: #059669;
+
+  --orange-primary: #FB923C;
+  --orange-accent: #F97316;
+  --orange-muted: #FDBA74;
+
+  --red-primary: #EF4444;
+  --red-accent: #F87171;
+  --red-muted: #FCA5A5;
+
+  /* =========================
+     BACKGROUNDS (FIXED DEPTH)
+  ========================= */
+  --app-bg: #0B0F14;
+  --surface-1: #e9e9e9;
+  --surface-2: #1F2937;
+  --surface-border: #2A3441;
+
+  --bg-light-blue: rgba(147, 197, 253, 0.14);
+  --bg-light-green: rgba(16, 185, 129, 0.14);
+  --bg-light-orange: rgba(251, 146, 60, 0.14);
+  --bg-light-purple: rgba(192, 132, 252, 0.14);
+
+  --bg-muted-pink: rgba(251, 146, 60, 0.12);
+  --bg-muted-purple: rgba(192, 132, 252, 0.12);
+  --bg-muted-gray: rgba(173, 174, 188, 0.18);
+
+  /* =========================
+     SHADOWS (SOFT DARK UI)
+  ========================= */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.5);
+
+  /* =========================
+     COMPONENTS
+  ========================= */
+
+  /* Footer */
+  --footer-bg: var(--surface-2);
+  --footer-text: var(--gray-600);
+  --footer-link: var(--gray-600);
+  --footer-link-hover: var(--gray-700);
+  --footer-border: var(--surface-border);
+  --footer-logo-filter: brightness(0) invert(1);
+  --footnote-gray: #c8d1da;
+
+  /* Header */
+  --header-bg: linear-gradient(90deg, #0B2A5B, #1E40AF);
+  --header-title-color: var(--gray-900);
+  --header-subtitle-color: var(--gray-600);
+  --header-button-border: var(--white);
+  --header-button-text: var(--white);
+  --header-button-active-bg: var(--white);
+  --header-button-active-text: var(--blue-primary);
+
+  /* Modal */
+  --modal-bg: var(--surface-2);
+  --modal-text: var(--gray-700);
+  --modal-title-color: var(--gray-800);
+  --modal-close: var(--gray-600);
+  --modal-close-hover: var(--gray-900);
+
+  /* Top bar */
+  --top-bar-bg: var(--surface-2);
+  --top-bar-text: var(--gray-700);
+  --top-bar-border: var(--surface-border);
+  --top-bar-select-bg: var(--surface-1);
+  --top-bar-select-text: var(--gray-800);
+  --top-bar-select-border: var(--surface-border);
+
+  --top-bar-toggle-label: var(--gray-600);
+  --top-bar-slider-bg: #000;
+  --top-bar-slider-knob: #111;
+  --top-bar-slider-checked-bg: #1f1111;
+  --top-bar-slider-knob-checked: var(--white);
+
+  /* Cards / dashboard */
+  --card-bg: var(--surface-1);
+  --card-title-color: var(--gray-900);
+  --card-divider: var(--surface-border);
+  --card-label-color: var(--gray-700);
+  --card-trend-color: var(--gray-600);
+  --card-date-color: var(--gray-600);
+
+  /* Overview */
+  --overview-bg: var(--app-bg);
+  --overview-title-color: var(--gray-900);
+  --overview-column-title-color: var(--gray-800);
+  --overview-text-color: var(--gray-700);
+
+  /* Explorer */
+  --explorer-bg: var(--app-bg);
+  --explorer-title-color: var(--gray-900);
+  --explorer-description-color: var(--gray-700);
+
+  /* Page sections */
+  --overview-page-bg: var(--app-bg);
+  --overview-section-bg: var(--surface-1);
+  --overview-block-bg: var(--surface-2);
+  --overview-divider-color: var(--surface-border);
+
+  /* Charts */
+  --chart-bg: var(--surface-1);
+  --chart-title-color: var(--gray-100);
+  --chart-subtitle-color: var(--gray-600);
+
+  /* Content */
+  --content-bg: var(--surface-1);
+  --content-title-color: var(--gray-900);
+  --content-subtitle-color: var(--gray-700);
+
+  /* Trends */
+  --trend-up-color: var(--red-accent);
+  --trend-down-color: var(--green-accent);
+  --trend-neutral-color: var(--gray-600);
+
+  --trend-bg: var(--surface-2);
+  --trend-highlight-color: var(--gray-800);
+
+  /* Chips */
+  --portal-section-bg: #515762;
+  --chip-inc-text: #FBBF24;
+  --chip-inc-bg: rgba(245, 158, 11, 0.12);
+
+  --chip-dec-text: #34D399;
+  --chip-dec-bg: rgba(16, 185, 129, 0.12);
+
+  --chip-neutral-text: var(--gray-600);
+  --chip-neutral-bg: var(--surface-1);
+
+  --chip-section-border: var(--surface-border);
+
+  /* Trend direction chips — dark mode */
+  --trend-chip-inc-bg:       rgba(163, 45, 45, 0.18);
+  --trend-chip-inc-text:     #F87171;
+  --trend-chip-dec-bg:       rgba(15, 110, 86, 0.18);
+  --trend-chip-dec-text:     #34D399;
+  --trend-chip-neutral-bg:   rgba(68, 68, 65, 0.22);
+  --trend-chip-neutral-text: #9CA3AF;
+
+  /* Info box */
+  --info-bg: var(--surface-1);
+  --info-title: var(--gray-800);
+  --info-text: var(--gray-700);
+  --info-shadow: 0 1px 3px rgba(0,0,0,0.4);
+
+  /* Misc */
+  --vgtt-bg: #0B0F14;
+  --vgtt-fg: var(--gray-800);
+  --vgtt-border: var(--surface-border);
+  --vgtt-shadow: 0 10px 30px rgba(0,0,0,.4);
+
+  --img-filter: invert(1) brightness(1.05) contrast(1.1);
+  --footer-img-filter: invert(1) brightness(1.05) contrast(1.1);
+}

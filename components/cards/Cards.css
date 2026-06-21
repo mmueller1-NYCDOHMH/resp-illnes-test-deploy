@@ -1,0 +1,18 @@
+/*
+ * Cards.css — minimal residual styles
+ *
+ * Retains only:
+ *   .info-card-icon[src*="..."] — attribute selectors resetting the img filter
+ *   for virus icon images (cannot be expressed as Tailwind utility classes).
+ *
+ * All layout, spacing, colour, and hover for InfoCard are handled via
+ * Tailwind classes in InfoCard.jsx.
+ * Hover elevation (.info-card:hover) is handled in AboutPageLayout.css.
+ * Link sizing (.overview-grid .info-card-link) is handled in OverviewGrid.css.
+ */
+
+.info-card-icon[src*="covid-"],
+.info-card-icon[src*="flu-"],
+.info-card-icon[src*="rsv-"] {
+  filter: none !important;
+}

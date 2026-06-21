@@ -1,0 +1,118 @@
+/*
+ * AboutPageLayout.css — minimal residual styles
+ *
+ * Retains only what cannot be expressed as Tailwind classes:
+ *  1. .info-card::before  — pseudo-element (accent top bar)
+ *  2. .info-card hover/focus-visible  — complex multi-property hover
+ *  3. .card-grid auto-fit grid
+ *  4. [data-theme="dark"] .markdown-body  — global dark-mode prose overrides
+ *
+ * All layout, spacing, surface cards, and rows are handled via Tailwind
+ * classes in AboutPageLayout.jsx.
+ */
+
+/* ── Accordion body open animation ───────────────────────────────────── */
+@keyframes accordionOpen {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.accordion-body {
+  animation: accordionOpen 180ms ease forwards;
+}
+
+/* ── Info card grid (auto-fit) ────────────────────────────────────────── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--spacing-lg);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Info card ────────────────────────────────────────────────────────── */
+.info-card {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-decoration: none;
+  transition: box-shadow 0.22s, transform 0.22s, background-color 0.22s;
+  margin-bottom: var(--spacing-lg);
+  border: 1.5px solid var(--gray-200);
+  position: relative;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+/* Accent bar at card top */
+.info-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--blue-primary);
+  opacity: 0.55;
+}
+
+.info-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Hover / focus — pointer devices only */
+@media (hover: hover) and (pointer: fine) {
+  .info-card:hover {
+    box-shadow: var(--shadow-lg, 0 6px 20px rgba(16, 40, 120, 0.12));
+    transform: translateY(-3px) scale(1.02);
+    border-color: var(--blue-primary);
+    background: var(--gray-100);
+  }
+  .info-card:focus-visible {
+    outline: 3px solid color-mix(in oklab, var(--blue-primary) 60%, white);
+    outline-offset: 2px;
+  }
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .card-grid { gap: var(--spacing-md); }
+  .info-card { padding: var(--spacing-md); }
+}
+
+@media (max-width: 640px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    justify-items: center;
+  }
+  .info-card {
+    margin: 0;
+    width: 100%;
+    max-width: 340px;
+    padding: var(--spacing-md) var(--spacing-lg) var(--spacing-2xl);
+  }
+}
+
+/* ── Dark mode: markdown-body prose overrides ─────────────────────────── */
+[data-theme="dark"] .markdown-body { color: #E5E7EB; }
+[data-theme="dark"] .markdown-body h1,
+[data-theme="dark"] .markdown-body h2,
+[data-theme="dark"] .markdown-body h3 { color: #F9FAFB; }
+[data-theme="dark"] .markdown-body a { color: #93C5FD; }
+[data-theme="dark"] .markdown-body blockquote {
+  background: #1f2937;
+  border-left-color: #374151;
+  color: #D1D5DB;
+}
+[data-theme="dark"] .markdown-body code {
+  background-color: #374151;
+  color: #F9FAFB;
+}

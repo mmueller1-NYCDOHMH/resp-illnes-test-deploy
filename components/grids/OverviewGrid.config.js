@@ -1,0 +1,24 @@
+import { resolveAsset } from '../../utils/pathUtils';
+
+const overviewGridItems = [
+  {
+    labelKey: "overviewBottomNav.wastewater.title",
+    descriptionKey: "overviewBottomNav.wastewater.description",
+    link: "https://coronavirus.health.ny.gov/covid-19-wastewater-surveillance",
+    icon: resolveAsset("assets/nys-logo.svg"),
+  },
+  {
+    labelKey: "overviewBottomNav.nysSurveillance.title",
+    descriptionKey: "overviewBottomNav.nysSurveillance.description",
+    link: "https://www.health.ny.gov/statistics/",
+    icon: resolveAsset("assets/nys-logo.svg"),
+  },
+  {
+    labelKey: "overviewBottomNav.github.title",
+    descriptionKey: "overviewBottomNav.github.description",
+    link: "https://github.com/nychealth/respiratory-illness-data",
+    icon: resolveAsset("assets/github-logo.png"),
+  },
+];
+
+export default overviewGridItems;

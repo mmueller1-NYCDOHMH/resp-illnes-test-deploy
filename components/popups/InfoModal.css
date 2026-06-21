@@ -1,0 +1,52 @@
+/*
+ * InfoModal.css — minimal residual styles
+ *
+ * Retains only:
+ *  1. @keyframes scaleIn — used by [animation:scaleIn_0.4s_ease] on .info-modal
+ *  2. Intermediate breakpoint (769px – 1024px) — range query that requires
+ *     both min-width and max-width (cannot be expressed with Tailwind's
+ *     min-width-only utilities alone).
+ *
+ * Base, mobile (≤768px), and all non-range responsive styles are handled via
+ * Tailwind classes in InfoModal.jsx.
+ */
+
+@keyframes scaleIn {
+  from { transform: scale(0.92); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes scaleOut {
+  from { transform: scale(1);    opacity: 1; }
+  to   { transform: scale(0.92); opacity: 0; }
+}
+
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes backdropOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ── Intermediate breakpoint: tablet portrait (769px – 1024px) ───────────── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .info-modal {
+    width: 70%;
+    padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-lg) var(--spacing-lg);
+  }
+  .info-modal-title {
+    font-size: var(--font-size-lg);
+    padding-right: 40px;
+  }
+  .info-modal-content {
+    font-size: var(--font-size-md);
+  }
+  .info-modal-close {
+    font-size: 22px;
+    top: 6px;
+    right: 6px;
+  }
+}
