@@ -1,0 +1,45 @@
+/*
+ * OverviewSection.css — minimal residual styles
+ *
+ * Retains only descendant selectors targeting elements inside the two
+ * column/container class names that cannot be expressed as Tailwind inline
+ * utilities on the parent:
+ *
+ *  1. .overview-container * — cascade-resets for all descendants
+ *  2. .overview-column h2   — heading typography (targets HTML tag inside component slot)
+ *  3. .overview-column p    — paragraph typography (targets HTML tag inside component slot)
+ *
+ * The mobile responsive media query is retained here because it targets these
+ * same descendant selectors.
+ *
+ * Outer layout is handled via Tailwind classes in OverviewSection.jsx.
+ */
+
+.overview-container * {
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.overview-column h2 {
+  font-size: var(--font-size-lg);
+  font-family: var(--font-heading);
+  color: var(--overview-column-title-color, var(--gray-900));
+  text-align: left;
+}
+
+.overview-column p {
+  font-family: var(--font-body);
+  color: var(--overview-text-color, var(--gray-700));
+  font-size: var(--font-size-md);
+  line-height: 24px;
+  text-align: left;
+}
+
+@media (max-width: 768px) {
+  .overview-title {
+    text-align: center;
+    font-size: var(--font-size-lg);
+  }
+}

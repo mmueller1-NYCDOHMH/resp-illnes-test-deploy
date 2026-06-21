@@ -1,0 +1,46 @@
+/*
+ * OverviewPageLayout.css — minimal residual styles
+ *
+ * Retains only:
+ *  1. .overview-block-title::after — decorative gradient pseudo-element
+ *     (cannot be expressed as Tailwind inline class).
+ *  2. .content-section:not(:last-child) — pseudo-class selector adding bottom
+ *     border + margin to non-last sections (can't be applied via Tailwind on
+ *     the element itself without knowing sibling count).
+ *
+ * Duplicate .trend-text/.trend-up/.trend-down/.trend-neutral rules removed —
+ * those live in index.css as global utilities.
+ *
+ * All other layout and typography are handled via Tailwind classes in
+ * the Overview page components.
+ */
+
+/* ── Section heading accent bar ────────────────────────────────────────── */
+.overview-block-title {
+  position: relative;
+  display: inline-block;
+  padding-bottom: var(--spacing-xs);
+}
+
+.overview-block-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #eaa360, #f4c4a5);
+  border-radius: 2px;
+}
+
+/*
+ * .content-section:not(:last-child) — previously added 64px margin + border-bottom.
+ * With the white-background layout the card shadows provide visual separation;
+ * the rule is retained but neutralised so it can be re-enabled by reverting
+ * the line below or restoring the original values.
+ */
+.content-section:not(:last-child) {
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
