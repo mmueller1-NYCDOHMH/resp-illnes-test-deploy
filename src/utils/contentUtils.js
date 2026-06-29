@@ -1,4 +1,12 @@
-import text from "../content/text.json";
+// Content is split by domain for easier editing.
+// All keys are merged here so getText("overview.title") keeps working unchanged.
+// To add a new domain file: import it below and spread it into `text`.
+import nav        from "../content/text/nav.json";
+import overview   from "../content/text/overview.json";
+import dataPages  from "../content/text/data-pages.json";
+import about      from "../content/text/about.json";
+
+const text = { ...nav, ...overview, ...dataPages, ...about };
 
 export const getText = (path, fallback = path) => {
   const result = path.split(".").reduce((acc, key) => acc?.[key], text);

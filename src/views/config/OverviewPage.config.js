@@ -4,7 +4,7 @@ import { DATA_PATHS } from "./Data.config";
 const overviewConfig = {
   id: "overviewPage",
   titleKey: "overview.title",
-  subtitleKey: "overview.subtitle",
+  subtitleMarkdownPath: "content/overview-intro.md",
   dataPath: DATA_PATHS.ed,
 
   controls: {
@@ -17,7 +17,7 @@ const overviewConfig = {
   // Revert by removing this block or changing values.
   layout: {
     pageBackground: "gray",
-    contentGap: "0px",
+    contentGap: "20px",
     headerBackground: null,
     updateNoteKey: "overview.updateNote",
   },
@@ -100,7 +100,7 @@ const overviewConfig = {
       wrapInChart: false,
       animateOnScroll: false,
       componentProps: {
-        textKey: "overview.disclaimer",
+        markdownPath: "content/overview-disclaimer.md",
       },
     },
   ],

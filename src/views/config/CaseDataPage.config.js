@@ -302,37 +302,6 @@ const caseDataPageConfig = {
         },
       },
     },
-    {
-      id: "case-info-flu-re",
-      dataType: "lab",
-      renderAs: "custom",
-      // title: "caseDataPage.noRaceEthnicitySection.title",
-      //textKey: "caseDataPage.noRaceEthnicitySection.body", 
-      showIfVirus: "Flu",
-      infoIcon: false,
-      downloadIcon: false,
-      animateOnScroll: true,
-      background: "transparent"
-
-    },
-
-    {
-      id: "case-info-rsv-re",
-      dataType: "lab",
-      renderAs: "custom",
-      dataSourceKey: "casesByAge",
-      wrapInChart: false,
-      // title: "caseDataPage.noRaceEthnicitySection.title",
-      // textKey: "caseDataPage.noRaceEthnicitySection.body", 
-      showIfVirus: "RSV",
-      infoIcon: false,
-      downloadIcon: false,
-      animateOnScroll: true,
-      background: "transparent"
-
-    },
-
-    
   ],
 };
 

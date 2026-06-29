@@ -187,20 +187,6 @@ const edPageConfig = {
       componentProps: { textKey: "overview.edDisclaimer" },
     },
 
-    {
-      id: "ed-info-re",
-      renderAs: "custom",
-      dataType: "ed",
-      dataSourceKey: "emergencyDeptData",
-      // title: "emergencyDeptPage.noRaceEthnicitySection.title",
-      // textKey: "emergencyDeptPage.noRaceEthnicitySection.body", 
-      infoIcon: false,
-      wrapInChart: false,
-      downloadIcon: false,
-      animateOnScroll: true,
-      background: "transparent"
-
-    },
   ],
 };
 

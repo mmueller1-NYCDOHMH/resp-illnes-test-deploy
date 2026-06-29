@@ -21,12 +21,6 @@
 import React from "react";
 import CustomSection from "../components/layout/CustomSection";
 import ChartSection from "../components/layout/ChartSection";
-import {
-  viewDisplayLabels,
-  viewDisplayLabelsPreposition,
-  virusDisplayLabelsArticle,
-  virusLowercaseDisplay,
-} from "./pageConstants";
 
 // ── Shared helper: resolve filteredData + textVars for custom sections ─────────
 const resolveCustomContext = (section, pageContext) => {
@@ -38,15 +32,15 @@ const resolveCustomContext = (section, pageContext) => {
     hydratedConfig,
     setView,
     latestDate,
+    viewDisplayLabels,
+    viewDisplayLabelsPreposition,
+    virusDisplayLabelsArticle,
+    virusLowercaseDisplay,
   } = pageContext;
 
   const chartProps = section.chart?.props || {};
-  const dataSourceKey =
-    section.dataSourceKey ||
-    chartProps.dataSourceKey ||
-    null;
-  const filteredData =
-    dataSourceKey && data[dataSourceKey] ? data[dataSourceKey] : [];
+  const dataSourceKey = section.dataSourceKey || chartProps.dataSourceKey || null;
+  const filteredData = dataSourceKey && data[dataSourceKey] ? data[dataSourceKey] : [];
 
   const textVars = {
     virus: activeVirus,

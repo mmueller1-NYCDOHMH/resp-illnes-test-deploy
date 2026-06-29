@@ -1,0 +1,36 @@
+[
+  {
+    "label": "COVID-19 ED Trends",
+    "href": "/data/covid-19#ed-trends",
+    "virus": "COVID-19",
+    "description": "Weekly % of ED visits with a COVID-19 diagnosis",
+    "dataFile": "/data/emergencyDeptData.csv",
+    "metric": "COVID-19 visits",
+    "submetric": "Overall"
+  },
+  {
+    "label": "COVID-19 Lab Cases by Season",
+    "href": "/data/covid-19?dataType=lab#case-reports-season",
+    "virus": "COVID-19",
+    "description": "Lab-confirmed COVID-19 cases reported by season",
+    "dataFile": "/data/caseData.csv",
+    "metric": "COVID-19 cases",
+    "submetric": "Total"
+  },
+  {
+    "label": "Lab Cases by Neighborhood",
+    "href": "/data/covid-19?dataType=lab#case-reports-neighborhood",
+    "virus": "COVID-19",
+    "description": "COVID-19 cases mapped by NYC neighborhood",
+    "dataFile": null
+  },
+  {
+    "label": "Flu ED Trends",
+    "href": "/data/flu#ed-trends",
+    "virus": "Flu",
+    "description": "Weekly % of ED visits with an influenza diagnosis",
+    "dataFile": "/data/emergencyDeptData.csv",
+    "metric": "Influenza visits",
+    "submetric": "Overall"
+  }
+]
