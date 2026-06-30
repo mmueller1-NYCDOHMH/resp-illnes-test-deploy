@@ -8,7 +8,7 @@ import { getThemeByTitle } from "../../utils/themeUtils";
 import { formatDate } from "../../utils/trendUtils";
 import { getDataTypeOptions } from "../../utils/dataTypeOptions";
 import LanguageToggle from "../contentUtils/LanguageToggle";
-import featuredLinks from "../../views/config/featuredLinks";
+import featuredLinks from "../../views/config/featuredLinks.json";
 import JumpToPreview from "./JumpToPreview";
 
 // ── Virus slug map ────────────────────────────────────────────────────────────
@@ -144,9 +144,10 @@ const PageSidebar = ({
   // ── Jump-to hover preview ────────────────────────────────────────────────
   // Only activated on devices that support true hover (no touch).
   const [canHover, setCanHover] = useState(false);
-  const [activeHref, setActiveHref]   = useState(null);
-  const [activeLabel, setActiveLabel] = useState(null);
-  const [anchorEl, setAnchorEl]       = useState(null);
+  const [activeHref, setActiveHref]       = useState(null);
+  const [activeLabel, setActiveLabel]     = useState(null);
+  const [activeLinkMeta, setActiveLinkMeta] = useState(null);
+  const [anchorEl, setAnchorEl]           = useState(null);
 
   useEffect(() => {
     setCanHover(
@@ -154,15 +155,17 @@ const PageSidebar = ({
     );
   }, []);
 
-  const handleLinkEnter = useCallback((href, label, e) => {
-    setActiveHref(href);
-    setActiveLabel(label);
+  const handleLinkEnter = useCallback((link, e) => {
+    setActiveHref(link.href);
+    setActiveLabel(link.label);
+    setActiveLinkMeta(link);
     setAnchorEl(e.currentTarget);
   }, []);
 
   const handleLinkLeave = useCallback(() => {
     setActiveHref(null);
     setActiveLabel(null);
+    setActiveLinkMeta(null);
     setAnchorEl(null);
   }, []);
 
@@ -278,14 +281,14 @@ const PageSidebar = ({
             <div className="border-t border-gray-200 mb-4" />
             <div className="flex flex-col gap-px mb-4">
               <SectionLabel>Jump to</SectionLabel>
-              {featuredLinks.map(({ label, href }) => (
+              {featuredLinks.map((link) => (
                 <div
-                  key={href}
-                  onMouseEnter={canHover ? (e) => handleLinkEnter(href, label, e) : undefined}
+                  key={link.href}
+                  onMouseEnter={canHover ? (e) => handleLinkEnter(link, e) : undefined}
                   onMouseLeave={canHover ? handleLinkLeave : undefined}
                 >
-                  <TextLink onClick={() => router.push(href)}>
-                    {label}
+                  <TextLink onClick={() => router.push(link.href)}>
+                    {link.label}
                   </TextLink>
                 </div>
               ))}
@@ -331,6 +334,7 @@ const PageSidebar = ({
         <JumpToPreview
           activeHref={activeHref}
           activeLabel={activeLabel}
+          activeLinkMeta={activeLinkMeta}
           anchorEl={anchorEl}
         />
       )}

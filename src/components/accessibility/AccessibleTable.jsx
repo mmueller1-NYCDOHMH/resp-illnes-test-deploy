@@ -1,10 +1,6 @@
 import React, { useId, useState, useMemo } from "react";
 import PropTypes from "prop-types";
-
-const interpolate = (str, variables = {}) =>
-  typeof str === "string"
-    ? str.replace(/{(\w+)}/g, (_, k) => (variables[k] ?? `{${k}}`))
-    : str;
+import { interpolateTokens as interpolate } from "../../utils/contentUtils";
 
 
 const decidePercentScale = (num, row, col) => {

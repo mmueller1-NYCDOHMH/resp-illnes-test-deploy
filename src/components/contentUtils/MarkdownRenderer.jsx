@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { marked } from "marked";
 import { resolveContentPath } from '../../utils/pathUtils';
-
+import { interpolateTokens } from '../../utils/contentUtils';
 
 const stripHtml = (s = "") => s.replace(/<[^>]*>/g, " ");
 const collapseWs = (s = "") => s.replace(/\s+/g, " ").trim();
@@ -42,8 +42,6 @@ const extractSection = (markdown, sectionTitle, stripRenderDirectives = false) =
   return result.join("\n").trim();
 };
 
-const interpolate = (markdown, variables = {}) =>
-  markdown.replace(/{(\w+)}/g, (_, key) => (key in variables ? variables[key] : `{${key}}`));
 
 const MarkdownRenderer = ({
   filePath,
@@ -76,7 +74,7 @@ const MarkdownRenderer = ({
         }
         
 
-        const interpolated = interpolate(markdown, variables);
+        const interpolated = interpolateTokens(markdown, variables);
         let content;
 
         if (sectionTitle) {

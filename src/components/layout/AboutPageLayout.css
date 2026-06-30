@@ -101,6 +101,122 @@
   }
 }
 
+/* ── Guide prose — "Using This Site" accordion bodies ────────────────── */
+.guide-prose {
+  color: var(--gray-700);
+  font-size: 0.94rem;
+  line-height: 1.75;
+  padding-top: 4px;
+}
+
+/* Paragraph spacing */
+.guide-prose p {
+  margin: 0 0 0.85rem;
+}
+
+.guide-prose p:last-child {
+  margin-bottom: 0;
+}
+
+/* Bold terms — subtle inline highlight */
+.guide-prose strong {
+  color: var(--gray-900);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--blue-primary) 7%, transparent);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+/* List items as styled pill rows */
+.guide-prose ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.guide-prose ul li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 9px 12px;
+  background: var(--gray-50, #f9fafb);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+.guide-prose ul li::before {
+  content: "→";
+  color: var(--blue-primary);
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-size: 0.85rem;
+}
+
+/* Sub-headings within guide content */
+.guide-prose h3,
+.guide-prose h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--gray-500);
+  margin: 1.4rem 0 0.5rem;
+}
+
+/* Tip / callout boxes via blockquote */
+.guide-prose blockquote {
+  margin: 0.9rem 0;
+  padding: 0.65rem 1rem;
+  background: color-mix(in srgb, var(--blue-primary) 5%, white);
+  border-left: 3px solid var(--blue-primary);
+  border-radius: 0 8px 8px 0;
+  color: var(--gray-700);
+  font-size: 0.9rem;
+}
+
+.guide-prose blockquote p {
+  margin: 0;
+}
+
+/* Inline code */
+.guide-prose code {
+  font-family: ui-monospace, "Cascadia Code", "Fira Code", monospace;
+  font-size: 0.82rem;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--gray-800);
+}
+
+/* Links */
+.guide-prose a {
+  color: var(--blue-primary);
+  text-underline-offset: 2px;
+}
+
+/* Dark mode */
+[data-theme="dark"] .guide-prose strong {
+  background: color-mix(in srgb, var(--blue-primary) 15%, transparent);
+}
+[data-theme="dark"] .guide-prose ul li {
+  background: var(--gray-800, #1f2937);
+  border-color: var(--gray-700, #374151);
+}
+[data-theme="dark"] .guide-prose blockquote {
+  background: color-mix(in srgb, var(--blue-primary) 10%, #1f2937);
+}
+[data-theme="dark"] .guide-prose code {
+  background: var(--gray-800, #1f2937);
+  border-color: var(--gray-700, #374151);
+  color: #f9fafb;
+}
+
 /* ── Dark mode: markdown-body prose overrides ─────────────────────────── */
 [data-theme="dark"] .markdown-body { color: #E5E7EB; }
 [data-theme="dark"] .markdown-body h1,

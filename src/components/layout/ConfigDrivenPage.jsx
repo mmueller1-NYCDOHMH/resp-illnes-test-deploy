@@ -21,11 +21,11 @@ import { usePageState } from "../hooks/usePageState";
 import usePageData from "../hooks/usePageData";
 
 import DataPageLayout from "./DataPageLayout";
-import TopControls from "./TopControls";
 import TrendSummaryContainer from "./TrendSummaryContainer";
 import SectionRenderer from "./SectionRenderer";
 import PageSidebar from "./PageSidebar";
 import PageSkeleton from "./PageSkeleton";
+import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
 
 import SeasonalBullet from "../bullets/SeasonalBullet";
 import HydratedDataContext from "../../context/HydratedDataContext";
@@ -35,6 +35,7 @@ import { getLatestWeek, formatDate } from "../../utils/trendUtils";
 import { getText, resolveText } from "../../utils/contentUtils";
 import { exportVegaImage, copyVegaImageToClipboard } from "../../utils/exportChartImage";
 import componentRegistry from "../../utils/componentRegistry";
+import { virusAccentColors } from "../../styles/tokens";
 
 import {
   viewDisplayLabels,
@@ -63,13 +64,9 @@ const ConfigDrivenPage = ({ config }) => {
   } = pageState;
 
   // ── Virus accent color — sets --page-accent on <html> for global theming ──
+  // Source of truth is virusAccentColors in tokens.js (colorScales[virus][2])
   useEffect(() => {
-    const accentMap = {
-      "COVID-19": "#8739B7",
-      "Flu":      "#387781",
-      "RSV":      "#AA4C34",
-    };
-    const color = accentMap[activeVirus] ?? "#1E40AF";
+    const color = virusAccentColors[activeVirus] ?? "#1E40AF";
     document.documentElement.style.setProperty("--page-accent", color);
     return () => document.documentElement.style.removeProperty("--page-accent");
   }, [activeVirus]);
@@ -138,7 +135,6 @@ const ConfigDrivenPage = ({ config }) => {
   // ── Shared text variables ─────────────────────────────────────────────────
   const pageTextVars = {
     virus: activeVirus,
-    virusSource: activeVirus,
     view,
     dataType,
     viewLabel: viewDisplayLabels[view],
@@ -184,28 +180,18 @@ const ConfigDrivenPage = ({ config }) => {
     virusLowercaseDisplay,
   };
 
-  // ── Header right column (overview page only) ─────────────────────────────
   const updateNoteKey = config.layout?.updateNoteKey;
-  const headerRight = updateNoteKey ? (
-    <div>
-      <p
-        className="mb-sm"
-        dangerouslySetInnerHTML={{ __html: getText(updateNoteKey) || "" }}
-      />
-      {hydratedConfig.uploadDate && (
-        <p>
-          Last updated: <strong>{formatDate(hydratedConfig.uploadDate)}</strong>
-        </p>
-      )}
-    </div>
-  ) : null;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <HydratedDataContext.Provider value={{ data }}>
       <DataPageLayout
         title={resolveText(resolvedTitleKey, pageTextVars)}
-        subtitle={resolveText(resolvedSubtitleKey, pageTextVars)}
+        subtitle={
+          config.subtitleMarkdownPath
+            ? <MarkdownRenderer filePath={config.subtitleMarkdownPath} showTitle={false} />
+            : resolveText(resolvedSubtitleKey, pageTextVars)
+        }
         pageBackground={config.layout?.pageBackground}
         contentGap={config.layout?.contentGap}
         contentMaxWidth={config.layout?.contentMaxWidth}

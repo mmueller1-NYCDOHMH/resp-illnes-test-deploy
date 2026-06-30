@@ -4,47 +4,9 @@ import { getAbsoluteTrend } from "../utils/trendUtils";
 import StatCardSparkline from "./charts/StatCardSparkline";
 import { useAnimatedNumber } from "./hooks/useAnimatedNumber";
 import ChartModal from "./popups/ChartModal";
+import TrendChip from "./TrendChip";
 
 const arrowRotation = { up: "-45deg", down: "45deg", same: "0deg" };
-
-const TrendChip = ({ dir }) => {
-  if (!dir) return null;
-
-  const styleMap = {
-    up:   "bg-[#FCEBEB] text-[#A32D2D]",
-    down: "bg-[#E1F5EE] text-[#0F6E56]",
-    same: "bg-[#F1EFE8] text-[#444441]",
-  };
-  const labelMap = {
-    up:   "Increased",
-    down: "Decreased",
-    same: "Stable",
-  };
-
-  return (
-    <span
-      className={[
-        "inline-flex items-center gap-2",
-        "px-4 py-1.5 rounded-full",
-        "font-semibold text-base leading-tight whitespace-nowrap",
-        "transition-colors duration-300",
-        styleMap[dir] ?? styleMap.same,
-      ].join(" ")}
-    >
-      <span
-        style={{
-          display: "inline-block",
-          transform: `rotate(${arrowRotation[dir] ?? "0deg"})`,
-          transition: "transform 350ms cubic-bezier(0.34,1.56,0.64,1)",
-        }}
-        aria-hidden="true"
-      >
-        →
-      </span>
-      {labelMap[dir] ?? labelMap.same}
-    </span>
-  );
-};
 
 const StatCardBottom = ({ title, series, valueKey = "value", view = "visits" }) => {
   const theme = getThemeByTitle(title);
@@ -100,7 +62,7 @@ const StatCardBottom = ({ title, series, valueKey = "value", view = "visits" }) 
 
       {/* ── Chip row ── */}
       <div className="flex justify-center items-center px-md py-1.5">
-        {trend && <TrendChip dir={dir} />}
+        {trend && <TrendChip dir={dir} size="sm" />}
       </div>
 
       {/* ── Values row ── */}
@@ -137,7 +99,21 @@ const StatCardBottom = ({ title, series, valueKey = "value", view = "visits" }) 
       </div>
     </div>
 
-    <ChartModal title={title} isOpen={modalOpen} onClose={() => setModalOpen(false)} maxWidth={720}>
+    <ChartModal
+      title={title}
+      subtitle={trend ? (
+        <div className="flex items-center gap-3 flex-wrap">
+          <TrendChip dir={dir} size="sm" />
+          <span className="text-base text-gray-600">
+            {fmt(trend.previous)}% → {fmt(trend.current)}%{" "}
+            <span className="text-gray-400">of {view === "hospitalizations" ? "hospitalizations" : "ED visits"}</span>
+          </span>
+        </div>
+      ) : null}
+      isOpen={modalOpen}
+      onClose={() => setModalOpen(false)}
+      maxWidth={720}
+    >
       <StatCardSparkline
         series={series}
         valueKey={valueKey}

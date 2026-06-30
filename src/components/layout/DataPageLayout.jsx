@@ -149,10 +149,16 @@ const DataPageLayout = ({
                     {(renderedSubtitle || headerRight) && (
                       <div className={`w-full ${headerRight ? "flex items-start gap-xl" : ""}`}>
                         {renderedSubtitle && (
-                          <div
-                            className="body-links text-gray-600 font-body text-md font-normal leading-relaxed text-left flex-1 min-w-0 [overflow-wrap:break-word]"
-                            dangerouslySetInnerHTML={{ __html: typeof renderedSubtitle === "string" ? renderedSubtitle : String(renderedSubtitle) }}
-                          />
+                          typeof renderedSubtitle === "string" ? (
+                            <div
+                              className="body-links text-gray-600 font-body text-md font-normal leading-relaxed text-left flex-1 min-w-0 [overflow-wrap:break-word]"
+                              dangerouslySetInnerHTML={{ __html: renderedSubtitle }}
+                            />
+                          ) : (
+                            <div className="body-links text-gray-600 font-body text-md font-normal leading-relaxed text-left flex-1 min-w-0 [overflow-wrap:break-word]">
+                              {renderedSubtitle}
+                            </div>
+                          )
                         )}
                         {headerRight && !isMobile && (
                           <div className="flex-shrink-0 w-56 text-md text-gray-600 leading-relaxed [&_strong]:font-semibold [&_strong]:text-gray-800">

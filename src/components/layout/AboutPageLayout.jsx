@@ -4,6 +4,7 @@ import DataPageLayout from "./DataPageLayout";
 import PageSidebar from "./PageSidebar";
 import MarkdownCardSection from "../cards/MarkdownCardSection";
 import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
+import { resolveContentPath } from "../../utils/pathUtils";
 import { getText } from "../../utils/contentUtils";
 import "./AboutPageLayout.css";
 
@@ -135,7 +136,11 @@ const AboutPageLayout = ({ config }) => {
   return (
     <DataPageLayout
       title={resolveText(titleKey)}
-      subtitle={resolveText(subtitleKey)}
+      subtitle={
+        config.subtitleMarkdownPath
+          ? <MarkdownRenderer filePath={resolveContentPath(config.subtitleMarkdownPath)} showTitle={false} />
+          : resolveText(subtitleKey)
+      }
       sidebar={sidebar}
       sectionLinks={sectionLinks}
     >
@@ -170,13 +175,29 @@ const AboutPageLayout = ({ config }) => {
             const items = Array.isArray(section.items) ? section.items : [];
             if (!items.length) return null;
             const groupTitle = resolveText(section.groupTitleKey || section.titleKey);
+            const isGuide = section.variant === "guide";
 
             return (
               <SurfaceCard key={key} id={key}>
                 {groupTitle && (
-                  <h2 className="text-[clamp(1.3rem,1.5rem+0.5vw,var(--font-size-xl))] font-bold leading-tight text-gray-900 mb-md">
-                    {groupTitle}
-                  </h2>
+                  <div className={isGuide ? "flex items-center gap-3 mb-md" : "mb-md"}>
+                    {isGuide && (
+                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-primary flex-shrink-0">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+                        </svg>
+                      </span>
+                    )}
+                    <h2 className="text-[clamp(1.3rem,1.5rem+0.5vw,var(--font-size-xl))] font-bold leading-tight text-gray-900">
+                      {groupTitle}
+                    </h2>
+                  </div>
+                )}
+
+                {isGuide && (
+                  <p className="text-sm text-gray-500 mb-md max-w-[680px]">
+                    New to the site? These guides walk through the key features.
+                  </p>
                 )}
 
                 <div className="max-w-[800px] mx-auto border-t border-[var(--gray-200)]">
@@ -206,7 +227,32 @@ const AboutPageLayout = ({ config }) => {
                             color: isOpen ? "var(--blue-primary)" : "var(--gray-700)",
                           }}
                         >
-                          {title}
+                          <span className="flex items-center gap-3">
+                            {isGuide && item.iconPath && (
+                              <span
+                                className="inline-flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0 transition-colors duration-150"
+                                style={{
+                                  background: isOpen ? "color-mix(in srgb, var(--blue-primary) 12%, transparent)" : "var(--gray-100)",
+                                }}
+                              >
+                                <svg
+                                  width="14" height="14"
+                                  viewBox={item.iconViewBox || "0 0 24 24"}
+                                  fill="none"
+                                  stroke={isOpen ? "var(--blue-primary)" : "var(--gray-500)"}
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  aria-hidden="true"
+                                >
+                                  {item.iconPath.split(" M").map((seg, i) => (
+                                    <path key={i} d={i === 0 ? seg : `M${seg}`} />
+                                  ))}
+                                </svg>
+                              </span>
+                            )}
+                            {title}
+                          </span>
                           <ChevronIcon open={isOpen} />
                         </button>
 
@@ -220,6 +266,7 @@ const AboutPageLayout = ({ config }) => {
                               filePath={item.markdownPath}
                               showTitle={false}
                               stripRenderDirectives={true}
+                              className={isGuide ? "markdown-body guide-prose" : "markdown-body"}
                             />
                           </div>
                         )}

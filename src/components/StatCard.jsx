@@ -4,48 +4,11 @@ import { getAbsoluteTrend } from "../utils/trendUtils";
 import StatCardSparkline from "./charts/StatCardSparkline";
 import { useAnimatedNumber } from "./hooks/useAnimatedNumber";
 import ChartModal from "./popups/ChartModal";
+import TrendChip from "./TrendChip";
+import { getText } from "../utils/contentUtils";
 
 // Arrow rotations: up=−45°, down=45°, same=0°
 const arrowRotation = { up: "-45deg", down: "45deg", same: "0deg" };
-
-const TrendChip = ({ dir }) => {
-  if (!dir) return null;
-
-  const styleMap = {
-    up:   "bg-trend-chip-inc-bg text-trend-chip-inc-text",
-    down: "bg-trend-chip-dec-bg text-trend-chip-dec-text",
-    same: "bg-trend-chip-neutral-bg text-trend-chip-neutral-text",
-  };
-  const labelMap = {
-    up:   "Increased",
-    down: "Decreased",
-    same: "Stable",
-  };
-
-  return (
-    <span
-      className={[
-        "inline-flex items-center gap-2",
-        "px-5 py-2 rounded-full",
-        "font-semibold text-lg leading-tight whitespace-nowrap",
-        "transition-colors duration-300",
-        styleMap[dir] ?? styleMap.same,
-      ].join(" ")}
-    >
-      <span
-        style={{
-          display: "inline-block",
-          transform: `rotate(${arrowRotation[dir] ?? "0deg"})`,
-          transition: "transform 350ms cubic-bezier(0.34,1.56,0.64,1)",
-        }}
-        aria-hidden="true"
-      >
-        →
-      </span>
-      {labelMap[dir] ?? labelMap.same}
-    </span>
-  );
-};
 
 /** Year-over-year comparison chip.
  *  Finds the value from ~52 weeks before the latest data point and computes
@@ -208,7 +171,7 @@ const StatCard = ({
                 <span className="sr-only">{dir === "up" ? "increased to" : dir === "down" ? "decreased to" : "stable at"}</span>
                 <span>{fmtAni(animCurrent)}%</span>
                 <span className="text-sm font-normal text-gray-700 ml-1">
-                  {view === "hospitalizations" ? "of hospitalizations" : "of ED visits"}
+                  {view === "hospitalizations" ? getText("overview.statCards.ofHospitalizations") : getText("overview.statCards.ofEdVisits")}
                 </span>
               </div>
             </div>
@@ -248,7 +211,21 @@ const StatCard = ({
       )}
     </div>
 
-    <ChartModal title={title} isOpen={modalOpen} onClose={() => setModalOpen(false)} maxWidth={860}>
+    <ChartModal
+      title={title}
+      subtitle={trend ? (
+        <div className="flex items-center gap-3 flex-wrap">
+          <TrendChip dir={dir} />
+          <span className="text-base text-gray-600">
+            {fmt(trend.previous)}% → {fmt(trend.current)}%{" "}
+            <span className="text-gray-400">of {view === "hospitalizations" ? getText("overview.statCards.ofHospitalizations") : getText("overview.statCards.ofEdVisits")}</span>
+          </span>
+        </div>
+      ) : null}
+      isOpen={modalOpen}
+      onClose={() => setModalOpen(false)}
+      maxWidth={860}
+    >
       <StatCardSparkline
         series={series}
         valueKey={valueKey}

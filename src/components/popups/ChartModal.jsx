@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 
-const ChartModal = ({ title, isOpen, onClose, children, maxWidth = 980 }) => {
+const ChartModal = ({ title, subtitle, isOpen, onClose, children, maxWidth = 980 }) => {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -52,8 +52,11 @@ const ChartModal = ({ title, isOpen, onClose, children, maxWidth = 980 }) => {
         className="bg-[var(--chart-bg)] w-full max-h-[90vh] overflow-auto rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.25)] p-4 pb-2 flex flex-col md:rounded-[10px]"
         style={{ maxWidth }}
       >
-        <div className="flex items-center justify-between gap-2 pb-2 border-b border-gray-200 mb-3">
-          <h3 className="m-0 text-[18px] font-semibold text-[var(--chart-title-color)]">{title}</h3>
+        <div className="flex items-start justify-between gap-2 pb-2 border-b border-gray-200 mb-3">
+          <div className="flex flex-col gap-1.5">
+            <h3 className="m-0 text-[18px] font-semibold text-[var(--chart-title-color)]">{title}</h3>
+            {subtitle && <div>{subtitle}</div>}
+          </div>
           <button
             className="modal-close border-0 bg-transparent cursor-pointer p-[6px] leading-none inline-flex items-center justify-center text-gray-700 hover:text-gray-900 transition-colors duration-200"
             onClick={onClose}
@@ -76,6 +79,7 @@ const ChartModal = ({ title, isOpen, onClose, children, maxWidth = 980 }) => {
 
 ChartModal.propTypes = {
   title: PropTypes.string,
+  subtitle: PropTypes.node,
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   children: PropTypes.node,

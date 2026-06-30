@@ -4,10 +4,7 @@ import StatCardBottom from "../StatCardBottom";
 import ToggleControls from "../controls/ToggleControls";
 import InfoModal from "../popups/InfoModal";
 import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
-import { resolveHTMLLabels } from "../../utils/contentUtils";
-import "./StatGrid.css";
-
-import text from "../../content/text.json";
+import { resolveHTMLLabels, getText } from "../../utils/contentUtils";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const fmt = (d) =>
@@ -60,7 +57,7 @@ const StatGrid = ({ data }) => {
     const latestVisit = visitSeries.at?.(-1) ?? null;
     const latestAdmit = hospitalizationSeries.at?.(-1) ?? null;
 
-    const statText = text?.overview?.statCards?.[key] || {};
+    const statText = getText(`overview.statCards.${key}`) || {};
     const title = statText.title || label;
     const infoText = statText.infoText || "";
 
@@ -84,14 +81,15 @@ const StatGrid = ({ data }) => {
   const previousWeek = baseDate ? fmt(new Date(baseDate.getTime() - 7 * DAY_MS)) : "–";
 
   const vars = { date: formattedDate, previousWeek };
-  const titleHTML = resolveHTMLLabels(text?.overview?.summaryBox?.title || "", vars);
-  const descriptionHTML = resolveHTMLLabels(text?.overview?.summaryBox?.description || "", vars);
+  const titleHTML = resolveHTMLLabels(getText("overview.summaryBox.title") || "", vars);
+  const descriptionHTML = resolveHTMLLabels(getText("overview.summaryBox.description") || "", vars);
 
   const { key: topKey, visitSeries: topVisit, hospitalizationSeries: topHosp, ...topRest } = statCards[0];
   const topSeries = view === "visits" ? topVisit : topHosp;
 
-  const sectionTitle    = text?.overview?.statGrid?.title    || "What's happening across the city?";
-  const sectionSubtitle = text?.overview?.statGrid?.subtitle || "Emergency Department trends for the week ending";
+  const sectionTitle    = getText("overview.statGrid.title")    || "What's happening across the city?";
+  const sectionSubtitle = getText("overview.statGrid.subtitle") || "Emergency Department trends for the week ending";
+  const infoModalTitle  = getText("overview.statGrid.infoModalTitle") || "About Emergency Department Data";
 
   return (
     <div className="stat-grid flex flex-col gap-xs w-full overflow-hidden">
@@ -160,10 +158,10 @@ const StatGrid = ({ data }) => {
         id="stat-grid-info-modal"
         isOpen={infoOpen}
         onClose={() => setInfoOpen(false)}
-        title="About Emergency Department Data"
+        title={infoModalTitle}
         content={
           <MarkdownRenderer
-            filePath="content/modals/emergency-dept-explainer.md"
+            filePath="content/modals/emergency-dept-overview.md"
             showTitle={false}
           />
         }

@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import VegaLiteWrapper from "./VegaLiteWrapper";
 import { tokens } from "../../styles/tokens";
 import ChartFooter from "./ChartFooter";
+import { toSourceVirus } from "../../utils/virusRegistry";
 
 const { colors, typography } = tokens;
 const { covid, flu, rsv } = tokens.colorScales;
@@ -64,7 +65,6 @@ useEffect(() => {
     RSV: colors.orangePrimary,
   };
 
-  const toSourceVirus = (v) => (v === "Flu" ? "Influenza" : v);
   const sourceVirus = toSourceVirus(virus);
 
   const filteredData =

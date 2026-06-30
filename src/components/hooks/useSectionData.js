@@ -33,25 +33,9 @@ import {
   groupDisplayNames,
   resolveMetricLabel,
 } from "../../utils/pageConstants";
-import { getText } from "../../utils/contentUtils";
+import { getText, interpolateTokens, interpolateObject, resolveText } from "../../utils/contentUtils";
 
 // ─── small helpers ────────────────────────────────────────────────────────────
-
-const interpolateTokens = (value, vars) => {
-  if (typeof value !== "string") return value;
-  return value.replace(/{(\w+)}/g, (_, key) => vars[key] ?? `{${key}}`);
-};
-
-const interpolateObject = (obj, vars) =>
-  JSON.parse(JSON.stringify(obj), (_, v) => interpolateTokens(v, vars));
-
-const resolveText = (input, variables = {}) => {
-  const raw =
-    typeof input === "string" && input.includes(".") ? getText(input) : input;
-  return typeof raw === "string"
-    ? raw.replace(/{(\w+)}/g, (_, key) => variables[key] ?? `{${key}}`)
-    : raw;
-};
 
 const resolveFooter = (footerConfig, variables = {}) => {
   if (!footerConfig) return null;

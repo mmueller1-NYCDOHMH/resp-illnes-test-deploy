@@ -15,18 +15,10 @@ import ToggleControls from "../controls/ToggleControls";
 import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
 import chartRegistry from "../../utils/chartRegistry";
 import { tokens } from "../../styles/tokens";
-import { getText } from "../../utils/contentUtils";
+import { getText, resolveText } from "../../utils/contentUtils";
 import { parseLocalISO, formatDate } from "../../utils/trendUtils";
 import { buildDownloadHandler } from "../../utils/sectionDownload";
 import { buildDownloadName } from "../../utils/downloadUtils";
-
-const resolveText = (input, variables = {}) => {
-  const raw =
-    typeof input === "string" && input.includes(".") ? getText(input) : input;
-  return typeof raw === "string"
-    ? raw.replace(/{(\w+)}/g, (_, key) => variables[key] ?? `{${key}}`)
-    : raw;
-};
 
 const ChartSection = ({
   section,

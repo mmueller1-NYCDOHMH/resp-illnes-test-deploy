@@ -16,6 +16,8 @@ const StatCardSparkline = ({
   color = colors.bluePrimary,
   height = 72,
   tall = false,
+  referenceValue = null,   // dashed horizontal rule at this value (e.g. season average)
+  referenceLabel = "avg",  // label shown beside the rule
 }) => {
   const data = useMemo(() => {
     if (!Array.isArray(series) || series.length < 2) return [];
@@ -109,6 +111,39 @@ const StatCardSparkline = ({
           ],
         },
       },
+      // ── Seasonal reference line (hidden when no referenceValue) ───────────
+      ...(referenceValue != null ? [
+        {
+          data: { values: [{ avg: referenceValue }] },
+          mark: {
+            type: "rule",
+            strokeDash: [5, 3],
+            strokeWidth: 1.5,
+            color: colors.gray500,
+            opacity: 0.75,
+          },
+          encoding: {
+            y: { field: "avg", type: "quantitative", scale: { zero: true } },
+          },
+        },
+        {
+          data: { values: [{ avg: referenceValue, label: `${referenceLabel} ${referenceValue.toFixed(1)}%` }] },
+          mark: {
+            type: "text",
+            align: "right",
+            baseline: "bottom",
+            fontSize: tall ? 13 : 11,
+            color: colors.gray500,
+            dx: -3,
+            dy: -3,
+          },
+          encoding: {
+            y: { field: "avg", type: "quantitative", scale: { zero: true } },
+            x: { value: { expr: "width" } },
+            text: { field: "label" },
+          },
+        },
+      ] : []),
     ],
   };
 
@@ -124,11 +159,13 @@ const StatCardSparkline = ({
 };
 
 StatCardSparkline.propTypes = {
-  series: PropTypes.arrayOf(PropTypes.object),
-  valueKey: PropTypes.string,
-  color: PropTypes.string,
-  height: PropTypes.number,
-  tall: PropTypes.bool,
+  series:         PropTypes.arrayOf(PropTypes.object),
+  valueKey:       PropTypes.string,
+  color:          PropTypes.string,
+  height:         PropTypes.number,
+  tall:           PropTypes.bool,
+  referenceValue: PropTypes.number,
+  referenceLabel: PropTypes.string,
 };
 
 export default StatCardSparkline;

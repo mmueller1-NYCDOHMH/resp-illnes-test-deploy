@@ -192,41 +192,4 @@ html[data-theme="dark"] .language-select {
   }
 }
 
-/* ── Google Translate global suppression ───────────────────────────────── */
-
-#google_translate_element {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 1px !important;
-  height: 1px !important;
-  overflow: hidden !important;
-  opacity: 0.001 !important;
-  z-index: -1 !important;
-}
-
-.goog-te-gadget,
-.goog-te-gadget-simple,
-.goog-te-combo {
-  font-size: 0 !important;
-  line-height: 0 !important;
-  color: transparent !important;
-  background: transparent !important;
-  border: 0 !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-.goog-te-banner-frame.skiptranslate {
-  display: none !important;
-}
-
-body {
-  top: 0 !important;
-}
-
-.goog-te-menu-frame {
-  z-index: 9999 !important;
-  box-shadow: none !important;
-  border: 0 !important;
-}
+/* Google Translate suppression lives in index.css */

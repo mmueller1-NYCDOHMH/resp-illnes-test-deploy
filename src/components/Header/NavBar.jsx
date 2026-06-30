@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { getText } from "../../utils/contentUtils";
 
 const HomeIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -40,10 +41,11 @@ const ShareIcon = () => (
   </svg>
 );
 
+// Labels come from src/content/text/nav.json → nav.home / nav.data / nav.about
 const LINKS = [
-  { label: "Home",  to: "/",              Icon: HomeIcon  },
-  { label: "Data",  to: "/data/covid-19", Icon: DataIcon  },
-  { label: "About", to: "/about",         Icon: AboutIcon },
+  { label: getText("nav.home"),  to: "/",              Icon: HomeIcon  },
+  { label: getText("nav.data"),  to: "/data/covid-19", Icon: DataIcon  },
+  { label: getText("nav.about"), to: "/about",         Icon: AboutIcon },
 ];
 
 /** Semantic <a> link via Next.js Link — supports right-click, keyboard, a11y */
@@ -127,7 +129,7 @@ const NavBar = () => {
           "flex items-center gap-[5px] whitespace-nowrap",
           "py-[14px] px-md border-0 bg-transparent cursor-pointer",
           "text-[14px] font-body font-normal transition-colors duration-150",
-          copied ? "text-[#16a34a]" : "text-gray-600 hover:text-blue-primary",
+          copied ? "text-green-600" : "text-gray-600 hover:text-blue-primary",
         ].join(" ")}
       >
         {copied ? <CheckIcon /> : <ShareIcon />}

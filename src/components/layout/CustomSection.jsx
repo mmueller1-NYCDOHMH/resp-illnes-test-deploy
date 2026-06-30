@@ -141,6 +141,11 @@ export const buildCombinedVirusSubtitle = ({ data, view, dataSourceKey }) => {
   );
 };
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const flattenData = (data) =>
+  Array.isArray(data) ? data : Object.values(data || {}).flat();
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const CustomSection = ({
@@ -180,10 +185,9 @@ const CustomSection = ({
     }
 
     const wrapInChart = section.wrapInChart !== false;
-    const latestDateForName = latestDate;
-
     const virusForFile = section.id === "combined-virus" ? "ARI" : activeVirus;
     const metricForFile = dataType === "ed" ? view : undefined;
+    const flatData = flattenData(filteredData);
 
     return (
       <ContentContainer
@@ -196,11 +200,7 @@ const CustomSection = ({
         background={section.background || "white"}
         infoIcon={section.infoIcon}
         downloadIcon={section.downloadIcon}
-        downloadPreviewData={
-          Array.isArray(filteredData)
-            ? filteredData
-            : Object.values(filteredData || {}).flat()
-        }
+        downloadPreviewData={flatData}
         downloadColumnLabels={mergedProps.columnLabels}
         downloadDescription={mergedProps.downloadDescription}
         modalTitle={resolveText(section.modal?.title, textVars)}
@@ -220,7 +220,7 @@ const CustomSection = ({
           activeVirus,
           dataType,
           view,
-          latestDate: latestDateForName,
+          latestDate,
           categoryForFile: section.id || "section",
         })}
         onDownloadPNG={onDownloadPNG(
@@ -230,7 +230,7 @@ const CustomSection = ({
               virus: virusForFile,
               metric: metricForFile,
               category: section.id || "section",
-              date: latestDateForName,
+              date: latestDate,
             })
         )}
       >
@@ -249,27 +249,11 @@ const CustomSection = ({
             }
             onNewView={onNewView(sectionKey)}
             {...(section.showSidebarToggle
-              ? {
-                  sidebar: (
-                    <ToggleControls
-                      data={
-                        Array.isArray(filteredData)
-                          ? filteredData
-                          : Object.values(filteredData || {}).flat()
-                      }
-                      view={view}
-                      onToggle={setView}
-                    />
-                  ),
-                }
+              ? { sidebar: <ToggleControls data={flatData} view={view} onToggle={setView} /> }
               : {})}
             stackSidebarAbove={!!section.sidebarAboveChart}
             footer={section.chart?.footer}
-            altTableData={
-              Array.isArray(filteredData)
-                ? filteredData
-                : Object.values(filteredData || {}).flat()
-            }
+            altTableData={flatData}
             altTableVariables={textVars}
             altTableColumns={section.chart?.altTable?.columns}
             altTableCaption={

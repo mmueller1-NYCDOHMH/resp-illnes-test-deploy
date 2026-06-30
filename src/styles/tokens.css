@@ -1,3 +1,17 @@
+/*
+ * tokens.css — CSS custom properties (design tokens)
+ *
+ * WHO EDITS THIS FILE
+ * ───────────────────
+ * • To change UI colors (header, footer, nav, links, modals) → edit here
+ * • To change chart / sparkline / virus colors               → edit tokens.js
+ * • To change dark-mode colors                               → edit the
+ *   [data-theme="dark"] :root block near the bottom of this file
+ *
+ * Semantic aliases (e.g. --footer-bg, --header-bg) are at the bottom of
+ * :root — prefer changing those over raw color values.
+ */
+
 :root {
   /* Typography */
   --font-body: 'Inter', sans-serif;
