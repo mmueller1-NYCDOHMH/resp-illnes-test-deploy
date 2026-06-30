@@ -10,7 +10,10 @@ import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
  *   - markdownPath — path to a .md file (preferred: edit content/overview-disclaimer.md)
  *   - textKey      — dot-path key into text.json (legacy, still supported)
  */
-const DisclaimerNote = ({ markdownPath, textKey }) => {
+const DisclaimerNote = ({ markdownPath, textKey, config }) => {
+  // When rendered via ConfigDrivenPage, props arrive wrapped in `config`
+  markdownPath = markdownPath ?? config?.markdownPath;
+  textKey = textKey ?? config?.textKey;
   if (markdownPath) {
     return (
       <div className="text-sm text-gray-600 leading-relaxed body-links [&_a]:font-normal [&_p]:m-0">
