@@ -1,0 +1,24 @@
+{
+  "nav": {
+    "home": "Home",
+    "data": "Data",
+    "about": "About",
+    "externalTool": "Health Tool"
+  },
+
+  "overviewBottomNav": {
+    "title": "Additional Resources",
+    "wastewater": {
+      "title": "NYS Wastewater Surveillance Data",
+      "description": "View NYC COVID-19 wastewater surveillance through the New York State dashboard"
+    },
+    "nysSurveillance": {
+      "title": "NYS Respiratory Surveillance Reports",
+      "description": "Explore additional NYS respiratory illness data"
+    },
+    "github": {
+      "title": "Respiratory Illness GitHub Repository",
+      "description": "Visit our GitHub repo to get code, file an issue, or download data"
+    }
+  }
+}
