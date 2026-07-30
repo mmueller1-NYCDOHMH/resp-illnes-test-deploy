@@ -4,7 +4,13 @@ import PropTypes from "prop-types";
 // "filter-button" is a marker class — FloatingTogglePill.css targets
 // .floating-pill .pill-dropdown .pill-section .virus-filter-group .filter-button
 // "virus-label" is a marker class used by FloatingTogglePill.css font-size override.
-const VirusFilterButton = ({ label, icon, active, onClick, className = "" }) => {
+//
+// No icon artwork — virus identity is carried by color instead. The active
+// state fills with the virus's own accent color (same value that drives
+// --page-accent elsewhere: DataPageLayout's header bar, ProgressRail's
+// active dot) instead of a generic dark gray, so selecting "COVID-19" here
+// reads as the same purple used throughout that virus's page.
+const VirusFilterButton = ({ label, accentColor, active, onClick, className = "" }) => {
   return (
     <button
       onClick={onClick}
@@ -19,25 +25,19 @@ const VirusFilterButton = ({ label, icon, active, onClick, className = "" }) => 
         "active:translate-y-[0.5px]",
         // max-sm: = mobile only (<640px); sm: would wrongly apply to desktop
         "max-sm:w-[80%] max-sm:max-w-[80%] max-sm:h-[40px] max-sm:rounded-md",
-        active ? "!bg-gray-900 !text-white" : "",
+        active ? "!text-white" : "",
         className,
       ].filter(Boolean).join(" ")}
+      style={active ? { backgroundColor: accentColor || "var(--gray-900)" } : undefined}
     >
-      <span className="inline-flex items-center gap-2">
-        <img
-          src={icon}
-          alt={label}
-          className="w-[18px] h-[18px] inline-block align-middle [filter:var(--img-on-light-filter)]"
-        />
-        <span className="virus-label">{label}</span>
-      </span>
+      <span className="virus-label">{label}</span>
     </button>
   );
 };
 
 VirusFilterButton.propTypes = {
   label: PropTypes.string.isRequired,
-  icon: PropTypes.string.isRequired,
+  accentColor: PropTypes.string,
   active: PropTypes.bool,
   onClick: PropTypes.func.isRequired,
 };

@@ -27,17 +27,52 @@ const SectionLabel = ({ children }) => (
   </div>
 );
 
-const PillButton = ({ isActive, onClick, children }) => (
+// A fixed-width "rail" is pinned to the left edge of every pill; the dot
+// sits centered inside it via flexbox. Selecting a row grows that dot to
+// fill the rail — but since switching virus also swaps the fetched dataset
+// (usePageData) and remounts the content area, a plain CSS *transition*
+// between prop states isn't reliable to catch. Using a CSS *animation*
+// (keyframes, defined below) instead means the grow effect plays on render
+// whenever a row is active, regardless of whether that's an update or a
+// fresh mount.
+// Two statically-shaped markers (a real circle, a real full-rail rectangle)
+// stacked in the same spot — no width/height/clip-path animation, only
+// transform + opacity, the two properties every browser is guaranteed to
+// run purely on the compositor. Sequenced with transition-delay so it reads
+// as shrink-then-grow rather than a simultaneous crossfade: whichever shape
+// is disappearing starts immediately (no delay); whichever is appearing
+// waits ~100ms so it only starts once the other has shrunk away. The bar
+// only scales on Y (scale-y-*) so it grows from the center vertically
+// without squishing its width.
+const PillButton = ({ isActive, onClick, accentColor, children }) => (
   <button
     onClick={onClick}
     className={[
-      "w-full px-3 py-[9px] rounded-full border-none cursor-pointer text-[15px] text-left whitespace-nowrap",
-      "transition-[background,color] duration-150 box-border",
+      "relative w-full pl-5 pr-3 py-[9px] rounded-full overflow-hidden cursor-pointer text-[15px] text-left whitespace-nowrap",
+      "transition-colors duration-150 box-border",
       isActive
         ? "bg-gray-900 text-white font-semibold"
-        : "bg-transparent text-gray-700 font-normal hover:bg-gray-300 hover:text-gray-900",
+        : "bg-transparent text-gray-700 font-normal hover:bg-gray-200 hover:text-gray-900",
     ].join(" ")}
   >
+    <span aria-hidden="true" className="absolute left-0 top-0 h-full w-3">
+      {/* Bar — grows in vertically from center, after the dot shrinks away */}
+      <span
+        className={[
+          "absolute inset-0 origin-center transition-[transform,opacity] ease-out",
+          isActive ? "opacity-100 scale-y-100 duration-150 delay-100" : "opacity-0 scale-y-0 duration-100",
+        ].join(" ")}
+        style={{ backgroundColor: accentColor || "var(--gray-300)" }}
+      />
+      {/* Dot — fixed-size circle, shrinks away first when a row is selected */}
+      <span
+        className={[
+          "absolute inset-0 m-auto w-2.5 h-2.5 rounded-full origin-center transition-[transform,opacity] ease-out",
+          isActive ? "opacity-0 scale-0 duration-100" : "opacity-100 scale-100 duration-150 delay-100",
+        ].join(" ")}
+        style={{ backgroundColor: accentColor || "var(--gray-300)" }}
+      />
+    </span>
     {children}
   </button>
 );
@@ -190,30 +225,18 @@ const PageSidebar = ({
             <div className="border-t border-gray-200 mb-4" />
             <div className="flex flex-col gap-[2px] mb-4">
               <SectionLabel>Virus</SectionLabel>
-              {virusOptions.map(({ label, icon }) => {
+              {virusOptions.map(({ label }) => {
                 const theme    = getThemeByTitle(label);
                 const isActive = activeVirus === label;
                 const slug     = VIRUS_SLUGS[label];
                 return (
                   <React.Fragment key={label}>
-                    <PillButton isActive={isActive} onClick={() => onVirusChange(label)}>
-                      <span className="inline-flex items-center gap-2 w-full">
-                        <span
-                          className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full flex-shrink-0"
-                          style={{
-                            background: isActive ? "rgba(255,255,255,0.15)" : theme.pillBackground,
-                          }}
-                        >
-                          <img
-                            src={icon}
-                            alt=""
-                            aria-hidden="true"
-                            className="w-[13px] h-[13px]"
-                            style={{ filter: "var(--img-on-light-filter, none)" }}
-                          />
-                        </span>
-                        {label}
-                      </span>
+                    <PillButton
+                      isActive={isActive}
+                      accentColor={theme.color}
+                      onClick={() => onVirusChange(label)}
+                    >
+                      {label}
                     </PillButton>
                     {activePage === "home" && slug && (
                       <div className="pl-[38px] -mt-1 mb-[2px]">

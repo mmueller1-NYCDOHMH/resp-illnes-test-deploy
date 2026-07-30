@@ -98,35 +98,25 @@ const StatCardRow = ({
         </svg>
 
         {/* ── Label column ──
-            Primary (ORI): icon top-aligned with the title line itself, not
-            centered against the title+subtitle block (items-start, not
-            items-center) so the icon reads as inline with "ORI".
-            Compact rows: icon+name grouped and right-aligned as a single
-            unit (justify-end) so the label sits flush against the chart —
-            icon and text move together instead of the icon anchoring left
-            while the text drifts right. */}
+            No icon artwork — the virus identity is carried by color instead,
+            via theme.color (same palette already driving each row's
+            sparkline/chartColor), applied directly to the title text.
+            Compact rows stay right-aligned so the label sits flush against
+            the chart, same as before. */}
         <div
           className={[
             "flex gap-sm min-w-0",
             isPrimary ? "items-start" : "items-center justify-end text-right",
           ].join(" ")}
         >
-          {theme.icon && (
-            <img
-              className={isPrimary ? "w-7 h-7 flex-shrink-0" : "w-5 h-5 flex-shrink-0"}
-              src={theme.icon}
-              alt=""
-              aria-hidden="true"
-              loading="lazy"
-            />
-          )}
           <div className="min-w-0">
             <div
               className={
                 isPrimary
-                  ? "text-lg font-semibold text-card-title-color leading-tight"
-                  : "text-md font-semibold text-card-title-color leading-tight"
+                  ? "text-lg font-semibold leading-tight"
+                  : "text-md font-semibold leading-tight"
               }
+              style={{ color: "var(--card-title-color)" }}
             >
               {title}
             </div>

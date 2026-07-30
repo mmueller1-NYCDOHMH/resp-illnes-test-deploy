@@ -166,8 +166,27 @@ const StatGrid = ({ data }) => {
         ))}
       </div>
 
-      <div className="font-semibold text-body text-[var(--footnote-gray)] text-right md:mt-md">
-        Compared with week of {previousWeek}
+      <div
+        className="chart-footer-inner md:mt-md"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: "1rem",
+          color: "var(--footnote-gray)",
+          fontSize: "12px",
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            overflowWrap: "anywhere",
+          }}
+        />
+        <div style={{ whiteSpace: "nowrap", textAlign: "right" }}>
+          Data as of: {formattedDate}
+        </div>
       </div>
 
       {/* ── Info modal ── */}
