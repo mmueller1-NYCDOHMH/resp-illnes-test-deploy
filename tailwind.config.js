@@ -131,8 +131,10 @@ export default {
         heading: ["var(--font-heading)", "sans-serif"],
       },
       fontSize: {
+        "2xs":["var(--font-size-2xs)", { lineHeight: "1.35" }],
         xs:   ["var(--font-size-xs)",  { lineHeight: "1.4" }],
         sm:   ["var(--font-size-sm)",  { lineHeight: "1.45" }],
+        body: ["var(--font-size-body)",{ lineHeight: "1.5" }],
         md:   ["var(--font-size-md)",  { lineHeight: "1.55" }],
         lg:   ["var(--font-size-lg)",  { lineHeight: "1.5" }],
         "2xl":["var(--font-size-2xl)", { lineHeight: "1.35" }],
