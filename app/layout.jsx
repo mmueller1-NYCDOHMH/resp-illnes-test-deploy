@@ -13,11 +13,22 @@
  * Server Component — no "use client" here.
  */
 
+import { GeistSans } from 'geist/font/sans';
 import Script from 'next/script';
 import HashRedirectShim from './components/HashRedirectShim';
 import AppShell from './components/AppShell';
 import '../src/index.css';
 import '../src/styles/tokens.css';
+
+// Matches CHP's font (Geist). CHP loads it via next/font/google, which only
+// has Geist available on the Next.js version CHP runs (16.x) — RVP is on
+// Next 14.2, whose next/font/google manifest predates Geist being added
+// ("Unknown font `Geist`"). The `geist` npm package (Vercel's own package,
+// self-hosts the actual font files via next/font/local under the hood)
+// works on any Next.js version and exports the same default
+// --font-geist-sans CSS variable name, so tokens.css's
+// var(--font-geist-sans) references need no changes.
+// Requires: npm install geist
 
 export const metadata = {
   title: 'Respiratory Illness Data Pages - NYC Health',
@@ -35,7 +46,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className={GeistSans.variable}>
       <head>
         <meta charSet="UTF-8" />
         <link
