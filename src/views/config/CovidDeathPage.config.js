@@ -4,7 +4,6 @@ import { DATA_PATHS } from "./Data.config";
 const covidDeathPageConfig = {
   id: "covidDeathPage",
   titleKey: "covidDeathPage.mainTitle",
-  subtitleKey: "covidDeathPage.mainSubtitle",
   dataPath: DATA_PATHS.death,
 
   controls: {

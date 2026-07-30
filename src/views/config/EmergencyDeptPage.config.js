@@ -4,7 +4,6 @@ import { DATA_PATHS } from "./Data.config";
 const edPageConfig = {
   id: "emergencyDeptPage",
   titleKey: "emergencyDeptPage.mainTitle",
-  subtitleKey: "emergencyDeptPage.mainSubtitle",
   dataPath: DATA_PATHS.ed,
 
   controls: {

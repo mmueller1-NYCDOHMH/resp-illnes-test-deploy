@@ -11,14 +11,6 @@ const covidPageConfig = {
     death:      "covidDeathPage.mainTitle",
     wastewater: "wastewaterPage.charts.viralLoad.title",
   },
-  subtitleKey: {
-    ed:         "emergencyDeptPage.mainSubtitle",
-    lab:        "caseDataPage.mainSubtitle",
-    death:      "covidDeathPage.mainSubtitle",
-    wastewater: null,
-  },
-
-
   dataPath: {
     ed: edPageConfig.dataPath,
     lab: caseDataPageConfig.dataPath,

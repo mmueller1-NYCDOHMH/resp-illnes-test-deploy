@@ -5,7 +5,6 @@ import { toSourceVirus } from "../../utils/virusMap";
 const caseDataPageConfig = {
   id: "caseDataPage",
   titleKey: "caseDataPage.mainTitle",
-  subtitleKey: "caseDataPage.mainSubtitle",
   dataPath: DATA_PATHS.lab,
   dataType: "lab",
 
@@ -93,6 +92,11 @@ const caseDataPageConfig = {
       navLabel: "Neighborhood",
       dataType: "lab",
       title: "caseDataPage.charts.reportsByNeighborhood.title",
+      // Title is rendered inside LabCasesNeighborhoodMap itself, in the same
+      // row as the search box (title left / search right — same pattern as
+      // NeighborhoodMap on the home page), instead of in ContentContainer's
+      // header row above a separate search row.
+      titleInComponent: true,
       renderAs: "custom",
       component: "LabCasesNeighborhoodMap",
       background: "white",

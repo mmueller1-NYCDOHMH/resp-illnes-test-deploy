@@ -17,9 +17,10 @@ const overviewConfig = {
   // Revert by removing this block or changing values.
   layout: {
     pageBackground: "gray",
-    contentGap: "20px",
+    contentGap: "32px",
     headerBackground: null,
     updateNoteKey: "overview.updateNote",
+    showProgressRail: false,
   },
 
   sections: [
