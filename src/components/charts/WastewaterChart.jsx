@@ -48,70 +48,141 @@ const AXIS_CONFIG = {
 };
 
 function buildLineSpec(color, titleText = "") {
-  return {
-    title: titleText
-      ? {
-          text: titleText,
-          anchor: "start",
-          fontSize: 14,
-          fontWeight: "normal",
-          font: typography.heading,
-          color: colors.gray800,
-          dy: -6,
-        }
-      : undefined,
-    mark: {
-      type: "line",
-      point: { filled: true, size: 36, fill: color },
-      color,
-      strokeWidth: 2,
+  const title = titleText
+    ? {
+        text: titleText,
+        anchor: "start",
+        fontSize: 14,
+        fontWeight: "normal",
+        font: typography.heading,
+        color: colors.gray800,
+        dy: -6,
+      }
+    : undefined;
+
+  const tooltip = [
+    {
+      field: "date",
+      type: "temporal",
+      format: "%b %d, %Y",
+      title: "Week ending",
     },
-    encoding: {
-      x: {
-        field: "date",
-        type: "temporal",
-        axis: {
-          title: null,
-          format: "%b %Y",
-          tickCount: 8,
-          labelAngle: -30,
-          ...AXIS_CONFIG,
-        },
-      },
-      y: {
-        field: "valueNum",
-        type: "quantitative",
-        title: "Normalized viral load",
-        axis: {
-          format: "~s",
-          gridDash: [2],
-          tickCount: 5,
-          domain: false,
-          ticks: false,
-          ...AXIS_CONFIG,
-        },
-      },
-      tooltip: [
-        {
-          field: "date",
-          type: "temporal",
-          format: "%b %d, %Y",
-          title: "Week ending",
-        },
-        {
-          field: "valueNum",
-          type: "quantitative",
-          format: ",d",
-          title: "Normalized viral load",
-        },
-      ],
+    {
+      field: "valueNum",
+      type: "quantitative",
+      format: ",d",
+      title: "Normalized viral load",
+    },
+  ];
+
+  return {
+    width: "container",
+    autosize: { type: "fit", contains: "padding" },
+    title: {
+      text: "Normalized viral load",
+      fontWeight: "normal",
+      anchor: "start",
+      fontSize: 13,
+      font: "sans-serif",
+      baseline: "top",
     },
     config: {
       background: colors.white,
-      view:  { stroke: "transparent" },
-      axisX: { ticks: true, domain: true, grid: false },
-      axisY: { orient: "left", zindex: 0 },
+      axis: {
+        ...AXIS_CONFIG,
+      },
+      axisX: { ticks: true, domain: true, domainColor: "lightgray", grid: false },
+      axisY: { domain: false, ticks: false, tickCount: 3, orient: "left", zindex: 0, gridDash: [2] },
+      view: { stroke: "transparent" },
     },
+    transform: [
+      {
+        calculate: "datum.pathogen === 'SC2' ? 'SARS-CoV-2 (COVID-19)' : datum.pathogen",
+        as: "pathogenLabel",
+      },
+    ],
+    layer: [
+      {
+        mark: { type: "line", interpolate: "linear", strokeWidth: 3, point: false },
+        encoding: {
+          x: {
+            field: "date",
+            type: "temporal",
+            axis: {
+              title: null,
+              format: "%b %Y",
+              tickCount: 8,
+              ...AXIS_CONFIG,
+            },
+          },
+          y: {
+            field: "valueNum",
+            type: "quantitative",
+            title: null,
+            axis: {
+              format: "~s",
+              gridDash: [2],
+              tickCount: 5,
+              domain: false,
+              ticks: false,
+              ...AXIS_CONFIG,
+            },
+          },
+          color: { value: color },
+          tooltip,
+        },
+      },
+      {
+        params: [
+          {
+            name: "pointHover",
+            select: {
+              type: "point",
+              on: "pointerover",
+              clear: "pointerout",
+              nearest: true,
+            },
+          },
+        ],
+        mark: { type: "point", filled: true, strokeWidth: 1.5 },
+        encoding: {
+          x: { field: "date", type: "temporal" },
+          y: { field: "valueNum", type: "quantitative" },
+          color: { value: color },
+          tooltip,
+          size: {
+            condition: { param: "pointHover", empty: false, value: 220 },
+            value: 60,
+          },
+        },
+      },
+      {
+        transform: [
+          {
+            joinaggregate: [
+              { op: "max", field: "date", as: "maxDate" },
+            ],
+          },
+          {
+            filter: "datum.date === datum.maxDate",
+          },
+        ],
+        mark: {
+          type: "text",
+          align: "left",
+          dx: 8,
+          dy: 0,
+          fontSize: 12,
+          fontWeight: "bold",
+        },
+        encoding: {
+          x: { field: "date", type: "temporal" },
+          y: { field: "valueNum", type: "quantitative" },
+          text: { field: "pathogenLabel", type: "nominal" },
+          color: { value: color },
+        },
+      },
+    ],
     height: 280,
   };
 }

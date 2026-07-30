@@ -57,7 +57,14 @@ export default function LanguageToggle({ className = "", wrapperClassName = "", 
       style={{ display: "inline-flex", alignItems: "center", width: "100%" }}
     >
       <span className="sr-only">Select language</span>
-      {showIcon && <span className="language-toggle-icon" aria-hidden="true">🌐</span>}
+      {showIcon && (
+        <span className="language-toggle-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18" />
+          </svg>
+        </span>
+      )}
       <select
         className={className}
         aria-label="Select language"

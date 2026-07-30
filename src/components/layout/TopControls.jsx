@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import DataTypeToggleGroup from "../controls/DataTypeToggleGroup";
-import ViewToggleGroup from "../controls/VisitAdmitToggle";
+import ToggleGroup from "../controls/ToggleGroup";
 import VirusFilterGroup from "../controls/VirusFilterGroup";
 import { getDataTypeOptions } from "../../utils/dataTypeOptions";
 
@@ -30,10 +29,12 @@ const TopControls = ({
       {dataTypeToggle && (
         <div className="flex flex-col gap-xs min-w-0 flex-1">
           <span className="sr-only">Data Type</span>
-          <DataTypeToggleGroup
+          <ToggleGroup
             options={dataTypeOptions}
-            activeType={dataType}
+            value={dataType}
             onChange={onDataTypeChange}
+            ariaLabel="Data type"
+            variant="solid"
           />
         </div>
       )}
@@ -41,7 +42,16 @@ const TopControls = ({
       {viewToggle && dataType === "ed" && (
         <div className="flex flex-col gap-xs min-w-0">
           <span className="sr-only">Choose Between</span>
-          <ViewToggleGroup activeView={view} onChange={onViewChange} />
+          <ToggleGroup
+            options={[
+              { label: "Visits", value: "visits" },
+              { label: "Hospitalizations", value: "hospitalizations" },
+            ]}
+            value={view}
+            onChange={onViewChange}
+            ariaLabel="View"
+            variant="stretch"
+          />
         </div>
       )}
     </div>

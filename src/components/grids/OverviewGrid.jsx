@@ -7,9 +7,9 @@ import { resolveAsset } from "../../utils/pathUtils";
 
 const OverviewGrid = () => (
   <section className="w-full">
-    <div className="overview-grid-container w-full mx-auto py-md px-lg box-border shadow-md rounded-lg bg-white">
+    <div className="overview-grid-container w-full mx-auto py-md px-lg box-border border border-[var(--gray-200)] shadow-sm rounded-lg bg-white">
       <div>
-        <h2 className="text-left text-lg font-heading text-[var(--content-title-color)] font-bold tracking-[0.01em]">
+        <h2 className="text-left text-lg font-heading text-[var(--content-title-color)] font-semibold tracking-[0.01em]">
           {getText("overviewBottomNav.title")}
         </h2>
       </div>

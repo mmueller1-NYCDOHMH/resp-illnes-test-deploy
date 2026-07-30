@@ -163,7 +163,7 @@ html[data-theme="dark"] .language-select {
   background-color: var(--top-bar-slider-knob-checked, #302e2e);
 }
 
-/* Emoji icon inside knob */
+/* Sun/moon SVG icon inside knob */
 .slider .icon {
   position: absolute;
   left: 3px;

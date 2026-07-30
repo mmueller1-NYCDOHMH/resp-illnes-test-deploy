@@ -34,8 +34,8 @@
 /* ── Intermediate breakpoint: tablet portrait (769px – 1024px) ───────────── */
 @media (min-width: 769px) and (max-width: 1024px) {
   .info-modal {
-    width: 70%;
-    padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-lg) var(--spacing-lg);
+    width: 78%;
+    padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg) var(--spacing-xl);
   }
   .info-modal-title {
     font-size: var(--font-size-lg);

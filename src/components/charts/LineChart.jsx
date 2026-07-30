@@ -592,18 +592,37 @@ const pointColorEncoding = colorField
       }, 
       
       {
-        params: hasMultipleSeasons || colorField
-          ? [{
-              name: "hover",
-              select: {
-                type: "point",
-                fields: hasMultipleSeasons ? ["season"] : [colorField || "metric"],
-                on: "mouseover",
-                nearest: false,
-                clear: "mouseout"
+        params: [
+          hasMultipleSeasons || colorField
+            ? {
+                name: "hover",
+                select: {
+                  type: "point",
+                  fields: hasMultipleSeasons ? ["season"] : [colorField || "metric"],
+                  on: "mouseover",
+                  nearest: false,
+                  clear: "mouseout"
+                }
               }
-            }]
-          : [],
+            : {
+                name: "hover",
+                select: {
+                  type: "point",
+                  on: "pointerover",
+                  clear: "pointerout",
+                  nearest: true
+                }
+              },
+          {
+            name: "pointHover",
+            select: {
+              type: "point",
+              on: "pointerover",
+              clear: "pointerout",
+              nearest: true
+            }
+          }
+        ],
         mark: { type: "point", filled: true, size: 40, strokeWidth: 1.5 },
         encoding: {
           x: xEncoding,
@@ -611,6 +630,10 @@ const pointColorEncoding = colorField
           color: pointColorEncoding,
           opacity: lineOpacityEncoding,
           tooltip: sharedTooltip,
+          size: {
+            condition: { param: "pointHover", empty: false, value: 150 },
+            value: 60
+          }
         },
       },
     ],

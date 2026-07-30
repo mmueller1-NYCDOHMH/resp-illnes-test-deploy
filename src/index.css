@@ -74,7 +74,7 @@ svg {
    and cannot be expressed as Tailwind classes on JSX elements.           */
 
 .dynamic-text {
-  font-weight: 700;
+  font-weight: 600;
   background-color: var(--gray-200);
   color: var(--trend-highlight-color, var(--gray-800));
   border-radius: var(--radius-sm);
@@ -86,20 +86,20 @@ svg {
   background-color: var(--gray-200);
   border-radius: var(--radius-sm);
   padding: 1px 4px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .trend-value {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* StatGrid resolveText() injects <span class="dynamic-label"> via dangerouslySetInnerHTML */
 .dynamic-label {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .trend-text {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .trend-up   { color: var(--trend-up-color); }
@@ -108,14 +108,14 @@ svg {
 .trend-same { color: var(--trend-neutral-color); }
 
 /* Virus/ARI label emphasis (injected by colorizeVirusInTitle / virusText.js) */
-.ari-label   { color: #FF6600; font-weight: 700; }
-.virus-label { font-weight: 700; }
+.ari-label   { color: #FF6600; font-weight: 600; }
+.virus-label { font-weight: 600; }
 
 /* ── ProgressRail dot pulse (moved from ProgressRail.css) ──────────────── */
 @keyframes dotPulse {
-  0%   { transform: translate(-50%, -50%) scale(1); }
-  35%  { transform: translate(-50%, -50%) scale(2.2); opacity: 0.4; }
-  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.4); opacity: 0.4; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .progress-dot-pulse {
@@ -149,8 +149,8 @@ svg {
 
 /* ── Page route transition ──────────────────────────────────────────────── */
 @keyframes pageEnter {
-  from { opacity: 0; transform: translateY(6px); filter: blur(4px); }
-  to   { opacity: 1; transform: translateY(0);   filter: blur(0px); }
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .page-enter {

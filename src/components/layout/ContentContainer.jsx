@@ -91,7 +91,7 @@ const ContentContainer = ({
   modalContent = null,
   downloadPreviewData = [],
   downloadColumnLabels = {},
-  downloadDescription = "This will download a CSV of this chart’s currently visible data.",
+  downloadDescription = "",
   onDownloadClick = null,
   onDownloadPNG = null,
   onCopyImage = null,
@@ -167,7 +167,7 @@ const ContentContainer = ({
       ref={ref}
       id={id || undefined}
       className={[
-        "w-full max-w-content mx-auto box-border mb-xl",
+        "w-full max-w-content mx-auto box-border mb-[40px]",
         bgVariant,
         animateOnScroll
           ? (isVisible ? "fade-in" : "opacity-0 translate-y-4 transition-[opacity,transform] duration-[600ms]")
@@ -183,11 +183,11 @@ const ContentContainer = ({
             {/* Title */}
             {isTitleString ? (
               <h3
-                className="text-[var(--content-title-size,var(--font-size-lg))] text-[var(--content-title-color,var(--gray-900))] font-semibold tracking-tight border-l-[3px] border-[var(--gray-300)] pl-sm m-0 flex-1 min-w-0"
+                className="text-[var(--content-title-size,var(--font-size-lg))] text-[var(--content-title-color,var(--gray-900))] font-semibold tracking-tight m-0 flex-1 min-w-0"
                 dangerouslySetInnerHTML={{ __html: renderedTitleHTML }}
               />
             ) : (
-              <h3 className="text-[var(--content-title-size,var(--font-size-lg))] text-[var(--content-title-color,var(--gray-900))] font-semibold tracking-tight border-l-[3px] border-[var(--gray-300)] pl-sm m-0 flex-1 min-w-0">
+              <h3 className="text-[var(--content-title-size,var(--font-size-lg))] text-[var(--content-title-color,var(--gray-900))] font-semibold tracking-tight m-0 flex-1 min-w-0">
                 {title}
               </h3>
             )}
@@ -225,7 +225,7 @@ const ContentContainer = ({
                   <button
                     type="button"
                     className="appearance-none bg-transparent border-0 p-0 leading-none cursor-pointer inline-flex items-center text-gray-900 hover:text-gray-600 transition-colors duration-150"
-                    aria-label="Download data as CSV"
+                    aria-label="Download"
                     aria-haspopup="dialog"
                     aria-expanded={isDownloadModalOpen}
                     aria-controls="download-modal"
@@ -238,7 +238,7 @@ const ContentContainer = ({
                   </button>
                   <div className="pointer-events-none absolute bottom-full right-0 mb-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                     <div className="bg-gray-900 text-white text-xs font-medium px-2 py-1 rounded whitespace-nowrap">
-                      Download data
+                      Download
                       <div className="absolute top-full right-2 border-4 border-transparent border-t-gray-900" />
                     </div>
                   </div>
@@ -251,13 +251,13 @@ const ContentContainer = ({
           {/* Subtitle */}
           {renderedSubtitle && (
             isNodeSubtitle ? (
-              <div ref={subtitleRef} className="text-[var(--content-subtitle-size,var(--font-size-md))] font-body text-[var(--content-subtitle-color,var(--gray-600))] m-0">
+              <div ref={subtitleRef} className="text-[var(--content-subtitle-size,var(--font-size-body))] leading-relaxed font-body text-[var(--content-subtitle-color,var(--gray-700))] m-0">
                 {renderedSubtitle}
               </div>
             ) : (
               <div
                 ref={subtitleRef}
-                className="text-[var(--content-subtitle-size,var(--font-size-md))] font-body text-[var(--content-subtitle-color,var(--gray-600))] m-0"
+                className="text-[var(--content-subtitle-size,var(--font-size-body))] leading-relaxed font-body text-[var(--content-subtitle-color,var(--gray-700))] m-0"
                 dangerouslySetInnerHTML={{ __html: renderedSubtitle }}
               />
             )
@@ -266,7 +266,7 @@ const ContentContainer = ({
       )}
 
       {/* ── Body ── */}
-      <div className="w-full p-0 box-border">{children}</div>
+      <div className={`w-full box-border ${(title || renderedSubtitle) ? "pt-md" : "p-0"}`}>{children}</div>
 
       {/* Info Modal */}
       {infoIcon && modalContent && (
@@ -286,6 +286,7 @@ const ContentContainer = ({
           isOpen={isDownloadModalOpen}
           onClose={() => setIsDownloadModalOpen(false)}
           title="Export &amp; Share"
+          maxContentHeight="42vh"
           content={
             <DownloadPanel
               onConfirm={() => {

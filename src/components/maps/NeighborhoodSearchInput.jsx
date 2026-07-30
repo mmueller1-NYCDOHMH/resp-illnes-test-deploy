@@ -14,6 +14,13 @@
  * - Clear (×) button; "/" hint when empty
  * - "current" badge on the active neighborhood
  *
+ * Styled entirely with Tailwind utilities (design tokens already exposed as
+ * Tailwind colors/fontSize/fontFamily in tailwind.config.js) — no inline
+ * `style={}` objects or JS-driven hover/focus swapping, matching the rest
+ * of the tree. The two rgba(59,130,246,…) accents are intentionally literal
+ * (not the `--blue-primary` token) — that's what the original design used
+ * for the subtle match highlight/row tint, so it's preserved as-is here.
+ *
  * Props:
  *   value            — controlled string (search query)
  *   onChange         — (string) => void — called on every keystroke
@@ -24,7 +31,7 @@
  *   id               — base id for aria attributes
  */
 
-import React, { useState, useRef, useEffect, useMemo, useImperativeHandle, forwardRef } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 
 // ── Borough ordering + derivation ─────────────────────────────────────────────
@@ -50,13 +57,7 @@ function Highlight({ text, query }) {
   return (
     <>
       {text.slice(0, idx)}
-      <mark style={{
-        backgroundColor: "rgba(59,130,246,0.12)",
-        color: "var(--blue-primary)",
-        borderRadius: "2px",
-        padding: "0 2px",
-        fontStyle: "normal",
-      }}>
+      <mark className="bg-[rgba(59,130,246,0.12)] text-blue-primary rounded-[2px] px-[2px] not-italic">
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}
@@ -184,8 +185,7 @@ const NeighborhoodSearchInput = ({
       <div className="relative">
         {/* Search icon */}
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-          style={{ color: "var(--gray-400)" }}
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-gray-600"
           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
           aria-hidden="true"
         >
@@ -215,48 +215,17 @@ const NeighborhoodSearchInput = ({
           aria-activedescendant={
             focusedIndex >= 0 ? `${listId}-opt-${focusedIndex}` : undefined
           }
-          style={{
-            width: "100%",
-            paddingLeft: "2.25rem",
-            paddingRight: "2rem",
-            paddingTop: "0.5rem",
-            paddingBottom: "0.5rem",
-            fontSize: "var(--font-size-sm)",
-            fontFamily: "var(--font-body)",
-            border: "1px solid var(--gray-200)",
-            borderRadius: "0.5rem",
-            background: "white",
-            outline: "none",
-            boxSizing: "border-box",
-            color: "var(--gray-900)",
-          }}
-          onFocusCapture={(e) => {
-            e.target.style.boxShadow = "0 0 0 2px var(--blue-primary)";
-            e.target.style.borderColor = "transparent";
-          }}
-          onBlurCapture={(e) => {
-            e.target.style.boxShadow = "";
-            e.target.style.borderColor = "var(--gray-200)";
-          }}
+          className={[
+            "w-full box-border pl-9 pr-8 py-2",
+            "text-sm font-body text-gray-900",
+            "bg-white border border-gray-200 rounded-lg outline-none",
+            "focus:border-transparent focus:ring-2 focus:ring-blue-primary",
+          ].join(" ")}
         />
 
         {/* "/" hint when empty */}
         {!value && (
-          <kbd style={{
-            position: "absolute",
-            right: "0.625rem",
-            top: "50%",
-            transform: "translateY(-50%)",
-            fontSize: "10px",
-            color: "var(--gray-400)",
-            border: "1px solid var(--gray-200)",
-            borderRadius: "3px",
-            padding: "1px 4px",
-            fontFamily: "monospace",
-            lineHeight: 1,
-            pointerEvents: "none",
-            userSelect: "none",
-          }}>
+          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 text-2xs text-gray-600 border border-gray-200 rounded-[3px] py-px px-1 font-mono leading-none pointer-events-none select-none">
             /
           </kbd>
         )}
@@ -267,29 +236,14 @@ const NeighborhoodSearchInput = ({
             type="button"
             aria-label="Clear search"
             onClick={() => { onChange(""); setShowDropdown(false); inputRef.current?.focus(); }}
-            style={{
-              position: "absolute",
-              right: "0.375rem",
-              top: "50%",
-              transform: "translateY(-50%)",
-              background: "none",
-              border: "none",
-              padding: "3px",
-              borderRadius: "50%",
-              cursor: "pointer",
-              color: "var(--gray-400)",
-              display: "flex",
-              alignItems: "center",
-              transition: "background 120ms, color 120ms",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--gray-700)";
-              e.currentTarget.style.background = "var(--gray-200)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--gray-400)";
-              e.currentTarget.style.background = "none";
-            }}
+            className={[
+              "absolute right-1.5 top-1/2 -translate-y-1/2",
+              "flex items-center p-[3px] rounded-full",
+              "bg-transparent border-0 cursor-pointer text-gray-600",
+              "transition-colors duration-[120ms]",
+              "hover:text-gray-700 hover:bg-gray-200",
+              "focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500",
+            ].join(" ")}
           >
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
@@ -305,33 +259,17 @@ const NeighborhoodSearchInput = ({
           id={listId}
           role="listbox"
           aria-label="Neighborhoods"
-          style={{
-            position: "absolute",
-            zIndex: 9999,
-            width: "100%",
-            background: "white",
-            border: "1px solid var(--gray-200)",
-            marginTop: "6px",
-            borderRadius: "0.5rem",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-            maxHeight: "16rem",
-            overflowY: "auto",
-            padding: "4px 0",
-            listStyle: "none",
-            // Slide-in animation
-            opacity: dropdownVisible ? 1 : 0,
-            transform: dropdownVisible ? "translateY(0)" : "translateY(-4px)",
-            transition: "opacity 150ms ease-out, transform 150ms ease-out",
-          }}
+          className={[
+            "absolute z-[9999] w-full mt-1.5 py-1 list-none",
+            "bg-white border border-gray-200 rounded-lg",
+            "shadow-[0_4px_16px_rgba(0,0,0,0.12)]",
+            "max-h-64 overflow-y-auto",
+            "transition-[opacity,transform] duration-150 ease-out",
+            dropdownVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1",
+          ].join(" ")}
         >
           {flat.length === 0 ? (
-            <li style={{
-              padding: "12px 16px",
-              fontSize: "var(--font-size-sm)",
-              fontFamily: "var(--font-body)",
-              color: "var(--gray-400)",
-              textAlign: "center",
-            }}>
+            <li className="py-3 px-4 text-sm font-body text-gray-600 text-center">
               No neighborhoods found
             </li>
           ) : (() => {
@@ -339,19 +277,10 @@ const NeighborhoodSearchInput = ({
             return grouped.map(([borough, ns]) => (
               <li key={borough} role="none">
                 {/* Borough group header */}
-                <p style={{
-                  fontSize: "10px",
-                  fontWeight: 600,
-                  color: "var(--gray-400)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  padding: "10px 12px 4px",
-                  userSelect: "none",
-                  margin: 0,
-                }}>
+                <p className="text-2xs font-semibold text-gray-600 uppercase tracking-[0.1em] pt-2.5 px-3 pb-1 m-0 select-none">
                   {borough}
                 </p>
-                <ul role="group" aria-label={borough} style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                <ul role="group" aria-label={borough} className="list-none m-0 p-0">
                   {ns.map(([geocode, data]) => {
                     const idx       = globalIdx++;
                     const isCurrent = parseInt(geocode, 10) === selectedGeocode;
@@ -366,33 +295,17 @@ const NeighborhoodSearchInput = ({
                         aria-selected={highlight}
                         onMouseDown={(e) => { e.preventDefault(); handleSelect([geocode, data]); }}
                         onMouseEnter={() => setFocusedIndex(idx)}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "8px 12px",
-                          fontSize: "var(--font-size-sm)",
-                          fontFamily: "var(--font-body)",
-                          cursor: "pointer",
-                          transition: "background 100ms, color 100ms",
-                          background: highlight ? "rgba(59,130,246,0.07)" : "transparent",
-                          color: highlight ? "var(--blue-primary)" : "var(--gray-800)",
-                        }}
+                        className={[
+                          "flex items-center justify-between px-3 py-2",
+                          "text-sm font-body cursor-pointer transition-colors duration-100",
+                          highlight ? "bg-[rgba(59,130,246,0.07)] text-blue-primary" : "text-gray-800",
+                        ].join(" ")}
                       >
-                        <span style={{ fontWeight: 500 }}>
+                        <span className="font-medium">
                           <Highlight text={data.name} query={value.trim()} />
                         </span>
                         {isCurrent && (
-                          <span style={{
-                            fontSize: "10px",
-                            color: "var(--blue-primary)",
-                            fontWeight: 600,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.08em",
-                            marginLeft: "8px",
-                            flexShrink: 0,
-                            opacity: 0.75,
-                          }}>
+                          <span className="text-2xs text-blue-primary font-semibold uppercase tracking-[0.08em] ml-2 flex-shrink-0 opacity-75">
                             current
                           </span>
                         )}

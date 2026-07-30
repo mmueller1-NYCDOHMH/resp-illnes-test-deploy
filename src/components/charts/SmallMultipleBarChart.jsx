@@ -64,6 +64,7 @@ const colorValue =
 const specTemplate = {
   width: "container",
   autosize: { type: "fit", contains: "padding" },
+  spacing: { row: 32 },
   transform: [
     {
       calculate: "datum.submetric === '0-4' ? 0 : datum.submetric === '5-17' ? 1 : datum.submetric === '18-49' ? 2 : datum.submetric === '50-64' ? 3 : 4",

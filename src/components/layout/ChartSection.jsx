@@ -11,7 +11,7 @@ import useSectionData from "../hooks/useSectionData";
 import SectionWithChart from "./SectionWithChart";
 import ChartContainer from "./ChartContainer";
 import TrendSubtitle from "../controls/TrendSubtitle";
-import ToggleControls from "../controls/ToggleControls";
+import ToggleGroup from "../controls/ToggleGroup";
 import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
 import chartRegistry from "../../utils/chartRegistry";
 import { tokens } from "../../styles/tokens";
@@ -29,7 +29,6 @@ const ChartSection = ({
   onCopyImage,
 }) => {
   const {
-    filteredData,
     workingData,
     interpolatedProps,
     textVars,
@@ -177,14 +176,15 @@ const ChartSection = ({
         {...(section.showSidebarToggle
           ? {
               sidebar: (
-                <ToggleControls
-                  data={
-                    Array.isArray(filteredData)
-                      ? filteredData
-                      : Object.values(filteredData || {}).flat()
-                  }
-                  view={view}
-                  onToggle={pageContext.setView}
+                <ToggleGroup
+                  options={[
+                    { label: "ED Visits", value: "visits" },
+                    { label: "Hospitalizations", value: "hospitalizations" },
+                  ]}
+                  value={view}
+                  onChange={pageContext.setView}
+                  ariaLabel="Toggle between visits and hospitalizations"
+                  variant="pill"
                 />
               ),
             }

@@ -55,7 +55,7 @@ const ghostCls = [
 // ── Section divider ───────────────────────────────────────────────────────────
 const Divider = ({ label }) => (
   <div className="flex items-center gap-2 my-3">
-    <span className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">{label}</span>
+    <span className="text-xs font-semibold uppercase tracking-widest text-gray-600">{label}</span>
     <div className="flex-1 border-t border-[var(--gray-200)]" />
   </div>
 );
@@ -160,7 +160,7 @@ const DownloadPanel = ({
           {/* Inline embed snippet */}
           {embedOpen && (
             <div className="mt-3">
-              <pre className="text-[11px] bg-[var(--gray-100)] border border-[var(--gray-300)] rounded-md p-3 overflow-x-auto whitespace-pre-wrap break-all text-gray-800 m-0 mb-2">
+              <pre className="text-xs bg-[var(--gray-100)] border border-[var(--gray-300)] rounded-md p-3 overflow-x-auto whitespace-pre-wrap break-all text-gray-800 m-0 mb-2">
                 {embedSnippet}
               </pre>
               <button

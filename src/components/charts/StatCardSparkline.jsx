@@ -13,11 +13,15 @@ const { colors } = tokens;
 const StatCardSparkline = ({
   series = [],
   valueKey = "value",
+  view = "visits",
   color = colors.bluePrimary,
   height = 72,
   tall = false,
   referenceValue = null,   // dashed horizontal rule at this value (e.g. season average)
   referenceLabel = "avg",  // label shown beside the rule
+  showXAxis = true,        // set false to hide date labels (e.g. compact overview rows)
+  showYAxis = true,        // set false to hide the %-axis (e.g. compact overview rows)
+  yAxisFormat = ".1f",     // tick label format — e.g. ".2f" for series that need 2 decimal places
 }) => {
   const data = useMemo(() => {
     if (!Array.isArray(series) || series.length < 2) return [];
@@ -35,21 +39,38 @@ const StatCardSparkline = ({
 
   if (data.length < 2) return null;
 
-  const yAxis = {
+  const minDate = data[0].date;
+  const maxDate = data[data.length - 1].date;
+
+  const values = data.map((d) => d.value);
+  const maxVal = Math.max(...values);
+  // Explicit tick value (actual max) instead of tickCount, so Vega-Lite's
+  // "nice" rounding never snaps a tick to 0 when the real data doesn't include it.
+  const yTickValues = [maxVal];
+
+  const yAxis = showYAxis ? {
     title: null,
-    tickCount: tall ? 4 : 3,
-    format: ".1f",
+    values: yTickValues,
+    format: yAxisFormat,
     labelExpr: "datum.label + '%'",
     grid: true,
     gridDash: [2],
-  };
+  } : null;
 
-  const xAxis = {
+  const xAxis = showXAxis ? {
     title: null,
     format: "%b %d",
-    tickCount: tall ? 8 : 6,
+    tickCount: 6,
     labelAngle: 0,
-  };
+    labelOverlap: "parity",
+    labelPadding: 6,
+    labelColor: colors.gray600,
+    domain: false,
+    ticks: false,
+    grid: false,
+  } : null;
+
+  const tooltipTitle = view === "hosps" ? "Percent of hospitalizations" : "Percent of ED visits";
 
   const specTemplate = {
     width: "container",
@@ -65,8 +86,8 @@ const StatCardSparkline = ({
         domainColor: "#E5E7EB",
         tickColor: "#E5E7EB",
       },
-      axisX: { ticks: true, domain: true, domainColor: "#E5E7EB", grid: false },
-      axisY: { domain: false, ticks: false, tickCount: 3, orient: "left", zindex: 0 },
+      axisX: { ticks: false, domain: false, grid: false },
+      axisY: { domain: false, ticks: false, tickCount: 2, orient: "left", zindex: 0 },
       legend: { disable: true },
     },
     layer: [
@@ -79,7 +100,7 @@ const StatCardSparkline = ({
         },
         encoding: {
           x: { field: "date", type: "temporal", axis: xAxis, scale: { padding: 10 } },
-          y: { field: "value", type: "quantitative", axis: yAxis, scale: { zero: true } },
+          y: { field: "value", type: "quantitative", axis: yAxis, scale: { zero: false } },
         },
       },
       {
@@ -88,33 +109,47 @@ const StatCardSparkline = ({
           interpolate: "linear",
           strokeWidth: tall ? 3 : 2,
           color,
-          point: { filled: true, size: tall ? 60 : 40, color },
         },
         encoding: {
           x: { field: "date", type: "temporal", axis: xAxis, scale: { padding: 10 } },
-          y: { field: "value", type: "quantitative", axis: yAxis, scale: { zero: true } },
+          y: { field: "value", type: "quantitative", axis: yAxis, scale: { zero: false } },
           tooltip: [
             { field: "date", type: "temporal", format: "%b %d, %Y", title: "Date" },
-            { field: "value", type: "quantitative", format: ".2f", title: "ED visits %" },
+            { field: "value", type: "quantitative", format: ".2f", title: tooltipTitle },
           ],
         },
       },
       {
-        mark: { type: "point", size: 300, opacity: 0.001 },
+        params: [
+        {
+          name: "hover",
+          select: {
+            type: "point",
+            on: "pointerover",
+            clear: "pointerout",
+            nearest: true
+          }
+        }
+      ],
+        mark: { type: "point",  filled: true, color },
         encoding: {
           x: { field: "date", type: "temporal" },
-          y: { field: "value", type: "quantitative", scale: { zero: true } },
+          y: { field: "value", type: "quantitative", scale: { zero: false } },
           color: { value: color },
+          size: {
+            condition: {param: "hover", empty: false, value: 150},
+            value: 60
+        },
           tooltip: [
             { field: "date", type: "temporal", format: "%b %d, %Y", title: "Date" },
-            { field: "value", type: "quantitative", format: ".2f", title: "ED visits %" },
+            { field: "value", type: "quantitative", format: ".2f", title: tooltipTitle },
           ],
         },
       },
       // ── Seasonal reference line (hidden when no referenceValue) ───────────
       ...(referenceValue != null ? [
         {
-          data: { values: [{ avg: referenceValue }] },
+          data: { values: [{ avg: referenceValue, start: minDate, end: maxDate }] },
           mark: {
             type: "rule",
             strokeDash: [5, 3],
@@ -123,11 +158,13 @@ const StatCardSparkline = ({
             opacity: 0.75,
           },
           encoding: {
-            y: { field: "avg", type: "quantitative", scale: { zero: true } },
+            x: { field: "start", type: "temporal", scale: { padding: 10 } },
+            x2: { field: "end" },
+            y: { field: "avg", type: "quantitative", scale: { zero: false } },
           },
         },
         {
-          data: { values: [{ avg: referenceValue, label: `${referenceLabel} ${referenceValue.toFixed(1)}%` }] },
+          data: { values: [{ avg: referenceValue, end: maxDate, label: `${referenceLabel} ${referenceValue.toFixed(1)}%` }] },
           mark: {
             type: "text",
             align: "right",
@@ -138,8 +175,8 @@ const StatCardSparkline = ({
             dy: -3,
           },
           encoding: {
-            y: { field: "avg", type: "quantitative", scale: { zero: true } },
-            x: { value: { expr: "width" } },
+            y: { field: "avg", type: "quantitative", scale: { zero: false } },
+            x: { field: "end", type: "temporal", scale: { padding: 10 } },
             text: { field: "label" },
           },
         },
@@ -153,6 +190,7 @@ const StatCardSparkline = ({
         data={data}
         specTemplate={specTemplate}
         rendererMode="svg"
+        actions={false}
       />
     </div>
   );
@@ -161,11 +199,15 @@ const StatCardSparkline = ({
 StatCardSparkline.propTypes = {
   series:         PropTypes.arrayOf(PropTypes.object),
   valueKey:       PropTypes.string,
+  view:           PropTypes.oneOf(["visits", "hosps"]),
   color:          PropTypes.string,
   height:         PropTypes.number,
   tall:           PropTypes.bool,
   referenceValue: PropTypes.number,
   referenceLabel: PropTypes.string,
+  showXAxis:      PropTypes.bool,
+  showYAxis:      PropTypes.bool,
+  yAxisFormat:    PropTypes.string,
 };
 
 export default StatCardSparkline;

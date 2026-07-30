@@ -1,5 +1,7 @@
 .data-summary-markdown {
     color: var(--text-body, var(--gray-700));
+    font-size: var(--font-size-body);
+    line-height: 1.625; /* leading-relaxed, matches CHP's paragraph copy */
 }
   /* Base chip */
   .data-summary-markdown .chip {
@@ -8,11 +10,14 @@
     gap: .35rem;
     margin: .15rem .1rem;
     padding: .3rem .4rem;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     /* border: 1px solid var(--chip-border, var(--portal-section-border)); */
     background: var(--chip-bg, var(--portal-section-bg));
     color: var(--trend-highlight-color, var(--portal-section-fg));
     line-height: 1.5;
+    font-size: var(--font-size-body); /* explicit, not just inherited — chips
+                                          are dangerouslySetInnerHTML content,
+                                          don't rely on cascade from the wrapper */
     font-weight: 600;
     white-space: nowrap;
   }

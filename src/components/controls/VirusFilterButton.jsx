@@ -8,13 +8,14 @@ const VirusFilterButton = ({ label, icon, active, onClick, className = "" }) => 
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       className={[
         "filter-button inline-flex items-center justify-center gap-2",
         "w-[140px] py-[12px] px-[24px] rounded-full",
         "bg-gray-300 text-gray-800 border-0 cursor-pointer",
         "font-body text-sm font-semibold transition-[background-color] duration-200 whitespace-nowrap",
         "hover:bg-gray-400 hover:shadow-sm",
-        "focus-visible:outline-none",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500",
         "active:translate-y-[0.5px]",
         // max-sm: = mobile only (<640px); sm: would wrongly apply to desktop
         "max-sm:w-[80%] max-sm:max-w-[80%] max-sm:h-[40px] max-sm:rounded-md",

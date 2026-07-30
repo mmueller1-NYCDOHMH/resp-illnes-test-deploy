@@ -13,15 +13,25 @@
  */
 
 :root {
-  /* Typography */
-  --font-body: 'Inter', sans-serif;
-  --font-heading: 'Inter', sans-serif;
-  --font-sans: "Inter", sans-serif;
+  /* Typography — matches CHP: Geist (via next/font/google in app/layout.jsx,
+     --font-geist-sans), with the previous "Inter" kept only as a text
+     fallback. Note: "Inter" was never actually loaded anywhere in this repo
+     (no stylesheet/@font-face/next-font for it), so this was silently
+     rendering as the browser's default sans-serif before this change. */
+  --font-body: var(--font-geist-sans), 'Inter', sans-serif;
+  --font-heading: var(--font-geist-sans), 'Inter', sans-serif;
+  --font-sans: var(--font-geist-sans), "Inter", sans-serif;
   --font-bold: "Inter-Bold", sans-serif;
 
   /* Font Sizes */
+  --font-size-2xs: 10px; /* micro-labels, legends, tiny footnotes — was a scattered
+                             mix of 9px/10px literals with no shared token */
   --font-size-xs: 12px;
   --font-size-sm: 13px;
+  --font-size-body: 0.875rem; /* 14px — paragraph/subtitle copy. RVP previously had
+                                  no step between sm(13px) and md(16px), so body
+                                  text fell back to 16px by default; this fills
+                                  that gap (matches CHP's --font-size-body). */
   --font-size-md: 16px;
   --font-size-lg: 18px;
   --font-size-2xl: 20px;
@@ -77,6 +87,13 @@
   --bg-muted-pink: #F4C4A5;
   --bg-muted-purple: #F5F3FF;
   --bg-muted-gray: #ADAEBC;
+
+  /* Layout — fallback height of the sticky NavBar block (Header is no
+     longer sticky, so it isn't included here), kept in sync at runtime by
+     AppShell (ResizeObserver → --header-h). Anything that needs to sit just
+     below the persistent top chrome should use `top-[var(--header-h)]`
+     rather than a hardcoded px/rem offset. */
+  --header-h: 48px;
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -210,8 +227,8 @@
   --content-bg: var(--white);
   --content-title-color: var(--gray-900);
   --content-subtitle-color: var(--gray-700);
-  --content-title-size: var(--font-size-lg);
-  --content-subtitle-size: var(--font-size-md);
+  --content-title-size: var(--font-size-lg); /* 18px — was a hardcoded 22px, off the shared scale */
+  --content-subtitle-size: var(--font-size-body); /* 14px — was font-size-md (16px) */
   
   --trend-up-color: var(--red-primary);
   --trend-down-color: var(--green-trend);

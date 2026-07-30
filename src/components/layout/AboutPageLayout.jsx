@@ -16,7 +16,7 @@ const SurfaceCard = ({ id, children }) => (
   <div className="w-full max-w-content mx-auto mb-xl px-lg box-border md:px-md">
     <section
       id={id}
-      className="about-surface bg-white rounded-lg shadow-md p-xl w-full box-border overflow-hidden"
+      className="about-surface bg-white rounded-lg border border-[var(--gray-200)] shadow-sm p-xl w-full box-border overflow-hidden"
     >
       {children}
     </section>
@@ -82,7 +82,7 @@ const ScrollBreadcrumb = ({ sectionLinks, dataGroupId, subLabel }) => {
       {parent && (
         <>
           <span className="text-[var(--gray-500)] text-xs">{parent}</span>
-          <span className="text-[var(--gray-300)] text-[11px] mx-[1px]">›</span>
+          <span className="text-[var(--gray-300)] text-xs mx-[1px]">›</span>
         </>
       )}
       {label && (
@@ -188,19 +188,19 @@ const AboutPageLayout = ({ config }) => {
                         </svg>
                       </span>
                     )}
-                    <h2 className="text-[clamp(1.3rem,1.5rem+0.5vw,var(--font-size-xl))] font-bold leading-tight text-gray-900">
+                    <h2 className="text-[clamp(1.2rem,1.4rem+0.3vw,1.6rem)] font-semibold leading-tight text-gray-900">
                       {groupTitle}
                     </h2>
                   </div>
                 )}
 
                 {isGuide && (
-                  <p className="text-sm text-gray-500 mb-md max-w-[680px]">
+                  <p className="text-sm text-gray-600 mb-md max-w-[680px]">
                     New to the site? These guides walk through the key features.
                   </p>
                 )}
 
-                <div className="max-w-[800px] mx-auto border-t border-[var(--gray-200)]">
+                <div className="w-full border-t border-[var(--gray-200)]">
                   {items.map((item) => {
                     const isOpen = openId === item.id;
                     const title = resolveText(item.titleKey);
@@ -260,7 +260,7 @@ const AboutPageLayout = ({ config }) => {
                           <div
                             id={`${item.id}-body`}
                             role="region"
-                            className="accordion-body pl-4 pb-5"
+                            className="accordion-body pl-4 pb-5 pt-3"
                           >
                             <MarkdownRenderer
                               filePath={item.markdownPath}
@@ -282,8 +282,8 @@ const AboutPageLayout = ({ config }) => {
           if (section.renderAs === "paragraph") {
             return (
               <SurfaceCard key={key} id={key}>
-                <div className="max-w-[800px]">
-                  <h2 className="text-[1.25rem] font-semibold text-gray-800 mb-4">
+                <div className="w-full">
+                  <h2 className="text-[clamp(1.2rem,1.4rem+0.3vw,1.6rem)] font-semibold text-gray-900 mb-4">
                     {resolveText(section.titleKey)}
                   </h2>
                   <MarkdownRenderer

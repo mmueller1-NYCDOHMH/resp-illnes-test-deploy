@@ -143,31 +143,89 @@ function featureStyle(geocode, selectedGeocode, colors) {
 }
 
 // ── Vega-Lite histogram spec ──────────────────────────────────────────────────
-
+// Column orientation (neighborhoods left→right, rate up the Y axis) with a
+// light y-axis for scale and a dashed rule at CITYWIDE_RATE for context —
+// matches the redesigned NeighborhoodMap chart on the home page.
+//
+// Hover + selection highlight are handled *inside* Vega via params instead
+// of by recomputing `chartData` in React on every mouseover. Previously,
+// hover state fed back into the data array passed to Vega, which changed
+// the spec's `data` on every mouseover and forced react-vega to tear down
+// and fully re-create the view (see computeSpecChanges/isExpensive in
+// react-vega) — including replaying the bar entrance animation — on every
+// single hover. With 58 narrow bars packed into this column, a normal
+// mouse sweep crosses several of them a second, so that showed up as a
+// visible flicker/"glitch". `hoverSel` is a native point selection (cheap,
+// no React round-trip); `selectedSig` is a plain reactive value kept in
+// sync with React's selectedGeocode via view.signal() (see the useEffect
+// in the component). selectedColor/hoverColor are per-virus, so they're
+// passed in via dynamicFields rather than hardcoded.
 const HISTO_SPEC = {
-  mark: { type: "bar", cursor: "pointer" },
-  encoding: {
-    x: {
-      field: "rate",
-      type: "quantitative",
-      scale: { zero: true },
-      axis: { title: null, labels: false, ticks: false, domain: false, grid: false },
+  params: [
+    { name: "selectedSig", value: null },
+  ],
+  layer: [
+    {
+      params: [
+        {
+          name: "hoverSel",
+          select: { type: "point", on: "mouseover", clear: "mouseout", fields: ["geocode"] },
+        },
+      ],
+      mark: { type: "bar", cursor: "pointer" },
+      encoding: {
+        x: {
+          field: "name",
+          type: "ordinal",
+          sort: { field: "rate", order: "descending" },
+          axis: { title: null, labels: false, ticks: false, domain: false },
+        },
+        y: {
+          field: "rate",
+          type: "quantitative",
+          scale: { zero: true },
+          axis: {
+            title: "Cases / 100k",
+            titleFontSize: 9,
+            labelFontSize: 9,
+            tickCount: 3,
+            domain: false,
+            ticks: false,
+            gridOpacity: 0.25,
+          },
+        },
+        color: {
+          condition: [
+            { test: "datum.geocode === selectedSig", value: "{selectedColor}" },
+            { param: "hoverSel", empty: false, value: "{hoverColor}" },
+          ],
+          field: "fillColor", type: "nominal", scale: null, legend: null,
+        },
+        opacity: {
+          condition: [
+            { test: "datum.geocode === selectedSig", value: 1 },
+            { param: "hoverSel", empty: false, value: 1 },
+          ],
+          field: "barOpacity", type: "quantitative", scale: null, legend: null,
+        },
+        tooltip: [
+          { field: "name",  title: "Neighborhood" },
+          { field: "rate",  title: "Cases per 100,000" },
+          { field: "count", title: "Est. weekly cases" },
+        ],
+      },
     },
-    y: {
-      field: "name",
-      type: "ordinal",
-      sort: { field: "rate", order: "descending" },
-      axis: { title: null, labels: false, ticks: false, domain: false },
+    {
+      // Single dashed reference line at the citywide rate.
+      data: { values: [{}] },
+      mark: { type: "rule", strokeDash: [4, 3], color: "#6b7280", size: 1 },
+      encoding: {
+        y: { datum: CITYWIDE_RATE, type: "quantitative" },
+        tooltip: { value: `Citywide: ${CITYWIDE_RATE} / 100,000` },
+      },
     },
-    color:   { field: "fillColor", type: "nominal", scale: null, legend: null },
-    opacity: { field: "barOpacity", type: "quantitative", scale: null, legend: null },
-    tooltip: [
-      { field: "name",  title: "Neighborhood" },
-      { field: "rate",  title: "Cases per 100,000" },
-      { field: "count", title: "Est. weekly cases" },
-    ],
-  },
-  height: 348,
+  ],
+  height: "{chartHeight}",
   padding: { top: 6, right: 8, bottom: 4, left: 4 },
   config: {
     view: { stroke: null },
@@ -189,22 +247,22 @@ function SnapshotRows({ data }) {
     <>
       <div className="px-3 py-2.5 flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-xs font-body text-[var(--gray-500)] leading-snug">Cases per 100,000</span>
+          <span className="text-xs font-body text-[var(--gray-600)] leading-snug">Cases per 100,000</span>
           <span className="text-xs font-semibold font-body text-[var(--gray-900)] tabular-nums">{data.rate}</span>
         </div>
         <div className="flex items-baseline justify-between gap-2">
-          <span className="text-xs font-body text-[var(--gray-500)] leading-snug">Est. weekly cases</span>
+          <span className="text-xs font-body text-[var(--gray-600)] leading-snug">Est. weekly cases</span>
           <span className="text-xs font-semibold font-body text-[var(--gray-900)] tabular-nums">{data.count}</span>
         </div>
         <span
-          className="self-start text-[10px] font-medium px-1.5 py-0.5 rounded-full leading-snug"
+          className="self-start text-2xs font-medium px-1.5 py-0.5 rounded-full leading-snug"
           style={{ color: diffColor, backgroundColor: diffBg }}
         >
           {diffLabel}
         </span>
       </div>
       <div className="px-3 pb-2.5">
-        <p className="text-[10px] font-body text-[var(--gray-400)]">Week ending {WEEK_ENDING}</p>
+        <p className="text-2xs font-body text-[var(--gray-600)]">Week ending {WEEK_ENDING}</p>
       </div>
     </>
   );
@@ -234,13 +292,15 @@ function loadLeaflet() {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-const LabCasesNeighborhoodMap = ({ virus = "Flu" }) => {
+const LabCasesNeighborhoodMap = ({ virus = "Flu", sectionTitle }) => {
   const colors = useMemo(() => getColors(virus), [virus]);
 
   const mapContainerRef    = useRef(null);
   const mapInstanceRef     = useRef(null);
   const geoLayerRef        = useRef(null);
   const selectedGeocodeRef = useRef(null);
+  const chartAreaRef       = useRef(null);
+  const chartViewRef       = useRef(null); // Vega view, for pushing selectedSig without a re-embed
 
   const [leafletReady, setLeafletReady]             = useState(false);
   const [geojson, setGeojson]                       = useState(null);
@@ -250,6 +310,7 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu" }) => {
   const [search, setSearch]                         = useState("");
   const [mapError, setMapError]                     = useState(false);
   const [loadingStatus, setLoadingStatus]           = useState("Loading map library…");
+  const [chartAreaHeight, setChartAreaHeight]       = useState(150);
 
   useEffect(() => {
     selectedGeocodeRef.current = selectedGeocode;
@@ -260,6 +321,18 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu" }) => {
     setMapHoveredGeocode(null);
     setHoveredBar(null);
   }, [selectedGeocode]);
+
+  // Track chart area height for the dynamic Vega spec
+  useEffect(() => {
+    const el = chartAreaRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const h = entry.contentRect.height;
+      if (h > 0) setChartAreaHeight(Math.floor(h));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Load Leaflet
   useEffect(() => {
@@ -362,9 +435,14 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu" }) => {
     });
   }, [selectedGeocode, colors]);
 
-  // Fly to selected
+  // Fly to selected — and back out to the full citywide view when the
+  // selection is cleared (e.g. search box emptied out).
   useEffect(() => {
-    if (!mapInstanceRef.current || !geoLayerRef.current || !selectedGeocode) return;
+    if (!mapInstanceRef.current || !geoLayerRef.current) return;
+    if (selectedGeocode == null) {
+      mapInstanceRef.current.fitBounds(geoLayerRef.current.getBounds(), { padding: [10, 10] });
+      return;
+    }
     geoLayerRef.current.eachLayer((layer) => {
       if (layer.feature.properties.GEOCODE === selectedGeocode) {
         mapInstanceRef.current.fitBounds(layer.getBounds(), {
@@ -373,6 +451,16 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu" }) => {
         });
       }
     });
+  }, [selectedGeocode]);
+
+  // Keep the bar chart's native "selected" signal in sync with React state.
+  // Cheap (view.signal + partial run) — does not touch `data`, so it never
+  // triggers a re-embed of the chart.
+  useEffect(() => {
+    const view = chartViewRef.current;
+    if (!view) return;
+    view.signal("selectedSig", selectedGeocode != null ? String(selectedGeocode) : null);
+    view.runAsync();
   }, [selectedGeocode]);
 
   // ── Search ────────────────────────────────────────────────────────────────
@@ -397,23 +485,23 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu" }) => {
       : "equal to"
     : null;
 
-  // Vega-Lite chart data — recomputed when selection/hover changes
-  const chartData = useMemo(() => {
-    const previewCode = hoveredBar ?? mapHoveredGeocode;
-    return Object.entries(LAB_CD_DATA).map(([geocode, d]) => {
-      const code       = parseInt(geocode, 10);
-      const isSelected = code === selectedGeocode;
-      const isPreview  = code === previewCode && !isSelected;
-      return {
+  // Vega-Lite chart data — static aside from the base per-rate color, which
+  // depends on the virus's color scale. Selected/hover highlighting is
+  // handled natively inside the Vega spec via params (see HISTO_SPEC + the
+  // selectedSig effect above), so this no longer needs to be recomputed on
+  // interaction.
+  const chartData = useMemo(
+    () =>
+      Object.entries(LAB_CD_DATA).map(([geocode, d]) => ({
         geocode,
         name:       d.name,
         rate:       d.rate,
         count:      d.count,
-        fillColor:  isSelected ? colors[4] : isPreview ? colors[2] : getColor(d.rate, colors),
-        barOpacity: isSelected || isPreview ? 1 : 0.82,
-      };
-    });
-  }, [selectedGeocode, hoveredBar, mapHoveredGeocode, colors]);
+        fillColor:  getColor(d.rate, colors),
+        barOpacity: 0.82,
+      })),
+    [colors]
+  );
 
   const legendItems = [
     { label: `< ${COLOR_BREAKS[0]}`,                    color: colors[0] },
@@ -424,17 +512,44 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu" }) => {
   ];
 
   // ── Render ────────────────────────────────────────────────────────────────
+  // Same layout as NeighborhoodMap on the home page: title left / search
+  // right in one row (title passed in via sectionTitle — see titleInComponent
+  // in CaseDataPage.config.js — since ContentContainer's own header row is
+  // suppressed for this section so title and search can share a row) → map
+  // (narrowed a bit) alongside a right column with the At-a-Glance card, the
+  // caption, and the ranked bar chart stacked underneath it.
+  // Original layout is in .backups/LabCasesNeighborhoodMap.jsx.pre-redesign.bak.
 
   return (
     <div className="w-full">
-      <div className="flex flex-col sm:flex-row gap-lg items-start">
+      {/* Header row — title left, search inline top-right. Always a row
+          (not gated behind the sm: breakpoint) so title and search sit
+          side by side regardless of viewport, with the search box fixed
+          at the same width as the right column (w-96) below; flex-wrap is
+          just a safety net for extremely narrow screens. */}
+      <div className="flex flex-row flex-wrap items-center justify-between gap-md mb-md">
+        {sectionTitle && (
+          // sectionTitle is pre-resolved HTML (virus-colored spans, etc. —
+          // see titleInComponent handling in CustomSection.jsx), same as
+          // ContentContainer's own title rendering — must use
+          // dangerouslySetInnerHTML, not plain text children, or the markup
+          // shows up as literal escaped text instead of being rendered.
+          <h3
+            className="flex-1 min-w-[160px] text-[var(--content-title-size,var(--font-size-lg))] text-[var(--content-title-color,var(--gray-900))] font-semibold tracking-tight m-0"
+            dangerouslySetInnerHTML={{ __html: sectionTitle }}
+          />
+        )}
 
-        {/* ── Left: search + dynamic text + At a Glance ── */}
-        <div className="w-full sm:w-60 flex-shrink-0">
+        <div className="w-96 max-w-full flex-shrink-0">
           <NeighborhoodSearchInput
             id="lab-neighborhood-search"
             value={search}
-            onChange={setSearch}
+            onChange={(val) => {
+              setSearch(val);
+              // Search box emptied out — clear the selection and let the
+              // map effect above fly back out to the full citywide view.
+              if (val.trim() === "") setSelectedGeocode(null);
+            }}
             onSelect={([geocode, data]) => {
               setSelectedGeocode(parseInt(geocode, 10));
               setSearch(data.name);
@@ -442,9 +557,138 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu" }) => {
             selectedGeocode={selectedGeocode}
             suggestions={suggestions}
           />
+        </div>
+      </div>
 
-          {/* Dynamic text */}
-          <div className="mt-md text-md font-body text-[var(--gray-700)] leading-relaxed">
+      {/* Map + At-a-Glance/caption row */}
+      <div className="flex flex-col sm:flex-row gap-md items-start">
+
+        {/* Map — sized to comfortably fit the right column's content
+             (At-a-Glance card + caption + bar chart) at 384px wide without
+             the column needing to scroll in the normal selected state. */}
+        <div
+          className="flex-1 min-w-0 rounded-md overflow-hidden border border-[var(--gray-200)] relative"
+          style={{ height: "520px" }}
+        >
+          {mapError ? (
+            <div className="flex items-center justify-center h-full text-md font-body text-[var(--gray-600)]">
+              Map could not be loaded. Please check your connection and try refreshing.
+            </div>
+          ) : (!leafletReady || !geojson) ? (
+            <div className="flex items-center justify-center h-full text-md font-body text-[var(--gray-600)]">
+              {loadingStatus}
+            </div>
+          ) : null}
+          <div
+            ref={mapContainerRef}
+            className="w-full h-full"
+            style={{ display: (leafletReady && geojson && !mapError) ? "block" : "none" }}
+          />
+          {/* Legend — top-left overlay */}
+          <div
+            className="absolute top-2 left-2 bg-white rounded border border-[var(--gray-200)] px-2 py-1.5 shadow-sm"
+            style={{ zIndex: 1000 }}
+          >
+            <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide mb-1">
+              Cases per 100k
+            </p>
+            <div className="flex flex-col gap-[2px]">
+              {legendItems.map((item) => (
+                <div key={item.label} className="flex items-center gap-1">
+                  <span
+                    className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-2xs font-body text-[var(--gray-600)]">
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* At a Glance + dynamic caption + bar chart — widened a bit from
+            the original narrow rail so the chart has room now that it
+            lives in this column. max-h (not a forced h) caps this column
+            at the map's height without forcing it there — the normal/
+            unselected state stays its natural (shorter) height, nothing
+            gets squeezed. 520px comfortably fits the card + caption + bar
+            chart in the normal selected state with no scrolling; the
+            scroll only kicks in for unusually long content. */}
+        <div className="w-full sm:w-96 flex-shrink-0 flex flex-col gap-md sm:max-h-[520px] sm:overflow-y-auto">
+
+          {/* At a Glance panel — hover and base layers are stacked via CSS
+              Grid (both in the same grid cell) instead of absolute
+              positioning, so the panel auto-sizes to whichever layer is
+              taller. (Absolute+inset-0 previously forced the hover
+              "Preview" layer to match the base layer's — usually shorter —
+              height, clipping its content via overflow-hidden.)
+              min-h-[170px] pins the panel to the height of its "full"
+              content (header + SnapshotRows) at all times, including the
+              empty/unselected placeholder. Without this, hovering a bar
+              with nothing selected grew the panel (short placeholder →
+              tall preview), which pushed the bar chart down out from under
+              the cursor, firing mouseout, shrinking the panel back, moving
+              the chart back up under the cursor, mouseover again — a
+              genuine hover/layout feedback loop. */}
+          <div
+            className="flex-shrink-0 grid min-h-[170px] rounded-lg border overflow-hidden transition-colors duration-200"
+            style={{ borderColor: showHoverLayer ? "#bfdbfe" : "var(--gray-300)" }}
+          >
+            {/* Hover layer */}
+            <div
+              className="col-start-1 row-start-1 flex flex-col bg-white transition-opacity duration-200 z-10"
+              style={{
+                opacity:       showHoverLayer ? 1 : 0,
+                pointerEvents: showHoverLayer ? "auto" : "none",
+              }}
+              aria-hidden={!showHoverLayer}
+            >
+              <div className="px-3 py-2.5 border-b border-blue-100 bg-blue-50">
+                <p className="text-2xs font-semibold font-body text-blue-600 uppercase tracking-widest mb-0.5">
+                  Preview
+                </p>
+                <p className="text-sm font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
+                  {previewData?.name ?? ""}
+                </p>
+              </div>
+              {previewData && <SnapshotRows data={previewData} />}
+            </div>
+
+            {/* Base layer */}
+            <div
+              className="col-start-1 row-start-1 flex flex-col bg-white transition-opacity duration-200"
+              style={{ opacity: showHoverLayer ? 0 : 1 }}
+            >
+              {selectedData ? (
+                <>
+                  <div className="px-3 py-2.5 border-b border-[var(--gray-200)] bg-[var(--gray-100)]">
+                    <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-widest mb-0.5">
+                      At a Glance
+                    </p>
+                    <p className="text-sm font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
+                      {selectedData.name}
+                    </p>
+                  </div>
+                  <SnapshotRows data={selectedData} />
+                </>
+              ) : (
+                <div className="px-3 py-4 bg-[var(--gray-100)]">
+                  <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-widest mb-1.5">
+                    At a Glance
+                  </p>
+                  <p className="text-xs font-body text-[var(--gray-600)] leading-relaxed">
+                    Click a neighborhood on the map or search above.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Dynamic caption — natural height, stays the width of this
+              narrow column (not stretched to the full-width bar chart below) */}
+          <div className="flex-shrink-0 rounded-md bg-[var(--gray-100)] border border-[var(--gray-200)] px-md py-md text-sm font-body text-[var(--gray-700)] leading-relaxed">
             {selectedData ? (
               <>
                 <p>
@@ -460,165 +704,94 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu" }) => {
                 </p>
               </>
             ) : (
-              <p className="text-[var(--gray-500)]">
+              <p className="text-[var(--gray-600)]">
                 Click a neighborhood on the map or search above to see local data.
               </p>
             )}
           </div>
 
-          {/* At a Glance panel */}
+          {/* Bar chart — moved into this column, beneath the dynamic
+              caption, flipped to column bars, with a dashed citywide-average
+              reference line. Fixed (not flex-1) so its size is predictable
+              regardless of how tall the card/caption above it get. */}
           <div
-            className="mt-md rounded-lg border overflow-hidden relative transition-colors duration-200"
-            style={{ borderColor: showHoverLayer ? "#bfdbfe" : "var(--gray-300)" }}
+            className="w-full flex-shrink-0 rounded-md border border-[var(--gray-200)] flex flex-col"
+            style={{ height: "190px" }}
+            aria-label={`Neighborhood case rates ranked, highest to lowest, with a dashed line at the citywide rate of ${CITYWIDE_RATE} per 100,000 — hover for details, click to highlight on map`}
           >
-            {/* Hover layer */}
-            <div
-              className="absolute inset-0 flex flex-col bg-white transition-opacity duration-200 z-10"
-              style={{
-                opacity:       showHoverLayer ? 1 : 0,
-                pointerEvents: showHoverLayer ? "auto" : "none",
-              }}
-              aria-hidden={!showHoverLayer}
-            >
-              <div className="px-3 py-2.5 border-b border-blue-100 bg-blue-50">
-                <p className="text-[10px] font-semibold font-body text-blue-500 uppercase tracking-widest mb-0.5">
-                  Preview
+            {/* Header */}
+            <div className="bg-white border-b border-[var(--gray-200)] px-sm pt-sm pb-xs rounded-t-md flex-shrink-0 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide leading-tight">
+                  Cases per 100,000 · 58 community districts
                 </p>
-                <p className="text-sm font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
-                  {previewData?.name ?? ""}
+                <p className="text-xs font-body text-[var(--gray-600)] mt-[2px] leading-tight">
+                  Highest → Lowest · Click to select
                 </p>
               </div>
-              {previewData && <SnapshotRows data={previewData} />}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <span className="inline-block w-3 border-t border-dashed" style={{ borderColor: "#6b7280" }} aria-hidden="true" />
+                <span className="text-2xs font-body text-[var(--gray-600)] whitespace-nowrap">
+                  Citywide ({CITYWIDE_RATE})
+                </span>
+              </div>
             </div>
 
-            {/* Base layer */}
-            <div
-              className="flex flex-col bg-white transition-opacity duration-200"
-              style={{ opacity: showHoverLayer ? 0 : 1 }}
-            >
-              {selectedData ? (
-                <>
-                  <div className="px-3 py-2.5 border-b border-[var(--gray-200)] bg-[var(--gray-100)]">
-                    <p className="text-[10px] font-semibold font-body text-[var(--gray-500)] uppercase tracking-widest mb-0.5">
-                      At a Glance
-                    </p>
-                    <p className="text-sm font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
-                      {selectedData.name}
-                    </p>
-                  </div>
-                  <SnapshotRows data={selectedData} />
-                </>
-              ) : (
-                <div className="px-3 py-4 bg-[var(--gray-100)]">
-                  <p className="text-[10px] font-semibold font-body text-[var(--gray-500)] uppercase tracking-widest mb-1.5">
-                    At a Glance
-                  </p>
-                  <p className="text-xs font-body text-[var(--gray-500)] leading-relaxed">
-                    Click a neighborhood on the map or search above.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+            {/* Vega-Lite chart */}
+            <div ref={chartAreaRef} className="flex-1 min-h-0 overflow-hidden">
+              <VegaLiteWrapper
+                data={chartData}
+                specTemplate={HISTO_SPEC}
+                dynamicFields={{
+                  chartHeight: chartAreaHeight,
+                  selectedColor: colors[4],
+                  hoverColor: colors[2],
+                }}
+                rendererMode="svg"
+                onNewView={(view) => {
+                  chartViewRef.current = view;
+                  // Seed the native "selected" signal — this view may have
+                  // just been (re)created (mount, or a width/theme/virus
+                  // change), so it starts from the param's default (null)
+                  // otherwise.
+                  view.signal("selectedSig", selectedGeocode != null ? String(selectedGeocode) : null);
+                  view.runAsync();
 
-        {/* ── Map ── */}
-        <div
-          className="flex-1 min-w-0 rounded-md overflow-hidden border border-[var(--gray-200)] relative"
-          style={{ height: "440px" }}
-        >
-          {mapError ? (
-            <div className="flex items-center justify-center h-full text-md font-body text-[var(--gray-500)]">
-              Map could not be loaded. Please check your connection and try refreshing.
-            </div>
-          ) : (!leafletReady || !geojson) ? (
-            <div className="flex items-center justify-center h-full text-md font-body text-[var(--gray-400)]">
-              {loadingStatus}
-            </div>
-          ) : null}
-          <div
-            ref={mapContainerRef}
-            className="w-full h-full"
-            style={{ display: (leafletReady && geojson && !mapError) ? "block" : "none" }}
-          />
-          {/* Legend — bottom-left overlay */}
-          <div
-            className="absolute bottom-2 left-2 bg-white rounded border border-[var(--gray-200)] px-2 py-1.5 shadow-sm"
-            style={{ zIndex: 1000 }}
-          >
-            <p className="text-[9px] font-semibold font-body text-[var(--gray-500)] uppercase tracking-wide mb-1">
-              Cases per 100k
-            </p>
-            <div className="flex flex-col gap-[2px]">
-              {legendItems.map((item) => (
-                <div key={item.label} className="flex items-center gap-1">
-                  <span
-                    className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-[9px] font-body text-[var(--gray-600)]">
-                    {item.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Histogram (Vega-Lite) ── */}
-        <div
-          className="w-full sm:w-52 flex-shrink-0 rounded-md border border-[var(--gray-200)] flex flex-col"
-          style={{ height: "440px" }}
-          aria-label="Neighborhood case rates ranked — hover for details, click to highlight on map"
-        >
-          {/* Header */}
-          <div className="bg-white border-b border-[var(--gray-200)] px-sm pt-sm pb-xs rounded-t-md flex-shrink-0">
-            <p className="text-[11px] font-semibold font-body text-[var(--gray-500)] uppercase tracking-wide leading-tight">
-              Cases per 100,000
-            </p>
-            <p className="text-[11px] font-body text-[var(--gray-400)] mt-[2px] leading-tight">
-              Highest → Lowest · Click to select
-            </p>
-          </div>
-
-          {/* Vega-Lite chart */}
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <VegaLiteWrapper
-              data={chartData}
-              specTemplate={HISTO_SPEC}
-              rendererMode="svg"
-              onNewView={(view) => {
-                view.addEventListener("click", (_, item) => {
-                  const code = item?.datum?.geocode;
-                  if (code != null) {
-                    const numCode = parseInt(code, 10);
-                    setSelectedGeocode(numCode);
-                    setSearch(LAB_CD_DATA[numCode]?.name ?? "");
-                  }
-                });
-                view.addEventListener("mouseover", (_, item) => {
-                  const code = item?.datum?.geocode;
-                  setHoveredBar(code != null ? parseInt(code, 10) : null);
-                });
-                view.addEventListener("mouseout", () => {
-                  setHoveredBar(null);
-                });
-
-                // Staggered bar entrance
-                requestAnimationFrame(() => {
-                  const bars = view.container()?.querySelectorAll("rect.mark-rect");
-                  bars?.forEach((bar, i) => {
-                    bar.style.transformOrigin = "left center";
-                    bar.style.transform       = "scaleX(0)";
-                    bar.style.transition      = `transform 220ms ease-out ${i * 5}ms`;
-                    requestAnimationFrame(() => { bar.style.transform = "scaleX(1)"; });
+                  view.addEventListener("click", (_, item) => {
+                    const code = item?.datum?.geocode;
+                    if (code != null) {
+                      const numCode = parseInt(code, 10);
+                      setSelectedGeocode(numCode);
+                      setSearch(LAB_CD_DATA[numCode]?.name ?? "");
+                    }
                   });
-                });
-              }}
-            />
+                  view.addEventListener("mouseover", (_, item) => {
+                    const code = item?.datum?.geocode;
+                    setHoveredBar(code != null ? parseInt(code, 10) : null);
+                  });
+                  view.addEventListener("mouseout", () => {
+                    setHoveredBar(null);
+                  });
+
+                  // Staggered bar entrance — scaleY from 0→1, growing up from
+                  // the baseline (column orientation; was scaleX before).
+                  // Only replays when the view is actually (re)created now —
+                  // hover no longer touches `data`, so it no longer forces a
+                  // re-embed here.
+                  requestAnimationFrame(() => {
+                    const bars = view.container()?.querySelectorAll("rect.mark-rect");
+                    bars?.forEach((bar, i) => {
+                      bar.style.transformOrigin = "center bottom";
+                      bar.style.transform       = "scaleY(0)";
+                      bar.style.transition      = `transform 220ms ease-out ${i * 5}ms`;
+                      requestAnimationFrame(() => { bar.style.transform = "scaleY(1)"; });
+                    });
+                  });
+                }}
+              />
+            </div>
           </div>
         </div>
-
       </div>
     </div>
   );

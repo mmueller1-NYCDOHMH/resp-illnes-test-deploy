@@ -7,7 +7,7 @@ const DURATION = 220; // ms — match keyframe durations below
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
-const InfoModal = ({ title, content, markdownPath, isOpen, onClose }) => {
+const InfoModal = ({ title, content, markdownPath, isOpen, onClose, maxContentHeight = "60vh" }) => {
   const [mounted, setMounted] = useState(isOpen);
   const [closing, setClosing] = useState(false);
   const dialogRef = useRef(null);
@@ -77,7 +77,7 @@ const InfoModal = ({ title, content, markdownPath, isOpen, onClose }) => {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="info-modal bg-[var(--modal-bg,var(--white))] rounded-lg max-w-[480px] w-1/2 p-lg pt-[calc(var(--spacing-lg)+8px)] shadow-md relative box-border md:w-[90%] md:p-lg md:pt-[calc(var(--spacing-lg)+8px)]"
+        className="info-modal bg-[var(--modal-bg,var(--white))] rounded-lg max-w-[640px] w-2/3 p-xl pt-[calc(var(--spacing-xl)+8px)] shadow-md relative box-border md:w-[92%] md:p-xl md:pt-[calc(var(--spacing-xl)+8px)]"
         style={{ animation: `${closing ? "scaleOut" : "scaleIn"} ${dur} ease both` }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -91,7 +91,10 @@ const InfoModal = ({ title, content, markdownPath, isOpen, onClose }) => {
           </svg>
         </button>
         {/* Title intentionally omitted per RPU/Comms decision */}
-        <div className="text-[15px] text-[var(--modal-text,var(--gray-800))] leading-[var(--line-height-lg)] max-h-[60vh] overflow-y-auto md:text-sm">
+        <div
+          className="text-body text-[var(--modal-text,var(--gray-800))] leading-[var(--line-height-lg)] overflow-y-auto md:text-sm"
+          style={{ maxHeight: maxContentHeight }}
+        >
           {markdownPath ? (
             <MarkdownRenderer filePath={markdownPath} />
           ) : (
@@ -109,6 +112,7 @@ InfoModal.propTypes = {
   markdownPath: PropTypes.string,
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
+  maxContentHeight: PropTypes.string,
 };
 
 export default InfoModal;

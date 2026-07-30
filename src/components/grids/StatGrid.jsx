@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import StatCard from "../StatCard";
-import StatCardBottom from "../StatCardBottom";
-import ToggleControls from "../controls/ToggleControls";
+import StatCardRow, { ROW_GRID_COLS } from "../StatCardRow";
+import ToggleGroup from "../controls/ToggleGroup";
 import InfoModal from "../popups/InfoModal";
 import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
 import { resolveHTMLLabels, getText } from "../../utils/contentUtils";
@@ -20,11 +19,6 @@ const toNum = (v) => {
   return null;
 };
 
-const formatValuePct = (d) =>
-  d && toNum(d.value) != null ? `${toNum(d.value).toFixed(1)}%` : "–";
-
-const formatAsOf = (d) => (d?.date ? `as of ${fmt(new Date(d.date))}` : "–");
-
 const seriesKeysForLabel = (label) => {
   if (label === "Respiratory illness") {
     return ["Respiratory illness visits", "Respiratory illness hospitalizations"];
@@ -36,10 +30,10 @@ const seriesKeysForLabel = (label) => {
 };
 
 const StatGrid = ({ data }) => {
-  if (!data) return null;
-
   const [view, setView] = useState("visits");
   const [infoOpen, setInfoOpen] = useState(false);
+
+  if (!data) return null;
 
   const viruses = [
     { key: "ari", label: "Respiratory illness" },
@@ -54,25 +48,11 @@ const StatGrid = ({ data }) => {
     const visitSeries = (data[visKey] || []).filter((d) => toNum(d.value) !== null);
     const hospitalizationSeries = (data[hosKey] || []).filter((d) => toNum(d.value) !== null);
 
-    const latestVisit = visitSeries.at?.(-1) ?? null;
-    const latestAdmit = hospitalizationSeries.at?.(-1) ?? null;
-
     const statText = getText(`overview.statCards.${key}`) || {};
     const title = statText.title || label;
     const infoText = statText.infoText || "";
 
-    return {
-      key,
-      title,
-      infoText,
-      visitSeries,
-      hospitalizationSeries,
-      valueKey: "value",
-      visitPercent: formatValuePct(latestVisit),
-      hospitalizationPercent: formatValuePct(latestAdmit),
-      visitDate: formatAsOf(latestVisit),
-      admitDate: formatAsOf(latestAdmit),
-    };
+    return { key, title, infoText, visitSeries, hospitalizationSeries };
   });
 
   const latestAri = (data["Respiratory illness visits"] || []).at?.(-1) || null;
@@ -81,38 +61,49 @@ const StatGrid = ({ data }) => {
   const previousWeek = baseDate ? fmt(new Date(baseDate.getTime() - 7 * DAY_MS)) : "–";
 
   const vars = { date: formattedDate, previousWeek };
-  const titleHTML = resolveHTMLLabels(getText("overview.summaryBox.title") || "", vars);
   const descriptionHTML = resolveHTMLLabels(getText("overview.summaryBox.description") || "", vars);
 
-  const { key: topKey, visitSeries: topVisit, hospitalizationSeries: topHosp, ...topRest } = statCards[0];
-  const topSeries = view === "visits" ? topVisit : topHosp;
+  const sparklineView = view === "hospitalizations" ? "hosps" : "visits";
+
+  const [primary, ...rest] = statCards;
 
   const sectionTitle    = getText("overview.statGrid.title")    || "What's happening across the city?";
   const sectionSubtitle = getText("overview.statGrid.subtitle") || "Emergency Department trends for the week ending";
   const infoModalTitle  = getText("overview.statGrid.infoModalTitle") || "About Emergency Department Data";
 
+  const columnHeaderLabel = view === "hospitalizations" ? "Percent of hospitalizations" : "Percent of ED visits";
+
   return (
     <div className="stat-grid flex flex-col gap-xs w-full overflow-hidden">
 
       {/* ── Section heading ── */}
-      <h3 className="text-lg font-semibold tracking-tight text-gray-900 mb-xs">
+      <h3 className="text-[var(--content-title-size)] font-semibold tracking-tight text-gray-900 mb-xs">
         {sectionTitle}
       </h3>
 
       {/* ── ED trends date subtitle ── */}
-      <p className="text-md text-gray-600 mb-sm">
+      <p className="text-body text-gray-700 leading-relaxed mb-sm">
         {sectionSubtitle} <strong className="text-gray-800">{formattedDate}</strong>
       </p>
 
       {/* ── Body copy ── */}
       <div
-        className="stat-info-description text-md text-gray-700 mb-md"
+        className="stat-info-description text-body text-gray-700 leading-relaxed mb-xl [&_p]:mb-3 [&_p:last-child]:mb-0"
         dangerouslySetInnerHTML={{ __html: descriptionHTML }}
       />
 
       {/* ── Toggle row + info icon ── */}
-      <div className="flex items-center justify-between mb-md">
-        <ToggleControls data={[]} view={view} onToggle={setView} />
+      <div className="flex items-center justify-between mb-lg">
+        <ToggleGroup
+          options={[
+            { label: "ED Visits", value: "visits" },
+            { label: "Hospitalizations", value: "hospitalizations" },
+          ]}
+          value={view}
+          onChange={setView}
+          ariaLabel="Toggle between visits and hospitalizations"
+          variant="pill"
+        />
         <button
           type="button"
           className="appearance-none bg-transparent border-0 p-0 cursor-pointer flex-shrink-0 text-gray-900 hover:text-gray-600 transition-colors duration-150"
@@ -127,29 +118,55 @@ const StatGrid = ({ data }) => {
         </button>
       </div>
 
-      {/* ── ARI card — full width ── */}
-      <StatCard
-        key={topKey}
-        {...topRest}
-        series={topSeries}
-        valueKey="value"
-        view={view}
-      />
+      {/* ── Unified stat card: one shared header, ORI heavy row, 3 compact rows ── */}
+      <div className="bg-white rounded-xl box-border w-full border border-[var(--gray-200)] shadow-[0_2px_8px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.04)] px-md md:px-lg">
 
-      {/* ── Virus cards ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
-        {statCards.slice(1).map(({ key, visitSeries, hospitalizationSeries, ...cardProps }) => (
-          <StatCardBottom
+        {/* Column headers — shown once, not repeated per row */}
+        <div className={`hidden md:grid ${ROW_GRID_COLS} gap-x-md items-end pt-md pb-3 border-b border-[var(--gray-200)]`}>
+          <div />
+          <div className="text-body font-semibold text-gray-700 text-left">{columnHeaderLabel}</div>
+          <div className="text-body font-semibold text-gray-700 text-center">Last week vs. this week</div>
+        </div>
+
+        {primary && (
+          <StatCardRow
+            key={primary.key}
+            title={primary.title}
+            infoText={primary.infoText}
+            series={view === "visits" ? primary.visitSeries : primary.hospitalizationSeries}
+            valueKey="value"
+            view={view}
+            sparklineView={sparklineView}
+            variant="primary"
+            showAxis
+            chartLabel={columnHeaderLabel}
+            valueLabel="Last week vs. this week"
+            yAxisFormat={primary.key === "rsv" ? ".2f" : ".1f"}
+          />
+        )}
+
+        <div className="pt-5 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+          By virus
+        </div>
+
+        {rest.map(({ key, title, visitSeries, hospitalizationSeries }, i) => (
+          <StatCardRow
             key={key}
-            {...cardProps}
+            title={title}
             series={view === "visits" ? visitSeries : hospitalizationSeries}
             valueKey="value"
             view={view}
+            sparklineView={sparklineView}
+            variant="compact"
+            isLast={i === rest.length - 1}
+            chartLabel={columnHeaderLabel}
+            valueLabel="Last week vs. this week"
+            yAxisFormat={key === "rsv" ? ".2f" : ".1f"}
           />
         ))}
       </div>
 
-      <div className="font-bold text-[14px] text-[var(--footnote-gray)] text-right md:mt-md">
+      <div className="font-semibold text-body text-[var(--footnote-gray)] text-right md:mt-md">
         Compared with week of {previousWeek}
       </div>
 

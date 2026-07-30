@@ -8,7 +8,6 @@ import useIsMobile from "../hooks/useIsMobile";
 import { colorizeVirusInTitle } from "../../utils/virusText";
 import { resolvePageHTML } from "../../utils/contentUtils";
 import ProgressRail from "./ProgressRail";
-import NavBar from "../Header/NavBar";
 
 const SlidersIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -23,9 +22,9 @@ const SlidersIcon = () => (
 const DataPageLayout = ({
   title, subtitle, topControls, sidebar, info, children,
   titleVariables = {}, subtitleVariables = {},
-  pageBackground = "gray", contentGap = "32px", contentMaxWidth = "1280px",
+  pageBackground = "gray", contentGap = "40px", contentMaxWidth = "1280px",
   headerBackground = null, sectionLinks = [], headerRight = null,
-  titleInContent = false,
+  titleInContent = false, showProgressRail = true,
 }) => {
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -56,10 +55,10 @@ const DataPageLayout = ({
           {/* ── Desktop sidebar (220px column) ── */}
           {sidebar && !isMobile && (
             <div className="relative flex-shrink-0 w-[220px] border-r border-[var(--gray-300)] bg-[var(--gray-100)] box-border">
-              <div className="sticky top-14 pt-6 px-2 pb-8">
+              <div className="sticky top-[var(--header-h)] pt-6 px-2 pb-8">
                 {sidebar}
               </div>
-              {sectionLinks.length > 0 && <ProgressRail sectionLinks={sectionLinks} />}
+              {sectionLinks.length > 0 && showProgressRail && <ProgressRail sectionLinks={sectionLinks} />}
             </div>
           )}
 
@@ -101,22 +100,20 @@ const DataPageLayout = ({
           {/* ── Main content ── */}
           <div className="flex-1 min-w-0 overflow-clip box-border flex flex-col">
 
-            {/* Sticky nav: sliders button (mobile) + NavBar — padded to match card width */}
-            <div className={`sticky top-14 z-50 ${isMobile ? "px-3" : "px-4"} flex items-center gap-1`}>
-              {sidebar && isMobile && (
+            {/* Sticky mobile "open filters" button — NavBar now lives in AppShell,
+                directly under the site header, so it isn't rendered here anymore. */}
+            {sidebar && isMobile && (
+              <div className={`sticky top-[var(--header-h)] z-50 px-3 flex items-center gap-1`}>
                 <button
                   onClick={() => setSheetOpen(true)}
                   aria-label="Open filters and navigation"
                   aria-expanded={sheetOpen}
-                  className="flex items-center justify-center p-[7px] bg-transparent border-0 cursor-pointer text-[var(--gray-700)] rounded-md flex-shrink-0"
+                  className="flex items-center justify-center p-[7px] bg-white border border-[var(--gray-300)] shadow-sm cursor-pointer text-[var(--gray-700)] rounded-md flex-shrink-0"
                 >
                   <SlidersIcon />
                 </button>
-              )}
-              <div className="flex-1 min-w-0">
-                <NavBar />
               </div>
-            </div>
+            )}
 
             {/* Page content — all sections share the same px-4 container */}
             <div
@@ -129,19 +126,21 @@ const DataPageLayout = ({
                   className={headerBackground ? "border border-black/[0.07] rounded-lg overflow-hidden" : "bg-white rounded-lg border border-[var(--gray-200)] shadow-sm overflow-hidden"}
                   style={headerBackground ? { background: headerBackground } : undefined}
                 >
-                  {/* Blue accent bar — only on the default (non-custom-background) header */}
+                  {/* Accent bar — blue by default, or the active virus's accent
+                      color on pages that set --page-accent (only on the
+                      default, non-custom-background header) */}
                   {!headerBackground && (
-                    <div className="h-[5px] bg-blue-primary" />
+                    <div className="h-[5px]" style={{ backgroundColor: "var(--page-accent, var(--blue-primary))" }} />
                   )}
                   <div className="p-4">
                     {!titleInContent && (
                       typeof renderedTitle === "string" ? (
                         <h1
-                          className="text-[clamp(18px,3.5vw,30px)] font-heading font-bold text-gray-900 mb-sm text-left tracking-tight w-full [overflow-wrap:break-word]"
+                          className="text-[clamp(18px,3vw,26px)] font-heading font-bold text-gray-900 mb-sm text-left tracking-tight w-full [overflow-wrap:break-word]"
                           dangerouslySetInnerHTML={{ __html: renderedTitle }}
                         />
                       ) : (
-                        <h1 className="text-[clamp(18px,3.5vw,30px)] font-heading font-bold text-gray-900 mb-sm text-left tracking-tight w-full [overflow-wrap:break-word]">
+                        <h1 className="text-[clamp(18px,3vw,26px)] font-heading font-bold text-gray-900 mb-sm text-left tracking-tight w-full [overflow-wrap:break-word]">
                           {renderedTitle}
                         </h1>
                       )
@@ -151,17 +150,17 @@ const DataPageLayout = ({
                         {renderedSubtitle && (
                           typeof renderedSubtitle === "string" ? (
                             <div
-                              className="body-links text-gray-600 font-body text-md font-normal leading-relaxed text-left flex-1 min-w-0 [overflow-wrap:break-word]"
+                              className="body-links text-gray-700 font-body text-md font-normal leading-relaxed text-left flex-1 min-w-0 [overflow-wrap:break-word]"
                               dangerouslySetInnerHTML={{ __html: renderedSubtitle }}
                             />
                           ) : (
-                            <div className="body-links text-gray-600 font-body text-md font-normal leading-relaxed text-left flex-1 min-w-0 [overflow-wrap:break-word]">
+                            <div className="body-links text-gray-700 font-body text-md font-normal leading-relaxed text-left flex-1 min-w-0 [overflow-wrap:break-word]">
                               {renderedSubtitle}
                             </div>
                           )
                         )}
                         {headerRight && !isMobile && (
-                          <div className="flex-shrink-0 w-56 text-md text-gray-600 leading-relaxed [&_strong]:font-semibold [&_strong]:text-gray-800">
+                          <div className="flex-shrink-0 w-56 text-md text-gray-700 leading-relaxed [&_strong]:font-semibold [&_strong]:text-gray-800">
                             {headerRight}
                           </div>
                         )}
@@ -224,6 +223,7 @@ DataPageLayout.propTypes = {
   headerBackground:  PropTypes.string,
   sectionLinks:      PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.string, label: PropTypes.string })),
   headerRight:       PropTypes.node,
+  showProgressRail:  PropTypes.bool,
 };
 
 export default DataPageLayout;

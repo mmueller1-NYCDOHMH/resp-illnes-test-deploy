@@ -22,7 +22,7 @@ const VIRUS_SLUGS = {
 // ── Shared sub-components ─────────────────────────────────────────────────────
 
 const SectionLabel = ({ children }) => (
-  <div className="text-[11px] font-semibold tracking-[0.06em] uppercase text-gray-600 px-1 mb-1">
+  <div className="text-xs font-semibold tracking-[0.06em] uppercase text-gray-600 px-1 mb-1">
     {children}
   </div>
 );
@@ -46,11 +46,11 @@ const SubNavButton = ({ isActive, onClick, children }) => (
   <button
     onClick={onClick}
     className={[
-      "w-full px-[10px] py-[6px] border-none cursor-pointer text-sm text-left",
+      "w-full px-[10px] py-[6px] border-0 cursor-pointer text-sm text-left",
       "transition-[border-color,color,background] duration-150 box-border",
       isActive
         ? "border-l-2 border-gray-900 text-gray-900 font-semibold bg-transparent"
-        : "border-l-2 border-gray-300 text-gray-500 font-normal hover:bg-gray-200",
+        : "border-l-2 border-gray-400 text-gray-600 font-normal hover:bg-gray-200",
     ].join(" ")}
   >
     {children}
@@ -61,7 +61,7 @@ const DataTypeButton = ({ isActive, isFirst, onClick, children }) => (
   <button
     onClick={onClick}
     className={[
-      "w-full px-3 py-2 border-none cursor-pointer text-sm text-left font-body",
+      "w-full px-3 py-2 border-0 cursor-pointer text-sm text-left font-body",
       "transition-[background-color,color] duration-150",
       !isFirst && "border-t border-gray-300",
       isActive
@@ -173,20 +173,14 @@ const PageSidebar = ({
     <>
       <aside className="flex flex-col gap-1 w-full">
 
-        {/* ── Update note + last updated — home page top ── */}
-        {(updateNote || uploadDate) && activePage === "home" && (
-          <div className="text-base text-gray-600 leading-snug pl-1 pb-[14px] mb-1 border-b border-gray-200">
-            {updateNote && (
-              <p
-                className="mt-0 mb-[6px]"
-                dangerouslySetInnerHTML={{ __html: updateNote }}
-              />
-            )}
-            {uploadDate && (
-              <p className="m-0">
-                Last updated: <strong>{formatDate(uploadDate)}</strong>
-              </p>
-            )}
+        {/* ── Update note — home page top (last updated now lives at the
+              bottom of the sidebar, same position as on data pages) ── */}
+        {updateNote && activePage === "home" && (
+          <div className="text-sm text-gray-700 leading-snug pl-1 pb-[14px] mb-1 border-b border-gray-200">
+            <p
+              className="mt-0 mb-0"
+              dangerouslySetInnerHTML={{ __html: updateNote }}
+            />
           </div>
         )}
 
@@ -320,8 +314,8 @@ const PageSidebar = ({
           <LanguageToggle className="sidebar-lang-select" showIcon={false} />
         </div>
 
-        {/* ── Last updated — data pages only (home page shows it at top) ── */}
-        {uploadDate && activePage !== "home" && (
+        {/* ── Last updated — same bottom position on every page, including home ── */}
+        {uploadDate && (
           <div className="mt-5 pt-3 pl-1 border-t border-gray-300 text-xs text-gray-600 leading-snug">
             Last updated<br />
             {formatDate(uploadDate)}

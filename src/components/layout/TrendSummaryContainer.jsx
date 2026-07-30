@@ -1,47 +1,46 @@
-import React, { useRef, useEffect, useState, forwardRef } from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
 import { getTrendInfo } from "../../utils/getTrendInfo";
-import { getThemeByTitle } from "../../utils/themeUtils";
 import "./TrendSummaryContainer.css"; // retains only: .trend-subtitle-select custom dropdown arrow
 
-const TrendSummaryContainer = forwardRef(({
+const ChevronIcon = ({ open }) => (
+  <svg
+    width="14" height="14" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2.2"
+    strokeLinecap="round" strokeLinejoin="round"
+    aria-hidden="true"
+    className={`flex-shrink-0 transition-transform duration-200 ease ${open ? "rotate-180" : "rotate-0"}`}
+  >
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
+/**
+ * TrendSummaryContainer
+ *
+ * Renders a page's "overview" content — an optional trend-arrow line, the
+ * always-visible page-specific overview blurb, an optional secondary section
+ * (e.g. shared seasonal context, identical across pages) collapsed behind a
+ * caret by default, and any seasonal-bullet children. It's plain inline
+ * content with no card/background of its own: it's meant to be placed inside
+ * DataPageLayout's `subtitle` slot so it lives in the *same* white header
+ * card as the page title, matching the home page's header card.
+ */
+const TrendSummaryContainer = ({
   sectionTitle,
-  date,
+  extraSectionTitle,
   trendDirection,
-  animateOnScroll = true,
   markdownPath,
-  showTitle = false,
   children,
   metricLabel,
   virus = "COVID-19",
   view = "visits",
   virusLabelArticle = "a",
   virusLowercase = "COVID-19",
-}, ref) => {
-  const localRef = useRef(null);
-  const resolvedRef = ref ?? localRef;
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const node = resolvedRef.current;
-    if (!animateOnScroll || !node) return;
-  
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsVisible(entry.isIntersecting),
-      { threshold: 0.2 }
-    );
-  
-    observer.observe(node);
-  
-    return () => {
-      if (node) observer.unobserve(node);
-    };
-  }, [animateOnScroll]);
-  
-
-  const virusTheme = getThemeByTitle(virus);
-  const accentColor = virusTheme.color || "#1E40AF";
+  collapsible = true,
+}) => {
+  const [expanded, setExpanded] = useState(false);
 
   const resolvedMetricLabel = metricLabel || view;
   const trend = getTrendInfo({
@@ -51,20 +50,7 @@ const TrendSummaryContainer = forwardRef(({
   });
 
   return (
-    <div
-      ref={resolvedRef}
-      className={[
-        "w-full max-w-content mx-auto box-border rounded-lg",
-        "p-[var(--trend-summary-padding,var(--spacing-md))] px-lg mb-xl",
-        "md:w-full md:px-lg md:py-md",
-        animateOnScroll ? (isVisible ? "fade-in" : "") : "",
-      ].filter(Boolean).join(" ")}
-      style={{
-        borderLeft: `4px solid var(--page-accent, ${accentColor})`,
-        backgroundColor: `color-mix(in srgb, var(--page-accent, ${accentColor}) 8%, white)`,
-        transition: "border-color 300ms ease, background-color 300ms ease",
-      }}
-    >
+    <div className="w-full">
       {trend && (
         <div
           className={[
@@ -74,7 +60,7 @@ const TrendSummaryContainer = forwardRef(({
             "md:flex-col md:items-start md:gap-xs",
           ].join(" ")}
         >
-          <span className="text-[var(--trend-arrow-size,18px)] font-bold" style={{ color: trend.trendColor }}>
+          <span className="text-[var(--trend-arrow-size,18px)] font-semibold" style={{ color: trend.trendColor }}>
             {trend.arrow}
           </span>
           <span className="trend-text" style={{ color: trend.trendColor }}>
@@ -85,33 +71,64 @@ const TrendSummaryContainer = forwardRef(({
       )}
 
       {markdownPath && (
-        <MarkdownRenderer
-          filePath={markdownPath}
-          sectionTitle={sectionTitle}
-          showTitle={false}
-          className="markdown-body"
-          variables={{ virus, view, virusLabelArticle, virusLowercase }}
-        />
+        <div>
+          {/* Always-visible, page-specific overview text */}
+          <MarkdownRenderer
+            filePath={markdownPath}
+            sectionTitle={sectionTitle}
+            showTitle={false}
+            className="markdown-body"
+            variables={{ virus, view, virusLabelArticle, virusLowercase }}
+          />
+
+          {/* Shared/secondary text (e.g. seasonal context) — same on every
+              page, so it's collapsed by default instead of repeating in full
+              every time the user lands here */}
+          {extraSectionTitle && (
+            <div className="mt-xs">
+              {collapsible && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  aria-expanded={expanded}
+                  aria-label={expanded ? "Hide seasonal context" : "Show seasonal context"}
+                  className="flex items-center gap-1.5 mb-xs text-gray-700 cursor-pointer hover:text-gray-900"
+                >
+                  <ChevronIcon open={expanded} />
+                  <span className="text-[var(--font-size-sm)] font-semibold">
+                    {extraSectionTitle}
+                  </span>
+                </button>
+              )}
+              {(!collapsible || expanded) && (
+                <MarkdownRenderer
+                  filePath={markdownPath}
+                  sectionTitle={extraSectionTitle}
+                  showTitle={false}
+                  className="markdown-body"
+                  variables={{ virus, view, virusLabelArticle, virusLowercase }}
+                />
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {children && <div aria-live="polite">{children}</div>}
     </div>
   );
-});
-
-TrendSummaryContainer.displayName = "TrendSummaryContainer";
+};
 
 TrendSummaryContainer.propTypes = {
   sectionTitle: PropTypes.string,
-  date: PropTypes.string,
+  extraSectionTitle: PropTypes.string,
   trendDirection: PropTypes.oneOf(["up", "down", "same"]),
   markdownPath: PropTypes.string,
-  showTitle: PropTypes.bool,
   metricLabel: PropTypes.string,
   virus: PropTypes.string,
   view: PropTypes.string,
   children: PropTypes.node,
-  animateOnScroll: PropTypes.bool,
+  collapsible: PropTypes.bool,
 };
 
 export default TrendSummaryContainer;

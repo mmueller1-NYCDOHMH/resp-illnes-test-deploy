@@ -16,7 +16,7 @@ const DisclaimerNote = ({ markdownPath, textKey, config }) => {
   textKey = textKey ?? config?.textKey;
   if (markdownPath) {
     return (
-      <div className="text-sm text-gray-600 leading-relaxed body-links [&_a]:font-normal [&_p]:m-0">
+      <div className="text-sm text-gray-700 leading-relaxed body-links [&_a]:font-normal [&_p]:m-0">
         <MarkdownRenderer filePath={markdownPath} showTitle={false} />
       </div>
     );
@@ -25,7 +25,7 @@ const DisclaimerNote = ({ markdownPath, textKey, config }) => {
   const html = getText(textKey) || "";
   return (
     <p
-      className="text-sm text-gray-600 leading-relaxed body-links [&_a]:font-normal"
+      className="text-sm text-gray-700 leading-relaxed body-links [&_a]:font-normal"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

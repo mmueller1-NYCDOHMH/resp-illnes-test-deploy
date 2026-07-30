@@ -3,7 +3,14 @@
  *
  * "What's happening in your neighborhood?" section on the home page.
  * Renders a Leaflet choropleth of NYC Community Districts, a search input,
- * dynamic neighborhood text, and a sorted horizontal bar chart.
+ * dynamic neighborhood text, and a sorted bar chart.
+ *
+ * LAYOUT (v2.1 — "map + stacked right rail"):
+ * Header row (title + inline search) → map (legend top-left, narrowed a bit)
+ * alongside a right column holding the At-a-Glance/compare card, the caption
+ * sentence, and the ranked bar chart stacked underneath it. Previous layout
+ * (full-width bar chart beneath the map+caption row) is preserved in
+ * .backups/NeighborhoodMap.jsx.pre-optionA.bak for easy revert.
  *
  * Data: placeholder — swap CD_DATA for real API/CSV values when available.
  * Map:  GeoJSON from NYC Health EHDP repository (Community Districts).
@@ -89,6 +96,11 @@ const CD_DATA = {
   503: { name: "Tottenville/Great Kills",      pct:  7.8, rate: 12.5 },
 };
 
+// Mean rate across all 58 CDs — used as a reference line on the bar chart so
+// the bars have a benchmark to read against instead of floating unlabeled.
+const CD_RATE_VALUES = Object.values(CD_DATA).map((d) => d.rate);
+const AVG_RATE = +(CD_RATE_VALUES.reduce((sum, r) => sum + r, 0) / CD_RATE_VALUES.length).toFixed(1);
+
 // ── Choropleth color scale (ARI blue-teal, 5 classes) ────────────────────────
 
 const COLOR_BREAKS = [12, 16, 20, 25]; // rate thresholds
@@ -138,28 +150,92 @@ function loadLeaflet() {
 
 // ── Vega-Lite histogram spec ──────────────────────────────────────────────────
 
+// Flipped to column orientation (v2): neighborhoods run left→right along X,
+// rate runs up the Y axis. Reads like a skyline beneath the map instead of a
+// narrow vertical leaderboard. To revert to horizontal bars, swap x/y back —
+// see .backups/NeighborhoodMap.jsx.pre-optionA.bak for the original spec.
+//
+// Layered with a dashed rule at AVG_RATE so the bars have a benchmark to
+// read against instead of floating with no scale — plus a light y-axis
+// (a few tick labels) so absolute values are visible without hovering.
+//
+// Hover + selection highlight are handled *inside* Vega via params instead
+// of by recomputing `chartData` in React on every mouseover. Previously,
+// hover state fed back into the data array passed to Vega, which changed
+// the spec's `data` on every mouseover and forced react-vega to tear down
+// and fully re-create the view (see computeSpecChanges/isExpensive in
+// react-vega) — including replaying the bar entrance animation — on every
+// single hover. With 58 narrow bars packed into this column, a normal
+// mouse sweep crosses several of them a second, so that showed up as a
+// visible flicker/"glitch". `hoverSel` is a native point selection (cheap,
+// no React round-trip); `selectedSig` is a plain reactive value kept in
+// sync with React's selectedGeocode via view.signal() (see the useEffect
+// in the component) so the selected bar stays highlighted even while a
+// different one is hovered.
 const HISTO_SPEC = {
-  mark: { type: "bar", cursor: "pointer" },
-  encoding: {
-    x: {
-      field: "rate",
-      type: "quantitative",
-      scale: { zero: true },
-      axis: { title: null, labels: false, ticks: false, domain: false, grid: false },
+  params: [
+    { name: "selectedSig", value: null },
+  ],
+  layer: [
+    {
+      params: [
+        {
+          name: "hoverSel",
+          select: { type: "point", on: "mouseover", clear: "mouseout", fields: ["geocode"] },
+        },
+      ],
+      mark: { type: "bar", cursor: "pointer" },
+      encoding: {
+        x: {
+          field: "name",
+          type: "ordinal",
+          sort: { field: "rate", order: "descending" },
+          axis: { title: null, labels: false, ticks: false, domain: false },
+        },
+        y: {
+          field: "rate",
+          type: "quantitative",
+          scale: { zero: true },
+          axis: {
+            title: "Rate / 100k",
+            titleFontSize: 9,
+            labelFontSize: 9,
+            tickCount: 3,
+            domain: false,
+            ticks: false,
+            gridOpacity: 0.25,
+          },
+        },
+        color: {
+          condition: [
+            { test: "datum.geocode === selectedSig", value: "#1E40AF" },
+            { param: "hoverSel", empty: false, value: "#387781" },
+          ],
+          field: "fillColor", type: "nominal", scale: null, legend: null,
+        },
+        opacity: {
+          condition: [
+            { test: "datum.geocode === selectedSig", value: 1 },
+            { param: "hoverSel", empty: false, value: 1 },
+          ],
+          field: "barOpacity", type: "quantitative", scale: null, legend: null,
+        },
+        tooltip: [
+          { field: "name", title: "Neighborhood" },
+          { field: "rate", title: "Rate per 100,000" },
+        ],
+      },
     },
-    y: {
-      field: "name",
-      type: "ordinal",
-      sort: { field: "rate", order: "descending" },
-      axis: { title: null, labels: false, ticks: false, domain: false },
+    {
+      // Single dashed reference line at the citywide average rate.
+      data: { values: [{}] },
+      mark: { type: "rule", strokeDash: [4, 3], color: "#6b7280", size: 1 },
+      encoding: {
+        y: { datum: AVG_RATE, type: "quantitative" },
+        tooltip: { value: `NYC average: ${AVG_RATE} / 100,000` },
+      },
     },
-    color:   { field: "fillColor", type: "nominal", scale: null, legend: null },
-    opacity: { field: "barOpacity", type: "quantitative", scale: null, legend: null },
-    tooltip: [
-      { field: "name", title: "Neighborhood" },
-      { field: "rate", title: "Rate per 100,000" },
-    ],
-  },
+  ],
   height: "{chartHeight}",
   padding: { top: 6, right: 8, bottom: 4, left: 4 },
   config: {
@@ -213,16 +289,16 @@ function SnapshotRows({ data }) {
     <>
       <div className="px-2 py-2 flex flex-col gap-0.5">
         <div style={rowStyle("pct")} onMouseEnter={() => setHoveredRow("pct")} onMouseLeave={() => setHoveredRow(null)}>
-          <span className="text-xs font-body text-[var(--gray-500)] leading-snug">% of ED visits</span>
+          <span className="text-xs font-body text-[var(--gray-600)] leading-snug">% of ED visits</span>
           <span className="text-xs font-semibold font-body text-[var(--gray-900)] tabular-nums">{data.pct}%</span>
         </div>
         <div style={rowStyle("rate")} onMouseEnter={() => setHoveredRow("rate")} onMouseLeave={() => setHoveredRow(null)}>
-          <span className="text-xs font-body text-[var(--gray-500)] leading-snug">Rate per 100,000</span>
+          <span className="text-xs font-body text-[var(--gray-600)] leading-snug">Rate per 100,000</span>
           <span className="text-xs font-semibold font-body text-[var(--gray-900)] tabular-nums">{data.rate}</span>
         </div>
         <div style={rowStyle("diff")} onMouseEnter={() => setHoveredRow("diff")} onMouseLeave={() => setHoveredRow(null)}>
           <span
-            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full leading-snug"
+            className="text-2xs font-medium px-1.5 py-0.5 rounded-full leading-snug"
             style={{ color: diffColor, backgroundColor: diffBg }}
           >
             {diffLabel}
@@ -230,7 +306,7 @@ function SnapshotRows({ data }) {
         </div>
       </div>
       <div className="px-3 pb-2">
-        <p className="text-[10px] font-body text-[var(--gray-400)]">Week ending {WEEK_ENDING}</p>
+        <p className="text-2xs font-body text-[var(--gray-600)]">Week ending {WEEK_ENDING}</p>
       </div>
     </>
   );
@@ -261,43 +337,43 @@ function CompareRows({ pinned, current }) {
   ];
 
   return (
-    <div className="px-0 py-1">
+    <div className="px-3 py-1.5">
       {/* Column headers */}
-      <div className="flex text-[9px] font-semibold font-body text-[var(--gray-400)] uppercase tracking-wide px-3 pb-1">
+      <div className="flex text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide pb-1">
         <span className="flex-[2] min-w-0" />
-        <span className="flex-1 text-right text-amber-600">Pinned</span>
-        <span className="w-8 text-center">Δ</span>
-        <span className="flex-1 text-right text-blue-600">Now</span>
+        <span className="w-16 text-right text-amber-700">Pinned</span>
+        <span className="w-9 text-center">Δ</span>
+        <span className="w-16 text-right text-blue-600">Selected</span>
       </div>
 
       {metrics.map(({ key, label, aVal, bVal, delta, suffix }) => {
         const isHovered = hoveredRow === key;
         const positive  = delta > 0;
         const deltaStr  = `${positive ? "+" : ""}${delta}${suffix}`;
-        const dColor    = delta === 0 ? "var(--gray-400)" : positive ? "#b91c1c" : "#065f46";
+        const dColor    = delta === 0 ? "var(--gray-600)" : positive ? "#b91c1c" : "#065f46";
 
         return (
           <div
             key={key}
-            className="flex items-center gap-1 px-2 py-1 rounded mx-1 transition-colors duration-100"
+            className="flex items-center gap-1 py-1 rounded transition-colors duration-100"
             style={{ backgroundColor: isHovered ? "var(--gray-100)" : "transparent", cursor: "text", userSelect: "text" }}
             onMouseEnter={() => setHoveredRow(key)}
             onMouseLeave={() => setHoveredRow(null)}
           >
-            <span className="flex-[2] text-[10px] font-body text-[var(--gray-500)] min-w-0 truncate">{label}</span>
-            <span className="flex-1 text-right text-[11px] font-semibold font-body tabular-nums text-amber-700">{aVal}</span>
+            <span className="flex-[2] text-xs font-body text-[var(--gray-600)] min-w-0 truncate">{label}</span>
+            <span className="w-16 text-right text-xs font-semibold font-body tabular-nums text-amber-700">{aVal}</span>
             <span
-              className="w-8 text-center text-[10px] font-semibold font-body tabular-nums transition-opacity duration-100"
-              style={{ color: dColor, opacity: isHovered ? 1 : 0.55 }}
+              className="w-9 text-center text-2xs font-semibold font-body tabular-nums transition-opacity duration-100"
+              style={{ color: dColor, opacity: isHovered ? 1 : 0.85 }}
             >
               {deltaStr}
             </span>
-            <span className="flex-1 text-right text-[11px] font-semibold font-body tabular-nums text-blue-700">{bVal}</span>
+            <span className="w-16 text-right text-xs font-semibold font-body tabular-nums text-blue-700">{bVal}</span>
           </div>
         );
       })}
-      <div className="px-3 pt-1 pb-2">
-        <p className="text-[9px] font-body text-[var(--gray-400)]">Week ending {WEEK_ENDING} · Δ = now − pinned</p>
+      <div className="pt-1 pb-0.5">
+        <p className="text-2xs font-body text-[var(--gray-600)]">Week ending {WEEK_ENDING} · Δ = selected − pinned</p>
       </div>
     </div>
   );
@@ -311,6 +387,7 @@ const NeighborhoodMap = () => {
   const geoLayerRef        = useRef(null);
   const selectedGeocodeRef = useRef(null); // stable ref for Leaflet closures
   const chartAreaRef       = useRef(null);
+  const chartViewRef       = useRef(null); // Vega view, for pushing selectedSig without a re-embed
 
   const [leafletReady, setLeafletReady]       = useState(false);
   const [geojson, setGeojson]                 = useState(null);
@@ -453,9 +530,14 @@ const NeighborhoodMap = () => {
     });
   }, [selectedGeocode]);
 
-  // Fly map to selected feature
+  // Fly map to selected feature — and back out to the full citywide view
+  // when the selection is cleared (e.g. search box emptied out).
   useEffect(() => {
-    if (!mapInstanceRef.current || !geoLayerRef.current || !selectedGeocode) return;
+    if (!mapInstanceRef.current || !geoLayerRef.current) return;
+    if (selectedGeocode == null) {
+      mapInstanceRef.current.fitBounds(geoLayerRef.current.getBounds(), { padding: [10, 10] });
+      return;
+    }
     geoLayerRef.current.eachLayer((layer) => {
       if (layer.feature.properties.GEOCODE === selectedGeocode) {
         mapInstanceRef.current.fitBounds(layer.getBounds(), {
@@ -464,6 +546,16 @@ const NeighborhoodMap = () => {
         });
       }
     });
+  }, [selectedGeocode]);
+
+  // Keep the bar chart's native "selected" signal in sync with React state.
+  // Cheap (view.signal + partial run) — does not touch `data`, so it never
+  // triggers a re-embed of the chart.
+  useEffect(() => {
+    const view = chartViewRef.current;
+    if (!view) return;
+    view.signal("selectedSig", selectedGeocode != null ? String(selectedGeocode) : null);
+    view.runAsync();
   }, [selectedGeocode]);
 
   // ── Arrow-key neighborhood navigation ──────────────────────────────────────
@@ -506,23 +598,22 @@ const NeighborhoodMap = () => {
   const previewData     = previewGeocode != null ? CD_DATA[previewGeocode] : null;
   const showHoverLayer  = Boolean(previewData && previewGeocode !== selectedGeocode);
 
-  // Vega-Lite chart data — recomputed when selection/hover changes
-  const chartData = useMemo(() => {
-    const previewCode = hoveredBar ?? mapHoveredGeocode;
-    return Object.entries(CD_DATA).map(([geocode, d]) => {
-      const code       = parseInt(geocode, 10);
-      const isSelected = code === selectedGeocode;
-      const isPreview  = code === previewCode && !isSelected;
-      return {
+  // Vega-Lite chart data — static (doesn't depend on selection/hover state
+  // anymore). Selected/hover highlighting is handled natively inside the
+  // Vega spec via params (see HISTO_SPEC + the selectedSig effect above),
+  // so this never needs to be recomputed on interaction.
+  const chartData = useMemo(
+    () =>
+      Object.entries(CD_DATA).map(([geocode, d]) => ({
         geocode,
         name:       d.name,
         pct:        d.pct,
         rate:       d.rate,
-        fillColor:  isSelected ? "#1E40AF" : isPreview ? "#387781" : getColor(d.rate),
-        barOpacity: isSelected || isPreview ? 1 : 0.82,
-      };
-    });
-  }, [selectedGeocode, hoveredBar, mapHoveredGeocode]);
+        fillColor:  getColor(d.rate),
+        barOpacity: 0.82,
+      })),
+    []
+  );
 
   // ── Legend breaks ───────────────────────────────────────────────────────────
   const legendItems = [
@@ -533,29 +624,39 @@ const NeighborhoodMap = () => {
     { label: `≥ ${COLOR_BREAKS[3]}`,                          color: COLORS[4] },
   ];
 
+  // Comparison mode: pinned + a different CD is selected/hovered
+  const compareData    = pinnedGeocode != null && pinnedGeocode !== selectedGeocode
+    ? CD_DATA[pinnedGeocode] : null;
+  const inCompareMode  = Boolean(compareData && selectedData);
+
   // ── Render ──────────────────────────────────────────────────────────────────
+  // v2 layout: header (title + inline search) → [map | At-a-Glance + caption]
+  // row, both narrow and natural-height on the right → full-width bar chart
+  // beneath the whole row. Original narrow single-column layout is preserved
+  // in .backups/NeighborhoodMap.jsx.pre-optionA.bak.
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="mb-md">
-        <h2 className="text-lg font-heading font-semibold tracking-tight text-[var(--gray-900)]">
-          What&rsquo;s happening in your neighborhood?
-        </h2>
-        <p className="text-md font-body text-[var(--gray-600)] mt-xs">
-          Overall respiratory illness ED visits in the past week
-        </p>
-      </div>
+      {/* Header row — title left, search inline top-right */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-md mb-md">
+        <div>
+          <h2 className="text-[var(--content-title-size)] font-heading font-semibold tracking-tight text-[var(--content-title-color,var(--gray-900))]">
+            What&rsquo;s happening in your neighborhood?
+          </h2>
+          <p className="text-md font-body text-[var(--gray-700)] mt-xs">
+            Overall respiratory illness ED visits in the past week
+          </p>
+        </div>
 
-      {/* Main layout: [left panel] [map] [bar chart] */}
-      <div className="flex flex-col sm:flex-row gap-lg items-start">
-
-        {/* ── Left: search + dynamic text ── */}
-        <div className="w-full sm:w-60 flex-shrink-0">
-          {/* Search input with suggestions */}
+        <div className="w-full sm:w-96 flex-shrink-0">
           <NeighborhoodSearchInput
             id="home-neighborhood-search"
             value={search}
-            onChange={setSearch}
+            onChange={(val) => {
+              setSearch(val);
+              // Search box emptied out — clear the selection and let the
+              // map effect above fly back out to the full citywide view.
+              if (val.trim() === "") setSelectedGeocode(null);
+            }}
             onSelect={([geocode, data]) => {
               setSelectedGeocode(parseInt(geocode, 10));
               setSearch(data.name);
@@ -563,199 +664,29 @@ const NeighborhoodMap = () => {
             selectedGeocode={selectedGeocode}
             suggestions={suggestions}
           />
-
           {/* Keyboard nav hint — shown only after a CD is selected */}
           {selectedGeocode != null && (
-            <p className="mt-xs text-[10px] font-body text-[var(--gray-400)] leading-tight">
+            <p className="mt-xs text-2xs font-body text-[var(--gray-600)] leading-tight text-right">
               ↑ ↓ ← → to navigate neighborhoods
             </p>
           )}
-
-          {/* Dynamic text — replaces placeholder once a neighborhood is selected */}
-          <div className="mt-md text-md font-body text-[var(--gray-700)] leading-relaxed">
-            {selectedData ? (
-              <>
-                <p>
-                  In <strong>{selectedData.name}</strong>, respiratory illnesses
-                  accounted for{" "}
-                  <strong className="text-[var(--blue-primary)]">{selectedData.pct}%</strong>{" "}
-                  of ED visits for the week ending <strong>{WEEK_ENDING}</strong>.
-                </p>
-                <p className="mt-sm">
-                  This is{" "}
-                  <strong>
-                    {selectedData.pct > CITYWIDE_PCT ? "more than"
-                      : selectedData.pct < CITYWIDE_PCT ? "less than"
-                      : "equal to"}
-                  </strong>{" "}
-                  the Citywide value of <strong>{CITYWIDE_PCT}%</strong>.
-                </p>
-              </>
-            ) : (
-              <p className="text-[var(--gray-500)]">
-                Click a neighborhood on the map or search above to see local data.
-              </p>
-            )}
-          </div>
-
-          {/* At a Glance panel */}
-          {(() => {
-            // Comparison mode: pinned + a different CD is selected/hovered
-            const compareData = pinnedGeocode != null && pinnedGeocode !== selectedGeocode
-              ? CD_DATA[pinnedGeocode] : null;
-            const inCompareMode = Boolean(compareData && selectedData);
-
-            return (
-              <div
-                className="mt-md rounded-lg overflow-hidden relative transition-all duration-200"
-                style={{
-                  border: inCompareMode
-                    ? "1.5px solid #f59e0b"
-                    : showHoverLayer
-                    ? "1.5px solid #93c5fd"
-                    : "1px solid var(--gray-300)",
-                  boxShadow: inCompareMode
-                    ? "0 0 0 3px #fef3c766"
-                    : "none",
-                }}
-              >
-                {/* ── Comparison mode ── */}
-                {inCompareMode ? (
-                  <div className="bg-white">
-                    {/* Two-column name header */}
-                    <div className="flex items-stretch border-b border-[var(--gray-200)]">
-                      {/* Pinned name */}
-                      <div className="flex-1 min-w-0 bg-amber-50 border-r border-amber-100 px-2.5 py-2">
-                        <p className="text-[9px] font-semibold font-body text-amber-600 uppercase tracking-widest mb-0.5 flex items-center gap-1">
-                          <PinIcon filled size={10} /> Pinned
-                        </p>
-                        <p className="text-[11px] font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
-                          {compareData.name}
-                        </p>
-                      </div>
-                      {/* Current name */}
-                      <div className="flex-1 min-w-0 bg-blue-50 px-2.5 py-2 flex items-start justify-between gap-1">
-                        <div className="min-w-0">
-                          <p className="text-[9px] font-semibold font-body text-blue-600 uppercase tracking-widest mb-0.5">
-                            Selected
-                          </p>
-                          <p className="text-[11px] font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
-                            {(previewData ?? selectedData)?.name}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => setPinnedGeocode(null)}
-                          className="flex-shrink-0 text-[var(--gray-400)] hover:text-[var(--gray-700)] transition-colors text-xs leading-none mt-0.5"
-                          style={{ cursor: "pointer" }}
-                          aria-label="Exit comparison"
-                          title="Exit comparison"
-                        >✕</button>
-                      </div>
-                    </div>
-                    {/* Delta rows */}
-                    <CompareRows
-                      pinned={compareData}
-                      current={previewData ?? selectedData}
-                    />
-                  </div>
-                ) : (
-                  <>
-                    {/* Hover layer — fades in when previewing a different CD */}
-                    <div
-                      className="absolute inset-0 flex flex-col bg-white transition-opacity duration-200 z-10"
-                      style={{
-                        opacity:       showHoverLayer ? 1 : 0,
-                        pointerEvents: showHoverLayer ? "auto" : "none",
-                      }}
-                      aria-hidden={!showHoverLayer}
-                    >
-                      <div className="px-3 py-2.5 border-b border-blue-100 bg-blue-50">
-                        <p className="text-[10px] font-semibold font-body text-blue-500 uppercase tracking-widest mb-0.5">
-                          Preview
-                        </p>
-                        <p className="text-sm font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
-                          {previewData?.name ?? ""}
-                        </p>
-                      </div>
-                      {previewData && <SnapshotRows data={previewData} />}
-                    </div>
-
-                    {/* Base layer */}
-                    <div
-                      className="flex flex-col bg-white transition-opacity duration-200"
-                      style={{ opacity: showHoverLayer ? 0 : 1 }}
-                    >
-                      {selectedData ? (
-                        <>
-                          <div className="px-3 py-2.5 border-b border-[var(--gray-200)] bg-[var(--gray-100)] flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="text-[10px] font-semibold font-body text-[var(--gray-500)] uppercase tracking-widest mb-0.5">
-                                At a Glance
-                              </p>
-                              <p className="text-sm font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
-                                {selectedData.name}
-                              </p>
-                            </div>
-                            {/* Pin button */}
-                            {(() => {
-                              const isPinned = pinnedGeocode === selectedGeocode;
-                              return (
-                                <button
-                                  onClick={() => setPinnedGeocode(isPinned ? null : selectedGeocode)}
-                                  onMouseEnter={() => setPinHovered(true)}
-                                  onMouseLeave={() => setPinHovered(false)}
-                                  className="flex-shrink-0 flex items-center gap-1 rounded px-1.5 py-1 transition-all duration-150"
-                                  style={{
-                                    cursor: "pointer",
-                                    backgroundColor: isPinned
-                                      ? "#fef3c7"
-                                      : pinHovered ? "var(--gray-200)" : "transparent",
-                                    color: isPinned ? "#b45309" : pinHovered ? "var(--gray-700)" : "var(--gray-400)",
-                                    border: isPinned ? "1px solid #fde68a" : "1px solid transparent",
-                                  }}
-                                  aria-label={isPinned ? "Unpin neighborhood" : "Pin for comparison"}
-                                  title={isPinned ? "Unpin" : "Pin to compare with another neighborhood"}
-                                >
-                                  <PinIcon filled={isPinned} size={12} />
-                                  {(pinHovered || isPinned) && (
-                                    <span className="text-[9px] font-semibold font-body whitespace-nowrap">
-                                      {isPinned ? "Pinned" : "Pin to compare"}
-                                    </span>
-                                  )}
-                                </button>
-                              );
-                            })()}
-                          </div>
-                          <SnapshotRows data={selectedData} />
-                        </>
-                      ) : (
-                        <div className="px-3 py-4 bg-[var(--gray-100)]">
-                          <p className="text-[10px] font-semibold font-body text-[var(--gray-500)] uppercase tracking-widest mb-1.5">
-                            At a Glance
-                          </p>
-                          <p className="text-xs font-body text-[var(--gray-500)] leading-relaxed">
-                            Click a neighborhood on the map or search above.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            );
-          })()}
-
         </div>
+      </div>
 
-        {/* ── Map ── */}
+      {/* ── Map + At-a-Glance/caption row (both narrow, natural height) ── */}
+      <div className="flex flex-col sm:flex-row gap-md items-start">
+
+        {/* Map — sized to comfortably fit the right column's content
+             (At-a-Glance card + caption + bar chart) at 384px wide without
+             the column needing to scroll in the normal selected state. */}
         <div className="flex-1 min-w-0 rounded-md overflow-hidden border border-[var(--gray-200)] relative"
-             style={{ height: "440px" }}>
+             style={{ height: "520px" }}>
           {mapError ? (
-            <div className="flex items-center justify-center h-full text-md font-body text-[var(--gray-500)]">
+            <div className="flex items-center justify-center h-full text-md font-body text-[var(--gray-600)]">
               Map could not be loaded. Please check your connection and try refreshing.
             </div>
           ) : !leafletReady || !geojson ? (
-            <div className="flex items-center justify-center h-full text-md font-body text-[var(--gray-400)]">
+            <div className="flex items-center justify-center h-full text-md font-body text-[var(--gray-600)]">
               {loadingStatus}
             </div>
           ) : null}
@@ -764,12 +695,13 @@ const NeighborhoodMap = () => {
             className="w-full h-full"
             style={{ display: (leafletReady && geojson && !mapError) ? "block" : "none" }}
           />
-          {/* Legend — bottom-left overlay */}
+
+          {/* Legend — top-left overlay (sits over NJ / open water on this extent) */}
           <div
-            className="absolute bottom-2 left-2 bg-white rounded border border-[var(--gray-200)] px-2 py-1.5 shadow-sm"
+            className="absolute top-2 left-2 bg-white rounded border border-[var(--gray-200)] px-2 py-1.5 shadow-sm"
             style={{ zIndex: 1000 }}
           >
-            <p className="text-[9px] font-semibold font-body text-[var(--gray-500)] uppercase tracking-wide mb-1">
+            <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide mb-1">
               Rate per 100k
             </p>
             <div className="flex flex-col gap-[2px]">
@@ -779,7 +711,7 @@ const NeighborhoodMap = () => {
                     className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-[9px] font-body text-[var(--gray-600)]">
+                  <span className="text-2xs font-body text-[var(--gray-600)]">
                     {item.label}
                   </span>
                 </div>
@@ -788,20 +720,200 @@ const NeighborhoodMap = () => {
           </div>
         </div>
 
-        {/* ── Histogram (Vega-Lite) ── */}
+        {/* ── Right: At-a-Glance card, dynamic caption, then the bar chart —
+             widened a bit from the original narrow rail so the chart has
+             room to breathe now that it lives in this column. max-h (not a
+             forced h) caps this column at the map's height without forcing
+             it there — normal/unselected state stays its natural (shorter)
+             height, nothing gets squeezed. 520px comfortably fits the card
+             + caption + bar chart in the normal selected state with no
+             scrolling; the scroll only kicks in for unusually long content
+             (e.g. compare mode with long names). ── */}
+        <div className="w-full sm:w-96 flex-shrink-0 flex flex-col gap-md sm:max-h-[520px] sm:overflow-y-auto">
+
+          {/* At a Glance / compare card — hover and base layers are stacked
+              via CSS Grid (both in the same grid cell) instead of absolute
+              positioning, so the card auto-sizes to whichever layer is
+              taller. (Absolute+inset-0 previously forced the hover
+              "Preview" layer to match the base layer's — usually shorter —
+              height, clipping its content via overflow-hidden.)
+              min-h-[170px] pins the card to the height of its "full" content
+              (header + SnapshotRows) at all times, including the empty/
+              unselected placeholder. Without this, hovering a bar with
+              nothing selected grew the card (short placeholder → tall
+              preview), which pushed the bar chart down out from under the
+              cursor, firing mouseout, shrinking the card back, moving the
+              chart back up under the cursor, mouseover again — a genuine
+              hover/layout feedback loop. */}
+          <div
+            className="grid min-h-[170px] rounded-lg overflow-hidden transition-all duration-200 flex-shrink-0"
+            style={{
+              border: inCompareMode
+                ? "1.5px solid #f59e0b"
+                : showHoverLayer
+                ? "1.5px solid #93c5fd"
+                : "1px solid var(--gray-300)",
+              boxShadow: inCompareMode ? "0 0 0 3px #fef3c766" : "none",
+            }}
+          >
+          {/* Hover layer — fades in when previewing a different CD */}
+          <div
+            className="col-start-1 row-start-1 flex flex-col bg-white transition-opacity duration-200 z-10"
+            style={{
+              opacity:       showHoverLayer ? 1 : 0,
+              pointerEvents: showHoverLayer ? "auto" : "none",
+            }}
+            aria-hidden={!showHoverLayer}
+          >
+            <div className="px-3 py-2.5 border-b border-blue-100 bg-blue-50">
+              <p className="text-2xs font-semibold font-body text-blue-600 uppercase tracking-widest mb-0.5">
+                Preview
+              </p>
+              <p className="text-sm font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
+                {previewData?.name ?? ""}
+              </p>
+            </div>
+            {previewData && <SnapshotRows data={previewData} />}
+          </div>
+
+          {/* Base layer */}
+          <div
+            className="col-start-1 row-start-1 flex flex-col bg-white transition-opacity duration-200"
+            style={{ opacity: showHoverLayer ? 0 : 1 }}
+          >
+            {selectedData ? (
+              <>
+                <div className="px-3 py-2.5 border-b border-[var(--gray-200)] bg-[var(--gray-100)] flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-widest mb-0.5">
+                      {inCompareMode ? "Comparing" : "At a Glance"}
+                    </p>
+                    <p className="text-sm font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
+                      {selectedData.name}
+                    </p>
+                  </div>
+                  {/* Pin button */}
+                  {(() => {
+                    const isPinned = pinnedGeocode === selectedGeocode;
+                    return (
+                      <button
+                        onClick={() => setPinnedGeocode(isPinned ? null : selectedGeocode)}
+                        onMouseEnter={() => setPinHovered(true)}
+                        onMouseLeave={() => setPinHovered(false)}
+                        className="flex-shrink-0 flex items-center gap-1 rounded px-1.5 py-1 transition-all duration-150"
+                        style={{
+                          cursor: "pointer",
+                          backgroundColor: isPinned
+                            ? "#fef3c7"
+                            : pinHovered ? "var(--gray-200)" : "transparent",
+                          color: isPinned ? "#b45309" : pinHovered ? "var(--gray-700)" : "var(--gray-600)",
+                          border: isPinned ? "1px solid #fde68a" : "1px solid transparent",
+                        }}
+                        aria-label={isPinned ? "Unpin neighborhood" : "Pin for comparison"}
+                        title={isPinned ? "Unpin" : "Pin to compare with another neighborhood"}
+                      >
+                        <PinIcon filled={isPinned} size={12} />
+                        <span className="text-2xs font-semibold font-body whitespace-nowrap">
+                          {isPinned ? "Pinned" : "Pin to compare"}
+                        </span>
+                      </button>
+                    );
+                  })()}
+                </div>
+
+                {/* Either the normal single-neighborhood snapshot, or — while
+                    comparing — the delta table instead of both stacked
+                    (the "Selected" column already covers the current stats, so
+                    showing SnapshotRows too was pure duplication). */}
+                {inCompareMode ? (
+                  <>
+                    <div className="px-3 pt-2 pb-1 flex items-center justify-between gap-2">
+                      <p className="text-2xs font-body text-[var(--gray-600)] truncate">
+                        vs <span className="font-semibold text-amber-700">{compareData.name}</span>
+                      </p>
+                      <button
+                        onClick={() => setPinnedGeocode(null)}
+                        className="flex-shrink-0 text-[var(--gray-600)] hover:text-[var(--gray-700)] transition-colors text-2xs leading-none"
+                        style={{ cursor: "pointer" }}
+                        aria-label="Exit comparison"
+                        title="Exit comparison"
+                      >✕</button>
+                    </div>
+                    <CompareRows
+                      pinned={compareData}
+                      current={previewData ?? selectedData}
+                    />
+                  </>
+                ) : (
+                  <SnapshotRows data={selectedData} />
+                )}
+              </>
+            ) : (
+              <div className="px-3 py-4 bg-[var(--gray-100)]">
+                <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-widest mb-1.5">
+                  At a Glance
+                </p>
+                <p className="text-xs font-body text-[var(--gray-600)] leading-relaxed">
+                  Click a neighborhood on the map or search above.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Dynamic caption — natural height, stays the width of this narrow
+            column (not stretched to the full-width bar chart below). */}
+        <div className="flex-shrink-0 rounded-md bg-[var(--gray-100)] border border-[var(--gray-200)] px-md py-md text-sm font-body text-[var(--gray-700)] leading-relaxed">
+          {selectedData ? (
+            <>
+              <p>
+                In <strong>{selectedData.name}</strong>, respiratory illnesses
+                accounted for{" "}
+                <strong className="text-[var(--blue-primary)]">{selectedData.pct}%</strong>{" "}
+                of ED visits for the week ending <strong>{WEEK_ENDING}</strong>.
+              </p>
+              <p className="mt-sm">
+                This is{" "}
+                <strong>
+                  {selectedData.pct > CITYWIDE_PCT ? "more than"
+                    : selectedData.pct < CITYWIDE_PCT ? "less than"
+                    : "equal to"}
+                </strong>{" "}
+                the Citywide value of <strong>{CITYWIDE_PCT}%</strong>.
+              </p>
+            </>
+          ) : (
+            <p className="text-[var(--gray-600)]">
+              Click a neighborhood on the map or search above to see local data.
+            </p>
+          )}
+        </div>
+
+        {/* ── Bar chart — moved into the right column, beneath the dynamic
+             caption, flipped to column bars, with a dashed citywide-average
+             reference line. Fixed (not flex-1) so its size is predictable
+             regardless of how tall the card/caption above it get. ── */}
         <div
-          className="w-full sm:w-52 flex-shrink-0 rounded-md border border-[var(--gray-200)] flex flex-col"
-          style={{ height: "440px" }}
-          aria-label="Neighborhood rates ranked — hover for details, click to highlight on map"
+          className="w-full flex-shrink-0 rounded-md border border-[var(--gray-200)] flex flex-col"
+          style={{ height: "190px" }}
+          aria-label={`Neighborhood rates ranked, highest to lowest, with a dashed line at the citywide average of ${AVG_RATE} per 100,000 — hover for details, click to highlight on map`}
         >
           {/* Header */}
-          <div className="bg-white border-b border-[var(--gray-200)] px-sm pt-sm pb-xs rounded-t-md flex-shrink-0">
-            <p className="text-[11px] font-semibold font-body text-[var(--gray-500)] uppercase tracking-wide leading-tight">
-              Rate per 100,000
-            </p>
-            <p className="text-[11px] font-body text-[var(--gray-400)] mt-[2px] leading-tight">
-              Highest → Lowest · Click to select
-            </p>
+          <div className="bg-white border-b border-[var(--gray-200)] px-sm pt-sm pb-xs rounded-t-md flex-shrink-0 flex items-center justify-between gap-2">
+            <div>
+              <p className="text-xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide leading-tight">
+                Rate per 100,000 · 58 community districts
+              </p>
+              <p className="text-xs font-body text-[var(--gray-600)] mt-[2px] leading-tight">
+                Highest → Lowest · Click to select
+              </p>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <span className="inline-block w-3 border-t border-dashed" style={{ borderColor: "#6b7280" }} aria-hidden="true" />
+              <span className="text-2xs font-body text-[var(--gray-600)] whitespace-nowrap">
+                NYC avg ({AVG_RATE})
+              </span>
+            </div>
           </div>
 
           {/* Vega-Lite chart */}
@@ -812,6 +924,13 @@ const NeighborhoodMap = () => {
               dynamicFields={{ chartHeight: chartAreaHeight }}
               rendererMode="svg"
               onNewView={(view) => {
+                chartViewRef.current = view;
+                // Seed the native "selected" signal — this view may have
+                // just been (re)created (mount, or a width/theme change),
+                // so it starts from the param's default (null) otherwise.
+                view.signal("selectedSig", selectedGeocode != null ? String(selectedGeocode) : null);
+                view.runAsync();
+
                 view.addEventListener("click", (_, item) => {
                   const code = item?.datum?.geocode;
                   if (code != null) {
@@ -828,21 +947,25 @@ const NeighborhoodMap = () => {
                   setHoveredBar(null);
                 });
 
-                // Staggered bar entrance — scaleX from 0→1 per bar
+                // Staggered bar entrance — scaleY from 0→1 per bar, growing up
+                // from the baseline (column orientation; was scaleX for the
+                // previous horizontal-bar layout). Only replays when the view
+                // is actually (re)created now — hover no longer touches
+                // `data`, so it no longer forces a re-embed here.
                 requestAnimationFrame(() => {
                   const bars = view.container()?.querySelectorAll("rect.mark-rect");
                   bars?.forEach((bar, i) => {
-                    bar.style.transformOrigin = "left center";
-                    bar.style.transform       = "scaleX(0)";
+                    bar.style.transformOrigin = "center bottom";
+                    bar.style.transform       = "scaleY(0)";
                     bar.style.transition      = `transform 220ms ease-out ${i * 5}ms`;
-                    requestAnimationFrame(() => { bar.style.transform = "scaleX(1)"; });
+                    requestAnimationFrame(() => { bar.style.transform = "scaleY(1)"; });
                   });
                 });
               }}
             />
           </div>
         </div>
-
+        </div>
       </div>
     </div>
   );

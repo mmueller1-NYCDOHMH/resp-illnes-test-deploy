@@ -27,8 +27,8 @@ const InfoCard = ({ title, icon, description, link, externalIcon }) => {
           />
         )}
       </div>
-      <h3 className="info-card-title text-[1.1rem] font-semibold m-0 text-gray-900">{title}</h3>
-      <p className="info-card-description text-[0.95rem] text-gray-800">{description}</p>
+      <h3 className="info-card-title text-[var(--content-title-size,var(--font-size-lg))] font-semibold m-0 text-gray-900">{title}</h3>
+      <p className="info-card-description text-body leading-relaxed text-gray-800">{description}</p>
     </div>
   );
 

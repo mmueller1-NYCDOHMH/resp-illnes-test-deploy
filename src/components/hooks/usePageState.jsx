@@ -31,18 +31,26 @@ export const PageStateProvider = ({
     return virusParam.charAt(0).toUpperCase() + virusParam.slice(1).toLowerCase();
   }, [virusParam, enableVirusToggle]);
 
-  // The ONLY setter — derives slug from virusRegistry (e.g. "COVID-19" → "covid-19")
-  const updateVirus = (newVirus) => {
-    const slug = virusRegistry[newVirus]?.slug || newVirus.toLowerCase();
-    router.push(`/data/${slug}`);
-  };
-
   const [dataType, setDataType] = useState(() => {
     if (!enableDataTypeToggle) return null;
     // Seed from ?dataType= query param on initial load (supports deep links)
     const param = searchParams.get("dataType");
     return param || initialDataType || "ed";
   });
+
+  // The ONLY setter — derives slug from virusRegistry (e.g. "COVID-19" → "covid-19").
+  // Carries the current dataType (e.g. "cases", "death") along in the URL so
+  // switching viruses keeps the user on the same data topic instead of
+  // bouncing back to the "ed" default — the new route's page mount seeds its
+  // dataType state from this same ?dataType= query param.
+  const updateVirus = (newVirus) => {
+    const slug = virusRegistry[newVirus]?.slug || newVirus.toLowerCase();
+    const target =
+      enableDataTypeToggle && dataType && dataType !== "ed"
+        ? `/data/${slug}?dataType=${dataType}`
+        : `/data/${slug}`;
+    router.push(target);
+  };
 
   // Sync dataType when the URL search params change (same-page deep-link navigation)
   useEffect(() => {

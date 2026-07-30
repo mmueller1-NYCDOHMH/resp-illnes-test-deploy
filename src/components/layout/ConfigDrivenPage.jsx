@@ -31,7 +31,7 @@ import SeasonalBullet from "../bullets/SeasonalBullet";
 import HydratedDataContext from "../../context/HydratedDataContext";
 
 import { isSectionVisible } from "../../utils/sectionVisibility";
-import { getLatestWeek, formatDate } from "../../utils/trendUtils";
+import { getLatestWeek } from "../../utils/trendUtils";
 import { getText, resolveText } from "../../utils/contentUtils";
 import { exportVegaImage, copyVegaImageToClipboard } from "../../utils/exportChartImage";
 import componentRegistry from "../../utils/componentRegistry";
@@ -162,6 +162,56 @@ const ConfigDrivenPage = ({ config }) => {
         resolvedSummary.markdownPath.default
       : resolvedSummary?.markdownPath;
 
+  // ── Summary / overview content ────────────────────────────────────────────
+  // Rendered inside DataPageLayout's `subtitle` slot, so it lives in the same
+  // white header card as the title (like the home page's header card),
+  // rather than in its own separate tinted box below it.
+  const summaryBullets = Array.isArray(resolvedSummary?.bullets)
+    ? resolvedSummary.bullets.map((b) => {
+        if (b.renderAs === "custom" && b.component && componentRegistry[b.component]) {
+          const Cmp = componentRegistry[b.component];
+          const slice = b.dataSourceKey ? data?.[b.dataSourceKey] : undefined;
+          const cfg = { id: b.id, ...(b.componentProps || {}) };
+          return (
+            <Cmp
+              key={b.id}
+              config={cfg}
+              dataSource={slice}
+              pageState={{ virus: activeVirus, dataType }}
+              as={b.componentProps?.as}
+              className={b.componentProps?.className}
+            />
+          );
+        }
+        const slice =
+          b.dataSourceKey && data?.[b.dataSourceKey] ? data[b.dataSourceKey] : undefined;
+        return (
+          <SeasonalBullet
+            key={b.id}
+            config={b}
+            dataSource={slice}
+            pageState={{ virus: activeVirus, dataType }}
+          />
+        );
+      })
+    : null;
+
+  const summaryOverview = resolvedSummaryMarkdownPath ? (
+    <TrendSummaryContainer
+      sectionTitle={resolveText(resolvedSummary.titleKey || resolvedSummary.title)}
+      extraSectionTitle="Seasonal Context"
+      markdownPath={resolvedSummaryMarkdownPath}
+      virus={activeVirus}
+      view={view}
+      virusLowercase={virusLowercaseDisplay[activeVirus]}
+      virusLabelArticle={virusDisplayLabelsArticle[activeVirus]}
+      metricLabel={resolvedSummary.metricLabel}
+      {...(resolvedSummary.showTrendArrow ? { trendDirection: "up" } : {})}
+    >
+      {summaryBullets}
+    </TrendSummaryContainer>
+  ) : null;
+
   // ── Page context passed to section renderers ──────────────────────────────
   const pageContext = {
     data,
@@ -190,14 +240,14 @@ const ConfigDrivenPage = ({ config }) => {
         subtitle={
           config.subtitleMarkdownPath
             ? <MarkdownRenderer filePath={config.subtitleMarkdownPath} showTitle={false} />
-            : resolveText(resolvedSubtitleKey, pageTextVars)
+            : summaryOverview || resolveText(resolvedSubtitleKey, pageTextVars)
         }
         pageBackground={config.layout?.pageBackground}
         contentGap={config.layout?.contentGap}
         contentMaxWidth={config.layout?.contentMaxWidth}
         headerBackground={config.layout?.headerBackground}
         sectionLinks={sectionLinks}
-        titleInContent={!!(controls.virusToggle || controls.dataTypeToggle)}
+        showProgressRail={config.layout?.showProgressRail !== false}
         sidebar={
           config.showSidebar === false ? null : (
             <PageSidebar
@@ -216,67 +266,6 @@ const ConfigDrivenPage = ({ config }) => {
       >
         {/* Content cross-fade wrapper — remounts on virus or dataType change */}
         <div key={`${activeVirus}-${dataType}`} className="content-fade">
-
-        {/* Summary / trend box */}
-        {resolvedSummaryMarkdownPath && (
-          <TrendSummaryContainer
-            key={`summary-${activeVirus}-${view}-${dataType}`}
-            sectionTitle={resolveText(
-              resolvedSummary.titleKey || resolvedSummary.title
-            )}
-            date={
-              hydratedConfig.uploadDate
-                ? formatDate(hydratedConfig.uploadDate)
-                : "(Date Currently Unavailable)"
-            }
-            markdownPath={resolvedSummaryMarkdownPath}
-            showTitle
-            animateOnScroll={resolvedSummary.animateOnScroll !== false}
-            virus={activeVirus}
-            view={view}
-            virusLowercase={virusLowercaseDisplay[activeVirus]}
-            virusLabelArticle={virusDisplayLabelsArticle[activeVirus]}
-            {...(resolvedSummary.showTrendArrow ? { trendDirection: "up" } : {})}
-            variables={{ ...pageTextVars, latestDate }}
-          >
-            {Array.isArray(resolvedSummary?.bullets) &&
-              resolvedSummary.bullets.map((b) => {
-                if (
-                  b.renderAs === "custom" &&
-                  b.component &&
-                  componentRegistry[b.component]
-                ) {
-                  const Cmp = componentRegistry[b.component];
-                  const slice = b.dataSourceKey
-                    ? data?.[b.dataSourceKey]
-                    : undefined;
-                  const cfg = { id: b.id, ...(b.componentProps || {}) };
-                  return (
-                    <Cmp
-                      key={b.id}
-                      config={cfg}
-                      dataSource={slice}
-                      pageState={{ virus: activeVirus, dataType }}
-                      as={b.componentProps?.as}
-                      className={b.componentProps?.className}
-                    />
-                  );
-                }
-                const slice =
-                  b.dataSourceKey && data?.[b.dataSourceKey]
-                    ? data[b.dataSourceKey]
-                    : undefined;
-                return (
-                  <SeasonalBullet
-                    key={b.id}
-                    config={b}
-                    dataSource={slice}
-                    pageState={{ virus: activeVirus, dataType }}
-                  />
-                );
-              })}
-          </TrendSummaryContainer>
-        )}
 
         {/* Sections */}
         {hydratedSections

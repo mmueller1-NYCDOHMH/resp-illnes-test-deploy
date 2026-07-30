@@ -14,7 +14,11 @@ export const virusOptions = [
 
 const VirusFilterGroup = ({ activeVirus, onChange }) => {
   return (
-    <div className="virus-filter-group flex flex-row gap-lg justify-start flex-nowrap max-sm:flex-col max-sm:items-center max-sm:gap-2 max-sm:my-[10px] max-sm:w-full">
+    <div
+      role="group"
+      aria-label="Filter by virus"
+      className="virus-filter-group flex flex-row gap-lg justify-start flex-nowrap max-sm:flex-col max-sm:items-center max-sm:gap-2 max-sm:my-[10px] max-sm:w-full"
+    >
       {virusOptions.map(({ label, icon }) => (
         <VirusFilterButton
           key={label}

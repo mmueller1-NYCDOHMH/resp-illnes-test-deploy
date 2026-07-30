@@ -16,6 +16,15 @@ const RAIL_TOP  = 15; // vh
 const RAIL_BOT  = 85; // vh
 const RAIL_SPAN = RAIL_BOT - RAIL_TOP; // 70 vh
 
+// The dot's own box never changes size — hover/active states scale it via
+// `transform` instead (see the dot's inline style below). Transform is
+// compositor-only, so it can never perturb the wrapper's centering; sizing
+// via width/height instead would force the wrapper's shrink-to-fit box (and
+// therefore its `translateX(-50%)` centering anchor) to be recomputed on
+// every frame of the grow/shrink transition, which is what caused dots to
+// visibly drift sideways as they grew.
+const DOT_BASE_PX = 10;
+
 const ProgressRail = ({ sectionLinks }) => {
   const [positions,  setPositions]  = useState([]); // { id, label, pct }
   const [scrollPct,  setScrollPct]  = useState(0);
@@ -23,6 +32,8 @@ const ProgressRail = ({ sectionLinks }) => {
   const [hoveredId,  setHoveredId]  = useState(null);
   const [pulsingId,  setPulsingId]  = useState(null);
   const prevActiveRef = useRef(null);
+  const footerHeightRef = useRef(0);
+  const scrollRafRef = useRef(null);
 
   // Stable key — lets effects diff cheaply
   const sectionKey = sectionLinks.map((s) => s.id).join(",");
@@ -31,15 +42,18 @@ const ProgressRail = ({ sectionLinks }) => {
   // Exclude footer height so rail calculations are bounded to content area,
   // preventing the track/fill from visually overlapping the footer on shorter
   // pages (e.g. wastewater, which has only one chart section).
-  const getFooterHeight = () => {
+  // Measured once on mount/resize and cached in a ref — reading it from the
+  // DOM on every scroll event (as this used to) is one of the two things
+  // that made the rail feel jumpy; see the scroll effect below for the other.
+  const measureFooterHeight = useCallback(() => {
     const footer = document.querySelector("footer");
-    return footer ? footer.offsetHeight : 0;
-  };
+    footerHeightRef.current = footer ? footer.offsetHeight : 0;
+  }, []);
 
   // ── Position calculation ────────────────────────────────────────────────
   const recalcPositions = useCallback(() => {
-    const footerH = getFooterHeight();
-    const pageH = document.documentElement.scrollHeight - footerH;
+    measureFooterHeight();
+    const pageH = document.documentElement.scrollHeight - footerHeightRef.current;
     if (!pageH) return;
     setPositions(
       sectionLinks
@@ -64,10 +78,16 @@ const ProgressRail = ({ sectionLinks }) => {
   }, [recalcPositions]);
 
   // ── Scroll tracking ─────────────────────────────────────────────────────
+  // Raw `scroll` events can fire many times per animation frame. Running the
+  // section-offset scan and two setState calls on every single one raced
+  // ahead of the browser's paint cycle and was the main cause of the fill
+  // bar / active-dot jumpiness. Coalescing to a single rAF-scheduled update
+  // per frame keeps it in step with paint instead of fighting it.
   useEffect(() => {
-    const onScroll = () => {
+    const updateFromScroll = () => {
+      scrollRafRef.current = null;
       const scrollY   = window.scrollY;
-      const footerH   = getFooterHeight();
+      const footerH   = footerHeightRef.current;
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight - footerH;
       setScrollPct(maxScroll > 0 ? Math.min(scrollY / maxScroll, 1) : 0);
 
@@ -81,9 +101,17 @@ const ProgressRail = ({ sectionLinks }) => {
       setActiveId(active);
     };
 
+    const onScroll = () => {
+      if (scrollRafRef.current != null) return;
+      scrollRafRef.current = requestAnimationFrame(updateFromScroll);
+    };
+
     window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll(); // seed on mount
-    return () => window.removeEventListener("scroll", onScroll);
+    updateFromScroll(); // seed on mount
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (scrollRafRef.current != null) cancelAnimationFrame(scrollRafRef.current);
+    };
   }, [sectionKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep the URL hash in sync with the active section so Share copies a deep link.
@@ -145,16 +173,20 @@ const ProgressRail = ({ sectionLinks }) => {
           const isHovered = id === hoveredId;
           const topPos    = `${RAIL_TOP + pct * RAIL_SPAN}vh`;
 
+          const scale = isActive ? 1 : isHovered ? 0.9 : 0.7;
+
           return (
             <div
               key={id}
               role="button"
               tabIndex={0}
               aria-label={`Jump to ${label}`}
-              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer z-[2] p-[6px] box-border"
-              style={{ top: topPos }}
+              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer z-[2] p-[6px] box-border rounded-full focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+              style={{ top: topPos, width: DOT_BASE_PX + 12, height: DOT_BASE_PX + 12 }}
               onMouseEnter={() => setHoveredId(id)}
               onMouseLeave={() => setHoveredId(null)}
+              onFocus={() => setHoveredId(id)}
+              onBlur={() => setHoveredId(null)}
               onClick={() =>
                 document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
               }
@@ -163,16 +195,18 @@ const ProgressRail = ({ sectionLinks }) => {
                   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
             >
-              {/* Dot — size and color are state-driven, keep in style */}
+              {/* Dot — fixed box size; hover/active only ever scale it via
+                  transform (color is still state-driven, kept in style) */}
               <div
                 className={`rounded-full border-2 border-[var(--gray-100)] mx-auto${pulsingId === id ? " progress-dot-pulse" : ""}`}
                 style={{
-                  width:           isActive ? "10px" : isHovered ? "9px" : "7px",
-                  height:          isActive ? "10px" : isHovered ? "9px" : "7px",
+                  width:           `${DOT_BASE_PX}px`,
+                  height:          `${DOT_BASE_PX}px`,
+                  transform:       `scale(${scale})`,
                   backgroundColor: isActive  ? "var(--page-accent, var(--gray-900))"
                                  : isHovered ? "var(--gray-600)"
                                  :             "var(--gray-300)",
-                  transition: "width 150ms, height 150ms, background-color 300ms ease",
+                  transition: "transform 150ms ease, background-color 300ms ease",
                 }}
               />
 

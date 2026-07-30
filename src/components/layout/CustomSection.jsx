@@ -16,12 +16,13 @@ import React from "react";
 import ContentContainer from "./ContentContainer";
 import ChartContainer from "./ChartContainer";
 import TrendSubtitle from "../controls/TrendSubtitle";
-import ToggleControls from "../controls/ToggleControls";
+import ToggleGroup from "../controls/ToggleGroup";
 import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
 import { getText, interpolateTokens, interpolateObject, resolveText } from "../../utils/contentUtils";
 import { parseLocalISO, formatDate } from "../../utils/trendUtils";
 import { buildDownloadHandler } from "../../utils/sectionDownload";
 import { buildDownloadName } from "../../utils/downloadUtils";
+import { colorizeVirusInTitle } from "../../utils/virusText";
 
 
 const renderSubtitle = (template, variables = {}) => {
@@ -171,7 +172,24 @@ const CustomSection = ({
 
     const chartProps = interpolateObject(section.chart?.props || {}, textVars);
     const compProps = interpolateObject(section.componentProps || {}, textVars);
-    const mergedProps = { ...compProps, ...chartProps };
+    const resolvedTitle = resolveText(section.title, textVars);
+    // When a section opts in via titleInComponent, the custom component
+    // renders its own title (typically alongside other header controls,
+    // like a search box, in the same row) instead of ContentContainer
+    // rendering it above the component in a separate row. resolvedTitle
+    // can contain raw HTML (content strings embed spans like
+    // <span class="dynamic-label">...</span>, and colorizeVirusInTitle
+    // adds virus-colored spans) — same processing ContentContainer's own
+    // title rendering does before handing off to dangerouslySetInnerHTML,
+    // so the component must render sectionTitle the same way, not as
+    // plain text children.
+    const mergedProps = {
+      ...compProps,
+      ...chartProps,
+      ...(section.titleInComponent
+        ? { sectionTitle: colorizeVirusInTitle(resolvedTitle) }
+        : {}),
+    };
 
     const dataSourceKey =
       section.dataSourceKey ||
@@ -193,7 +211,7 @@ const CustomSection = ({
       <ContentContainer
         key={sectionKey}
         id={section.anchorId || section.id || undefined}
-        title={resolveText(section.title, textVars)}
+        title={section.titleInComponent ? null : resolvedTitle}
         subtitle={subtitleNode}
         subtitleVariables={textVars}
         animateOnScroll={section.animateOnScroll !== false}
@@ -249,7 +267,20 @@ const CustomSection = ({
             }
             onNewView={onNewView(sectionKey)}
             {...(section.showSidebarToggle
-              ? { sidebar: <ToggleControls data={flatData} view={view} onToggle={setView} /> }
+              ? {
+                  sidebar: (
+                    <ToggleGroup
+                      options={[
+                        { label: "ED Visits", value: "visits" },
+                        { label: "Hospitalizations", value: "hospitalizations" },
+                      ]}
+                      value={view}
+                      onChange={setView}
+                      ariaLabel="Toggle between visits and hospitalizations"
+                      variant="pill"
+                    />
+                  ),
+                }
               : {})}
             stackSidebarAbove={!!section.sidebarAboveChart}
             footer={section.chart?.footer}

@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { marked } from "marked";
 import { resolveContentPath } from '../../utils/pathUtils';
 import { interpolateTokens } from '../../utils/contentUtils';
+import "./markdown.css";
 
 const stripHtml = (s = "") => s.replace(/<[^>]*>/g, " ");
 const collapseWs = (s = "") => s.replace(/\s+/g, " ").trim();
@@ -101,7 +102,11 @@ const MarkdownRenderer = ({
 
   return (
     <div className={className}>
-      {showTitle && sectionTitle && <h3>{cleanDisplayTitle}</h3>}
+      {showTitle && sectionTitle && (
+        <h3 className="text-[var(--content-title-size,var(--font-size-lg))] font-semibold text-gray-900 m-0 mb-xs">
+          {cleanDisplayTitle}
+        </h3>
+      )}
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </div>
   );

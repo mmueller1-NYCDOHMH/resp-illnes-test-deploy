@@ -199,6 +199,7 @@ useEffect(() => {
   const specTemplate = {
     width: "container",
     autosize: { type: "fit", contains: "padding", resize: true },
+    spacing: 32,
     title: {
       text: title,
       subtitlePadding: 10,

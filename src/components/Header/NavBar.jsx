@@ -49,25 +49,44 @@ const LINKS = [
 ];
 
 /** Semantic <a> link via Next.js Link — supports right-click, keyboard, a11y */
-const NavLink = ({ label, to, isActive, Icon }) => (
-  <Link
-    href={to}
-    aria-current={isActive ? "page" : undefined}
-    className={[
-      "flex items-center gap-[5px] whitespace-nowrap no-underline",
-      "p-[10px] sm:py-[14px] sm:px-[18px]",
-      "text-[14px] sm:text-[15px] font-body -mb-px",
-      "border-b-[3px] transition-[color,border-color] duration-150",
-      isActive
-        ? "font-semibold text-blue-primary border-blue-primary"
-        : "font-normal text-gray-600 border-transparent hover:text-blue-primary hover:border-blue-primary",
-    ].join(" ")}
-  >
-    {Icon && <Icon />}
-    {/* Label hidden on mobile — icon remains visible */}
-    <span className="hidden sm:inline">{label}</span>
-  </Link>
-);
+const NavLink = ({ label, to, isActive, Icon }) => {
+  // NOTE: color is applied to child <span>s, not the <a> itself. index.css
+  // has a global `a { color: inherit }` reset that lives outside any
+  // Tailwind @layer — in Tailwind v4, unlayered CSS always wins over layered
+  // utility classes (like hover:text-blue-primary) regardless of specificity,
+  // so putting the color classes directly on the <Link> gets silently
+  // overridden on hover. Scoping color to these spans (which aren't <a>
+  // elements) sidesteps that reset, same trick used for the icon.
+  const colorClasses = isActive
+    ? "text-blue-primary"
+    : "text-gray-600 group-hover:text-blue-primary";
+
+  return (
+    <Link
+      href={to}
+      aria-current={isActive ? "page" : undefined}
+      className={[
+        "group flex items-center gap-[5px] whitespace-nowrap no-underline",
+        "py-[10px] px-[14px] sm:py-[12px] sm:px-[20px]",
+        "text-[14px] sm:text-[15px] font-body -mb-px",
+        "border-b-[3px] transition-colors duration-150",
+        isActive
+          ? "font-semibold border-blue-primary"
+          : "font-normal border-transparent hover:border-blue-primary",
+      ].join(" ")}
+    >
+      {Icon && (
+        <span className={["transition-colors duration-150", colorClasses].join(" ")}>
+          <Icon />
+        </span>
+      )}
+      {/* Label hidden on mobile — icon remains visible */}
+      <span className={["hidden sm:inline transition-colors duration-150", colorClasses].join(" ")}>
+        {label}
+      </span>
+    </Link>
+  );
+};
 
 /** Vertical divider — hidden on mobile alongside the text labels */
 const NavDivider = () => (
@@ -127,7 +146,7 @@ const NavBar = () => {
         title="Copy link to this page"
         className={[
           "flex items-center gap-[5px] whitespace-nowrap",
-          "py-[14px] px-md border-0 bg-transparent cursor-pointer",
+          "py-[12px] px-md border-0 bg-transparent cursor-pointer",
           "text-[14px] font-body font-normal transition-colors duration-150",
           copied ? "text-green-600" : "text-gray-600 hover:text-blue-primary",
         ].join(" ")}

@@ -31,7 +31,8 @@ const VegaLiteWrapper = ({
   specTemplate,
   dynamicFields = {},
   rendererMode = "canvas",
-  onNewView
+  onNewView,
+  actions = true
 }) => {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -249,7 +250,7 @@ const VegaLiteWrapper = ({
           <VegaLite
             key={embedKey}
             spec={finalSpec}
-            actions={true}
+            actions={actions}
             renderer={rendererMode}
             tooltip={tooltip}
             onError={onError}
@@ -270,6 +271,7 @@ VegaLiteWrapper.propTypes = {
   dynamicFields: PropTypes.object,
   rendererMode: PropTypes.oneOf(["canvas", "svg"]),
   onNewView: PropTypes.func,
+  actions: PropTypes.bool,
 };
 
 export default VegaLiteWrapper;

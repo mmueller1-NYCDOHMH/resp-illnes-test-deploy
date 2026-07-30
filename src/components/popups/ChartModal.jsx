@@ -54,7 +54,7 @@ const ChartModal = ({ title, subtitle, isOpen, onClose, children, maxWidth = 980
       >
         <div className="flex items-start justify-between gap-2 pb-2 border-b border-gray-200 mb-3">
           <div className="flex flex-col gap-1.5">
-            <h3 className="m-0 text-[18px] font-semibold text-[var(--chart-title-color)]">{title}</h3>
+            <h3 className="m-0 text-[var(--content-title-size,var(--font-size-lg))] font-semibold text-[var(--chart-title-color)]">{title}</h3>
             {subtitle && <div>{subtitle}</div>}
           </div>
           <button
