@@ -20,7 +20,7 @@ export function colorizeVirusInTitle(title) {
     const meta = virusByAnyName[match];
     const key = meta?.colorScaleKey;
     const scale = key ? tokens.colorScales?.[key] : null;
-    const color = Array.isArray(scale) ? scale[1] : undefined;
+    const color = Array.isArray(scale) ? scale[2] : undefined;
     const cls = `virus-label virus-${key || "unknown"}`;
     const style = color ? ` style="color:${color}"` : "";
     return `<span class="${cls}"${style}>${match}</span>`;
