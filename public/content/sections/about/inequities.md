@@ -1,0 +1,4 @@
+Data received from emergency departments and electronic laboratory reports often lack information on demographic characteristics, such as race and ethnicity. Race and ethnicity information is most complete for COVID-19 cases and deaths. The NYC Health Department acknowledges this lack of representation in the data is inequitable, and we are committed to developing methods for ensuring more inclusive, equitable representation in the future.
+
+
+Differences in health outcomes among racial and ethnic groups are due to long-term structural racism, not biological or personal traits. Structural racism — centuries of racist policies and discriminatory practices across institutions, including government agencies, and society — prevents communities of color from accessing vital resources (such as health care, housing and food) and opportunities (such as employment and education), and negatively affects overall health and well-being.
