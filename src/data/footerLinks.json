@@ -1,0 +1,17 @@
+[
+  [
+    { "label": "Directory of City Agencies", "href": "/nyc-resources/agencies.page" },
+    { "label": "Notify NYC",                 "href": "https://a858-nycnotify.nyc.gov/notifynyc/" },
+    { "label": "NYC Mobile Apps",            "href": "/connect/mobile-applications.page" }
+  ],
+  [
+    { "label": "Contact NYC Government", "href": "/home/contact-us.page" },
+    { "label": "CityStore",              "href": "https://a856-citystore.nyc.gov/" },
+    { "label": "Maps",                   "href": "/nyc-resources/nyc-maps.page" }
+  ],
+  [
+    { "label": "City Employees",    "href": "https://a127-ess.nyc.gov" },
+    { "label": "Stay Connected",    "href": "/connect/social-media.page" },
+    { "label": "Resident Toolkit",  "href": "/nyc-resources/resident-toolkit.page" }
+  ]
+]

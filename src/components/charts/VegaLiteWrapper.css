@@ -1,0 +1,66 @@
+/* Style custom export buttons */
+.custom-vega-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 6px;
+  }
+  
+  .custom-vega-actions button {
+    background: var(--color-bg-surface, #f9fafb);
+    border: 1px solid var(--color-border, #e5e7eb);
+    color: var(--color-primary, #355E81);
+    font-family: "Inter", sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  
+  .custom-vega-actions button:hover {
+    background: var(--color-hover, #e0ecf4);
+    border-color: var(--color-primary, #355E81);
+  }
+  
+  /* Hide default Vega details menu entirely - this overrides actions={true} */
+  .vega-embed details,
+  .vega-embed details summary {
+    display: none !important; 
+  }
+
+  .vega-lite-wrapper {
+    width: 100% !important;
+  }
+  
+  /* Vega wraps charts inside a .chart-wrapper inline-block – override it */
+  .chart-wrapper {
+    width: 100% !important;
+    display: block !important;
+  }
+  
+  /* Ensure embed container stretches */
+  .vega-embed,
+  .vega-embed > div {
+    width: 100% !important;
+  }
+  
+  /* Make SVG responsive */
+  .vega-embed svg {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /*
+   * vega-tooltip's own stylesheet gives td.value `display: block`, which
+   * pulls it out of normal table layout. When a value wraps onto multiple
+   * lines (our combined "series: value of metric" tooltip lines are long),
+   * the browser can end up starving the key column's width, causing short
+   * keys like "Date" to break mid-word instead of just staying on one line.
+   * Keep keys on a single line and let the value column absorb all the
+   * wrapping instead.
+   */
+  #vg-tooltip-element table tr td.key {
+    white-space: nowrap;
+  }

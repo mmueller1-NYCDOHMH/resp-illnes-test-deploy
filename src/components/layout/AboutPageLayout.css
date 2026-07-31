@@ -1,0 +1,238 @@
+/*
+ * AboutPageLayout.css — minimal residual styles
+ *
+ * Retains only what cannot be expressed as Tailwind classes:
+ *  1. .info-card::before  — pseudo-element (accent top bar)
+ *  2. .info-card hover/focus-visible  — complex multi-property hover
+ *  3. .card-grid auto-fit grid
+ *  4. [data-theme="dark"] .markdown-body  — global dark-mode prose overrides
+ *
+ * All layout, spacing, surface cards, and rows are handled via Tailwind
+ * classes in AboutPageLayout.jsx.
+ */
+
+/* ── Accordion body open animation ───────────────────────────────────── */
+@keyframes accordionOpen {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.accordion-body {
+  animation: accordionOpen 180ms ease forwards;
+}
+
+/* ── Info card grid (auto-fit) ────────────────────────────────────────── */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--spacing-lg);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Info card ────────────────────────────────────────────────────────── */
+.info-card {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-decoration: none;
+  transition: box-shadow 0.18s, transform 0.18s, background-color 0.18s, border-color 0.18s;
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--gray-200);
+  position: relative;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+/* Accent bar at card top — thinned and lightened by default; the hover
+   border-color change is the primary color cue, this is just a quiet
+   top-of-card mark. Cards can override via --card-accent-color /
+   --card-accent-opacity (e.g. per-virus colors on the About page) to make
+   the bar a full-strength identifying color instead. */
+.info-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--card-accent-color, var(--blue-primary));
+  opacity: var(--card-accent-opacity, 0.35);
+}
+
+.info-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Hover / focus — pointer devices only */
+@media (hover: hover) and (pointer: fine) {
+  .info-card:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+    border-color: var(--blue-primary);
+    background: var(--gray-100);
+  }
+  .info-card:focus-visible {
+    outline: 3px solid color-mix(in oklab, var(--blue-primary) 60%, white);
+    outline-offset: 2px;
+  }
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .card-grid { gap: var(--spacing-md); }
+  .info-card { padding: var(--spacing-md); }
+}
+
+@media (max-width: 640px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    justify-items: center;
+  }
+  .info-card {
+    margin: 0;
+    width: 100%;
+    max-width: 340px;
+    padding: var(--spacing-md) var(--spacing-lg) var(--spacing-2xl);
+  }
+}
+
+/* ── Guide prose — "Using This Site" accordion bodies ────────────────── */
+.guide-prose {
+  color: var(--gray-700);
+  font-size: 0.94rem;
+  line-height: 1.75;
+  padding-top: 4px;
+}
+
+/* Paragraph spacing */
+.guide-prose p {
+  margin: 0 0 0.85rem;
+}
+
+.guide-prose p:last-child {
+  margin-bottom: 0;
+}
+
+/* Bold terms — subtle inline highlight */
+.guide-prose strong {
+  color: var(--gray-900);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--blue-primary) 7%, transparent);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+/* List items as styled pill rows */
+.guide-prose ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.guide-prose ul li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 9px 12px;
+  background: var(--gray-50, #f9fafb);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+.guide-prose ul li::before {
+  content: "→";
+  color: var(--blue-primary);
+  font-weight: 600;
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-size: 0.85rem;
+}
+
+/* Sub-headings within guide content */
+.guide-prose h3,
+.guide-prose h4 {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--gray-500);
+  margin: 1.4rem 0 0.5rem;
+}
+
+/* Tip / callout boxes via blockquote */
+.guide-prose blockquote {
+  margin: 0.9rem 0;
+  padding: 0.65rem 1rem;
+  background: color-mix(in srgb, var(--blue-primary) 5%, white);
+  border-left: 3px solid var(--blue-primary);
+  border-radius: 0 8px 8px 0;
+  color: var(--gray-700);
+  font-size: 0.9rem;
+}
+
+.guide-prose blockquote p {
+  margin: 0;
+}
+
+/* Inline code */
+.guide-prose code {
+  font-family: ui-monospace, "Cascadia Code", "Fira Code", monospace;
+  font-size: 0.82rem;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--gray-800);
+}
+
+/* Links */
+.guide-prose a {
+  color: var(--blue-primary);
+  text-underline-offset: 2px;
+}
+
+/* Dark mode */
+[data-theme="dark"] .guide-prose strong {
+  background: color-mix(in srgb, var(--blue-primary) 15%, transparent);
+}
+[data-theme="dark"] .guide-prose ul li {
+  background: var(--gray-800, #1f2937);
+  border-color: var(--gray-700, #374151);
+}
+[data-theme="dark"] .guide-prose blockquote {
+  background: color-mix(in srgb, var(--blue-primary) 10%, #1f2937);
+}
+[data-theme="dark"] .guide-prose code {
+  background: var(--gray-800, #1f2937);
+  border-color: var(--gray-700, #374151);
+  color: #f9fafb;
+}
+
+/* ── Dark mode: markdown-body prose overrides ─────────────────────────── */
+[data-theme="dark"] .markdown-body { color: #E5E7EB; }
+[data-theme="dark"] .markdown-body h1,
+[data-theme="dark"] .markdown-body h2,
+[data-theme="dark"] .markdown-body h3 { color: #F9FAFB; }
+[data-theme="dark"] .markdown-body a { color: #93C5FD; }
+[data-theme="dark"] .markdown-body blockquote {
+  background: #1f2937;
+  border-left-color: #374151;
+  color: #D1D5DB;
+}
+[data-theme="dark"] .markdown-body code {
+  background-color: #374151;
+  color: #F9FAFB;
+}

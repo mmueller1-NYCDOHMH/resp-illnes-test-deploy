@@ -1,0 +1,10 @@
+/*
+ * Cards.css — no longer imported.
+ *
+ * Previously retained a .info-card-icon[src*="covid-/flu-/rsv-"] filter
+ * reset for the virus icon images on the About page's provider-info cards.
+ * Those icons were removed in favor of a colored top-border accent per
+ * virus (see InfoCard.jsx accentColor prop + AboutPageLayout.css), so this
+ * rule has nothing left to target. Left as an empty file rather than
+ * deleted; safe to remove entirely on the next pass.
+ */

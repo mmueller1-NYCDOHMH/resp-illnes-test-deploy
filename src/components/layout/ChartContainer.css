@@ -1,0 +1,66 @@
+/*
+ * ChartContainer.css — minimal residual styles
+ *
+ * Retains only styles that:
+ *  1. Target child components via descendant selectors (cannot be expressed
+ *     as Tailwind classes on ChartContainer's own elements).
+ *  2. Need CSS `position: sticky` with an ancestor context.
+ *
+ * Layout, color, spacing, and sizing for ChartContainer's own elements
+ * are handled via Tailwind classes in ChartContainer.jsx.
+ */
+
+/* ── Stack mode: sidebar above chart ──────────────────────────────────────
+   When stackSidebarAbove=true, the sidebar wraps and the ToggleControls
+   inside it become a horizontal row instead of a vertical stack.           */
+
+.chart-content.stack .chart-sidebar .toggle-controls {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+/* Override full-width button rules from ToggleControls.css */
+.chart-content.stack .chart-sidebar .toggle-controls .toggle-button {
+  display: inline-flex !important;
+  width: auto !important;
+  min-width: 120px;
+  flex: 0 0 auto;
+  justify-content: center;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* ── Side mode: sticky sidebar on tablet+ ─────────────────────────────── */
+@media (min-width: 1024px) {
+  .chart-content.side .chart-sidebar {
+    position: sticky;
+    top: var(--spacing-xl);
+    align-self: flex-start;
+  }
+}
+
+/* ── Footer footnote row ──────────────────────────────────────────────── */
+.chart-footer-inner {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--footnote-gray);
+}
+
+@media (max-width: 768px) {
+  .chart-footer-inner {
+    flex-wrap: wrap;
+    white-space: normal;
+    row-gap: 4px;
+    font-size: 10px !important;
+  }
+}
