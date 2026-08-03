@@ -1,0 +1,30 @@
+/*
+ * DownloadPreviewTable.css — minimal residual styles
+ *
+ * Retains only:
+ *   .preview-table th, .preview-table td  — table cell borders, padding, whitespace
+ *   .preview-table th                     — header background + cursor
+ *   .preview-table th:hover               — header hover background
+ *   (HTML table elements cannot be styled via Tailwind classes on the <table>
+ *    wrapper alone — descendant selectors are required.)
+ *
+ * Wrapper, pagination controls, and buttons are handled via Tailwind in
+ * DownloadPreviewTable.jsx.
+ */
+
+.preview-table th,
+.preview-table td {
+  border: 1px solid #e5e7eb;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.preview-table th {
+  background-color: var(--gray-200);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.preview-table th:hover {
+  background-color: #f3f4f6;
+}

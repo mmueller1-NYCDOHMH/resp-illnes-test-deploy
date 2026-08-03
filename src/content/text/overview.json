@@ -1,0 +1,45 @@
+{
+  "overview": {
+    "title": "Respiratory Illnesses in New York City",
+
+    "updateNote": "This page is <strong>updated every Thursday</strong> with data through the previous Saturday.",
+    "edDisclaimer": "Data from EDs often lack information on demographic characteristics like race and ethnicity. We know this lack of representation in data is inequitable, and are working to ensure more inclusive, equitable representation in the future.",
+
+    "statGrid": {
+      "title": "What's happening across the city?",
+      "subtitle": "Emergency Department trends for the week ending",
+      "infoModalTitle": "About Emergency Department Data"
+    },
+
+    "statCards": {
+      "ari":   { "title": "Overall Respiratory Illness", "infoText": "COVID-19, flu, RSV, and other diagnoses" },
+      "covid": { "title": "COVID-19" },
+      "flu":   { "title": "Flu" },
+      "rsv":   { "title": "RSV" },
+      "ofEdVisits":        "of ED visits",
+      "ofHospitalizations": "of hospitalizations"
+    },
+
+    "summaryBox": {
+      "title": "<span class='dynamic-label'>Emergency Department</span> Trends for the Week Ending <span class='dynamic-label'>{date}</span>",
+      "description": "<p>We examine data for visits to the emergency department (ED visits) with a respiratory illness diagnosis. These can include COVID-19, flu, and RSV, general respiratory complaints like cough, or illnesses such as pneumonia.</p><p>ED visit data can provide a timely view of changes in respiratory virus spread but do not represent everyone with respiratory illness. For example, people who are sick and don't seek care or get care somewhere other than an emergency department are not included.</p>"
+    },
+
+    "charts": {
+      "monthlyARIChart": {
+        "title": "<span class='dynamic-label'>Percent</span> of <span class='dynamic-label'>{viewLabel}</span> {viewLabelPreposition} the <span class='dynamic-label'>Emergency Department</span> that have a <span class='dynamic-label'>Respiratory Illness Diagnosis</span>",
+        "staticSubtitle": "<p>These data show trends of people who received a respiratory illness diagnosis in an NYC emergency department and do not represent everyone with respiratory illness. For example, people who received care outside of an emergency department or who never sought care for their illness are not included.</p>"
+      }
+    },
+
+    "otherResp": {
+      "title": "<span class='dynamic-label'>What else is happening in the city?</span>",
+      "intro": "The NYC Health Department receives data from selected NYC laboratories that test for an expanded panel of circulating respiratory viruses, including those that are not required to be reported to the NYC Health Department.",
+      "listIntro": "Percent of positive test results for the week of {date}:"
+    },
+
+    "indicators": {
+      "title": "Emergency Department Trends"
+    }
+  }
+}

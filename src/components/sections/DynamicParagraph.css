@@ -1,0 +1,62 @@
+.data-summary-markdown {
+    color: var(--text-body, var(--gray-700));
+    font-size: var(--font-size-body);
+    line-height: 1.625; /* leading-relaxed, matches CHP's paragraph copy */
+}
+
+/* "Percent of positive test results for the week of <date>:" label above
+   the value grid. The date substitution stays bold since it's the one
+   dynamic value in that line. */
+.data-summary-markdown .dp-as-of {
+  margin-top: var(--spacing-md);
+  color: var(--gray-700);
+}
+.data-summary-markdown .dp-as-of-date {
+  font-weight: 600;
+}
+
+/* Plain value/label grid — replaces the old chip/badge treatment. No
+   background, border, or padding per item; hierarchy comes from weight
+   and size alone (bold value, regular label) instead of pill styling. */
+.data-summary-markdown .dp-value-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md) var(--spacing-lg);
+  margin: var(--spacing-sm) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.data-summary-markdown .dp-value-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.data-summary-markdown .dp-value {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--gray-900);
+  line-height: 1.2;
+}
+
+.data-summary-markdown .dp-label {
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  color: var(--gray-600);
+  line-height: 1.3;
+  text-transform: capitalize;
+}
+
+@media (min-width: 640px) {
+  .data-summary-markdown .dp-value-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .data-summary-markdown {
+    font-size: var(--font-size-sm);
+  }
+}

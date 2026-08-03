@@ -1,0 +1,46 @@
+/*
+ * TrendSummaryContainer.css — minimal residual styles
+ *
+ * Retains only the custom-select dropdown arrow for .trend-subtitle-select.
+ * The arrow is a background-image SVG data URI that cannot be expressed
+ * in standard Tailwind utility classes.
+ *
+ * All layout, color, spacing, and animation are handled in
+ * TrendSummaryContainer.jsx via Tailwind classes (fade-in is in index.css).
+ */
+
+.trend-subtitle-select {
+  width: auto;
+  font-weight: 600;
+  font-size: var(--trend-status-size, var(--font-size-md));
+  font-family: var(--font-body);
+  color: var(--trend-status-color, var(--gray-800));
+  background-color: var(--gray-200);
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 28px 6px 4px;
+  margin-left: 4px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236B7280'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.trend-subtitle-select:hover {
+  background-color: var(--gray-200);
+}
+
+@media (max-width: 768px) {
+  .trend-subtitle-select {
+    font-size: var(--font-size-sm);
+    margin-top: 4px;
+    padding: 6px 24px 6px 8px;
+    width: 100%;
+    max-width: 100%;
+    background-position: right 10px center;
+    background-size: 12px;
+  }
+}
