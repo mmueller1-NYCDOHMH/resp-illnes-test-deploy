@@ -15,6 +15,10 @@ import DataAsOf from "../charts/DataAsOf";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const fmt = formatShortDate;
 
+// Temporarily hides the "More info" icon on the stat grid header. Flip back
+// to true to restore it — the button and its modal are left in place.
+const SHOW_STAT_GRID_INFO_ICON = false;
+
 const toNum = (v) => {
   if (v == null) return null;
   if (typeof v === "number") return Number.isFinite(v) ? v : null;
@@ -170,18 +174,21 @@ const StatGrid = ({ data }) => {
           variant="pill"
         />
         <div className="flex items-center gap-sm flex-shrink-0">
-          <button
-            type="button"
-            className="appearance-none bg-transparent border-0 p-0 cursor-pointer flex-shrink-0 text-gray-900 hover:text-gray-600 transition-colors duration-150"
-            aria-label="More info about emergency department data"
-            onClick={() => setInfoOpen(true)}
-          >
-            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5"/>
-              <circle cx="9" cy="6" r="1" fill="currentColor"/>
-              <line x1="9" y1="9" x2="9" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
+          {/* Info icon hidden for the time being — re-enable by removing this flag */}
+          {SHOW_STAT_GRID_INFO_ICON && (
+            <button
+              type="button"
+              className="appearance-none bg-transparent border-0 p-0 cursor-pointer flex-shrink-0 text-gray-900 hover:text-gray-600 transition-colors duration-150"
+              aria-label="More info about emergency department data"
+              onClick={() => setInfoOpen(true)}
+            >
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="9" cy="6" r="1" fill="currentColor"/>
+                <line x1="9" y1="9" x2="9" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+          )}
           <button
             type="button"
             className="appearance-none bg-transparent border-0 p-0 cursor-pointer flex-shrink-0 text-gray-900 hover:text-gray-600 transition-colors duration-150 hidden sm:inline-flex items-center"
