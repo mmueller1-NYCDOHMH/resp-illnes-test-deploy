@@ -149,6 +149,13 @@ export default function useChoroplethMap({
       zoomControl: false,
       scrollWheelZoom: false,
       attributionControl: false,
+      // Leaflet's default keyboard handling pans/zooms the map on arrow
+      // keys whenever the map container has focus, which fights with the
+      // app's own arrow-key "select adjacent neighborhood" navigation
+      // (bound on window and layered on top). Disabling it here avoids
+      // both firing on the same keypress. Zoom remains reachable via the
+      // zoom control buttons, which are separately keyboard-focusable.
+      keyboard: false,
     });
     mapInstanceRef.current = map;
 

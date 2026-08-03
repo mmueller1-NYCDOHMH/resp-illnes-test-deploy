@@ -45,6 +45,7 @@ const StatCardRow = ({
   valueLabel = "Last week vs. this week",
   yAxisFormat = ".1f",
   virusKey,
+  onNewView,
 }) => {
   const theme = getThemeByTitle(title);
   const isPrimary = variant === "primary";
@@ -72,12 +73,15 @@ const StatCardRow = ({
     ? "border-b-2 border-[var(--gray-300)]"
     : !isLast ? "border-b border-[var(--gray-200)]" : "";
 
+  const trendDescId = `${virusKey || title}-trend-desc`;
+
   return (
     <>
       <div
         role="button"
         tabIndex={0}
         aria-label={`${title} stat row — click to enlarge chart`}
+        aria-describedby={trend ? trendDescId : undefined}
         onClick={() => setModalOpen(true)}
         onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setModalOpen(true)}
         className={[
@@ -163,17 +167,20 @@ const StatCardRow = ({
             className={isPrimary ? "px-sm py-xs" : "px-xs py-xs"}
           >
             {hasSeries ? (
-              <StatCardSparkline
-                series={series}
-                valueKey={valueKey}
-                view={sparklineView}
-                color={theme.chartColor || theme.color}
-                height={isPrimary ? 132 : 88}
-                tall={isPrimary}
-                showXAxis={showAxis}
-                showYAxis
-                yAxisFormat={yAxisFormat}
-              />
+              <div aria-hidden="true">
+                <StatCardSparkline
+                  series={series}
+                  valueKey={valueKey}
+                  view={sparklineView}
+                  color={theme.chartColor || theme.color}
+                  height={isPrimary ? 132 : 88}
+                  tall={isPrimary}
+                  showXAxis={showAxis}
+                  showYAxis
+                  yAxisFormat={yAxisFormat}
+                  onNewView={onNewView}
+                />
+              </div>
             ) : (
               <div
                 className="flex items-center justify-center text-sm text-gray-400"
@@ -208,7 +215,7 @@ const StatCardRow = ({
         </div>
 
         {trend && (
-          <div className="sr-only">
+          <div id={trendDescId} className="sr-only">
             {title}: {view === "hospitalizations" ? "hospitalizations" : "ED visits"}{" "}
             {dir === "up" ? "increased" : dir === "down" ? "decreased" : "remained stable"} from{" "}
             {fmt(trend.previous)}% last week to {fmt(trend.current)}% this week.

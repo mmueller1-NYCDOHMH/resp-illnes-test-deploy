@@ -18,17 +18,21 @@
  * Map lifecycle, GeoJSON fetch, feature click/hover, search suggestions,
  * and the linked bar chart's view lifecycle are shared with
  * LabCasesNeighborhoodMap via useChoroplethMap — see that file for the
- * common behavior. This component owns the parts unique to the home page:
- * fixed (non-virus) color scale, arrow-key navigation, and the pin/compare
- * mode.
+ * common behavior. Pin-to-compare (PinIcon + CompareRows pattern) is also
+ * shared in spirit with LabCasesNeighborhoodMap, just with pct/rate swapped
+ * for that map's rate/count fields. This component owns the parts unique to
+ * the home page: fixed (non-virus) color scale and arrow-key navigation.
  */
 
 import React, { useEffect, useMemo } from "react";
 import NeighborhoodSearchInput from "./NeighborhoodSearchInput";
 import VegaLiteWrapper from "../charts/VegaLiteWrapper";
 import DataAsOf from "../charts/DataAsOf";
+import AccessibleTable from "../accessibility/AccessibleTable";
 import useChoroplethMap, { WEEK_ENDING } from "./useChoroplethMap";
 import { buildChoroplethBarSpec } from "./choroplethBarSpec";
+import { makeColorScale, domainFromValues, stopsToCssGradient } from "../../utils/colorScale";
+import PinIcon from "./PinIcon";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -105,11 +109,16 @@ const CD_DATA = {
 const CD_RATE_VALUES = Object.values(CD_DATA).map((d) => d.rate);
 const AVG_RATE = +(CD_RATE_VALUES.reduce((sum, r) => sum + r, 0) / CD_RATE_VALUES.length).toFixed(1);
 
-// ── Choropleth color scale (ARI blue-teal, 5 classes) ────────────────────────
+// ── Choropleth color scale (ARI blue-teal gradient) ──────────────────────────
+// Continuous interpolation across these stops (low → high), scaled to the
+// actual min/max rate in CD_DATA — no hardcoded breakpoints, so two
+// neighborhoods a point apart never get bucketed into the same flat color.
 
-const COLOR_BREAKS = [12, 16, 20, 25]; // rate thresholds
-const COLORS       = ["#cde8ec", "#629FAA", "#387781", "#1E5A6B", "#0D3D4D"];
+const COLORS = ["#cde8ec", "#629FAA", "#387781", "#1E5A6B", "#0D3D4D"];
 const HIGHLIGHT_STROKE = "#1E40AF";
+
+const RATE_DOMAIN = domainFromValues(Object.values(CD_DATA).map((d) => d.rate));
+const GRADIENT_CSS = stopsToCssGradient(COLORS);
 
 // Fixed fill opacity across all states (default/hover/selected). Previously
 // selection bumped this to 1.0 (from 0.72), which reads as a color/value
@@ -120,13 +129,7 @@ const HIGHLIGHT_STROKE = "#1E40AF";
 // the underlying rate regardless of interaction state.
 const FILL_OPACITY = 0.82;
 
-function getColor(rate) {
-  if (rate == null) return "#e5e7eb";
-  for (let i = 0; i < COLOR_BREAKS.length; i++) {
-    if (rate < COLOR_BREAKS[i]) return COLORS[i];
-  }
-  return COLORS[COLORS.length - 1];
-}
+const getColor = makeColorScale(COLORS, RATE_DOMAIN);
 
 function featureStyle(geocode, selectedGeocode) {
   const d   = CD_DATA[geocode];
@@ -148,24 +151,6 @@ const HISTO_SPEC = buildChoroplethBarSpec([
   { field: "name", title: "Neighborhood" },
   { field: "rate", title: "Rate per 100,000" },
 ]);
-
-// ── SVG Pin icon ──────────────────────────────────────────────────────────────
-
-const PinIcon = ({ filled = false, size = 14 }) => (
-  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    {filled ? (
-      <path
-        d="M9.5 1.5a1 1 0 0 1 1 1v.94l2.06 2.06A1 1 0 0 1 13 6.5v.5a1 1 0 0 1-1 1H9.5v4l-1.5 2-1.5-2V8H4a1 1 0 0 1-1-1v-.5a1 1 0 0 1 .44-.83L5.5 3.44V2.5a1 1 0 0 1 1-1h3Z"
-        fill="currentColor"
-      />
-    ) : (
-      <path
-        d="M9.5 1.5a1 1 0 0 1 1 1v.94l2.06 2.06A1 1 0 0 1 13 6.5v.5a1 1 0 0 1-1 1H9.5v4l-1.5 2-1.5-2V8H4a1 1 0 0 1-1-1v-.5a1 1 0 0 1 .44-.83L5.5 3.44V2.5a1 1 0 0 1 1-1h3Z"
-        stroke="currentColor" strokeWidth="1.2" fill="none"
-      />
-    )}
-  </svg>
-);
 
 // ── At-a-Glance snapshot rows ─────────────────────────────────────────────────
 
@@ -370,14 +355,13 @@ const NeighborhoodMap = () => {
     []
   );
 
-  // ── Legend breaks ───────────────────────────────────────────────────────────
-  const legendItems = [
-    { label: `< ${COLOR_BREAKS[0]}`,                          color: COLORS[0] },
-    { label: `${COLOR_BREAKS[0]}–${COLOR_BREAKS[1]}`,         color: COLORS[1] },
-    { label: `${COLOR_BREAKS[1]}–${COLOR_BREAKS[2]}`,         color: COLORS[2] },
-    { label: `${COLOR_BREAKS[2]}–${COLOR_BREAKS[3]}`,         color: COLORS[3] },
-    { label: `≥ ${COLOR_BREAKS[3]}`,                          color: COLORS[4] },
-  ];
+  // Same data as chartData, sorted for the AccessibleTable fallback (the
+  // Vega bar chart is visually pre-sorted by its spec; the table needs that
+  // order explicitly since it doesn't go through Vega's sort transform).
+  const rankedTableData = useMemo(
+    () => [...chartData].sort((a, b) => b.rate - a.rate),
+    [chartData]
+  );
 
   // Comparison mode: pinned + a different CD is selected/hovered
   const compareData    = pinnedGeocode != null && pinnedGeocode !== selectedGeocode
@@ -393,9 +377,9 @@ const NeighborhoodMap = () => {
       {/* Header row — title left, search inline top-right */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-md mb-md">
         <div>
-          <h2 className="text-[var(--content-title-size)] font-heading font-semibold tracking-tight text-[var(--content-title-color,var(--gray-900))]">
+          <h3 className="text-[var(--content-title-size)] font-heading font-semibold tracking-tight text-[var(--content-title-color,var(--gray-900))]">
             What&rsquo;s happening in your neighborhood?
-          </h2>
+          </h3>
           <p className="text-md font-body text-[var(--gray-700)] mt-xs">
             Overall respiratory illness ED visits in the past week
           </p>
@@ -435,6 +419,17 @@ const NeighborhoodMap = () => {
              the column needing to scroll in the normal selected state. */}
         <div className="flex-1 min-w-0 rounded-md overflow-hidden border border-[var(--gray-200)] relative"
              style={{ height: "520px" }}>
+          {/* The map itself isn't keyboard-operable (Leaflet polygon click/hover
+              only) — this note gives keyboard and screen-reader users the actual
+              accessible path: the search box + arrow-key navigation below, and
+              the ranked data table further down. */}
+          <p id="neighborhood-map-instructions" className="sr-only">
+            Interactive map of NYC neighborhoods. This map is not operable by
+            keyboard — use the search box below to find and select a
+            neighborhood. Once a neighborhood is selected, use the arrow keys
+            to move to an adjacent one. A full ranked data table is also
+            available below the chart.
+          </p>
           {mapError ? (
             <div className="flex items-center justify-center h-full text-md font-body text-[var(--gray-600)]">
               Map could not be loaded. Please check your connection and try refreshing.
@@ -447,6 +442,7 @@ const NeighborhoodMap = () => {
           <div
             ref={mapContainerRef}
             className="w-full h-full"
+            aria-describedby="neighborhood-map-instructions"
             style={{ display: (leafletReady && geojson && !mapError) ? "block" : "none" }}
           />
 
@@ -458,18 +454,18 @@ const NeighborhoodMap = () => {
             <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide mb-1">
               Rate per 100k
             </p>
-            <div className="flex flex-col gap-[2px]">
-              {legendItems.map((item) => (
-                <div key={item.label} className="flex items-center gap-1">
-                  <span
-                    className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-2xs font-body text-[var(--gray-600)]">
-                    {item.label}
-                  </span>
-                </div>
-              ))}
+            <div
+              className="w-28 h-2 rounded-sm"
+              style={{ background: GRADIENT_CSS }}
+              aria-hidden="true"
+            />
+            <div className="flex justify-between mt-0.5">
+              <span className="text-2xs font-body text-[var(--gray-600)]">
+                {RATE_DOMAIN[0].toFixed(0)}
+              </span>
+              <span className="text-2xs font-body text-[var(--gray-600)]">
+                {RATE_DOMAIN[1].toFixed(0)}
+              </span>
             </div>
           </div>
         </div>
@@ -667,8 +663,11 @@ const NeighborhoodMap = () => {
             </div>
           </div>
 
-          {/* Vega-Lite chart */}
-          <div ref={chartAreaRef} className="flex-1 min-h-0 overflow-hidden">
+          {/* Vega-Lite chart — decorative/visual only; the equivalent ranked
+              data is exposed to screen readers via the AccessibleTable below,
+              since neither this chart's bars nor the map's polygons are
+              keyboard- or screen-reader-operable. */}
+          <div ref={chartAreaRef} className="flex-1 min-h-0 overflow-hidden" aria-hidden="true">
             <VegaLiteWrapper
               data={chartData}
               specTemplate={HISTO_SPEC}
@@ -683,6 +682,19 @@ const NeighborhoodMap = () => {
               onNewView={handleChartNewView}
             />
           </div>
+
+          {/* Non-visual fallback — full ranked list, reachable by keyboard/
+              screen reader regardless of map or chart interaction. */}
+          <AccessibleTable
+            data={rankedTableData}
+            columns={[
+              { key: "name", header: "Neighborhood", format: "text" },
+              { key: "rate", header: "Rate per 100,000", format: "number" },
+            ]}
+            caption="Neighborhood respiratory illness ED-visit rates, ranked highest to lowest"
+            srOnly
+            allowToggleForSighted
+          />
         </div>
         </div>
       </div>

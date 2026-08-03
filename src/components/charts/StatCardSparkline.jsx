@@ -23,6 +23,7 @@ const StatCardSparkline = ({
   showYAxis = true,        // set false to hide the %-axis (e.g. compact overview rows)
   yAxisFormat = ".1f",     // tick label format — e.g. ".2f" for series that need 2 decimal places
   yTickCount = 1,          // number of y-axis ticks — compact rows use 1 (just the max), expanded/modal views want more
+  onNewView,               // optional — exposes the underlying Vega view instance (e.g. for PNG/clipboard export)
 }) => {
   const data = useMemo(() => {
     if (!Array.isArray(series) || series.length < 2) return [];
@@ -208,6 +209,7 @@ const StatCardSparkline = ({
         specTemplate={specTemplate}
         rendererMode="svg"
         actions={false}
+        onNewView={onNewView}
       />
     </div>
   );
@@ -226,6 +228,7 @@ StatCardSparkline.propTypes = {
   showYAxis:      PropTypes.bool,
   yAxisFormat:    PropTypes.string,
   yTickCount:     PropTypes.number,
+  onNewView:      PropTypes.func,
 };
 
 export default StatCardSparkline;

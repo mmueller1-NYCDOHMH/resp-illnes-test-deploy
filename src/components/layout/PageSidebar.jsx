@@ -8,7 +8,7 @@ import { getThemeByTitle } from "../../utils/themeUtils";
 import { formatDate } from "../../utils/trendUtils";
 import { getDataTypeOptions } from "../../utils/dataTypeOptions";
 import LanguageToggle from "../contentUtils/LanguageToggle";
-import featuredLinks from "../../views/config/featuredLinks.json";
+import { getRankedJumpLinks } from "../../utils/rankFeaturedLinks";
 import JumpToPreview from "./JumpToPreview";
 
 // ── Virus slug map ────────────────────────────────────────────────────────────
@@ -122,6 +122,78 @@ const ExternalLinkIcon = () => (
   </svg>
 );
 
+// Small trending-up icon for the ranked-links section header — signals
+// "this list moves with the data" rather than a static nav shortcut.
+const TrendingIcon = () => (
+  <svg
+    width="13" height="13" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2.4"
+    strokeLinecap="round" strokeLinejoin="round"
+    aria-hidden="true"
+    className="flex-shrink-0"
+  >
+    <polyline points="3 17 9 11 13 15 21 7" />
+    <polyline points="14 7 21 7 21 14" />
+  </svg>
+);
+
+// Chevron that slides in on hover/focus — same affordance StatCardRow uses
+// for its "More {title} data" links, reused here so a Trending Data row
+// reads as clickable rather than as a plain info line.
+const HoverChevron = () => (
+  <svg
+    aria-hidden="true"
+    width="12" height="12" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2.5"
+    strokeLinecap="round" strokeLinejoin="round"
+    className={[
+      "absolute right-2 top-1/2 -translate-y-1/2 flex-shrink-0 text-gray-400",
+      "opacity-0 -translate-x-1 transition-all duration-150",
+      "group-hover:opacity-100 group-hover:translate-x-0",
+      "group-focus-visible:opacity-100 group-focus-visible:translate-x-0",
+    ].join(" ")}
+  >
+    <polyline points="9 6 15 12 9 18" />
+  </svg>
+);
+
+// Small colored delta badge next to a ranked "Jump to" link — reuses the
+// same up/down semantics and color tokens as TrendChip elsewhere on the
+// site (up = increased = red, since higher illness metrics read as worse).
+const CHANGE_TEXT_COLOR = {
+  up:   "text-trend-chip-inc-text",
+  down: "text-trend-chip-dec-text",
+};
+const CHANGE_ARROW = { up: "▲", down: "▼" };
+const CHANGE_WORD  = { up: "Increased", down: "Decreased" };
+
+const ChangeBadge = ({ direction, pctDisplay }) => {
+  if (!direction || !pctDisplay || !CHANGE_ARROW[direction]) return null;
+  return (
+    <span
+      title={`${CHANGE_WORD[direction]} ${pctDisplay}`}
+      className={[
+        "flex-shrink-0 text-[11px] font-semibold tabular-nums ml-2 mt-[3px] whitespace-nowrap",
+        CHANGE_TEXT_COLOR[direction] ?? "text-gray-500",
+      ].join(" ")}
+    >
+      {CHANGE_ARROW[direction]} {pctDisplay}
+    </span>
+  );
+};
+
+// Placeholder rows shown while the "Jump to" ranking is being computed —
+// same footprint as a real row so nothing jumps once data arrives.
+const JumpToSkeleton = ({ count = 4 }) => (
+  <>
+    {Array.from({ length: count }).map((_, i) => (
+      <div key={i} className="px-3 py-[5px]">
+        <div className="h-[15px] w-[70%] rounded bg-gray-200 animate-pulse" />
+      </div>
+    ))}
+  </>
+);
+
 // Compact text link — used for anchor jumps, data-page links, and resources
 const TextLink = ({ href, onClick, external, className: extraCls = "", children }) => {
   const base = [
@@ -190,6 +262,18 @@ const PageSidebar = ({
     );
   }, []);
 
+  // ── Jump-to links — ranked by biggest WoW % change, home page only ──────
+  const [jumpLinks, setJumpLinks] = useState(null); // null = still loading
+
+  useEffect(() => {
+    if (activePage !== "home") return;
+    let cancelled = false;
+    getRankedJumpLinks({ limit: 4 }).then((ranked) => {
+      if (!cancelled) setJumpLinks(ranked);
+    });
+    return () => { cancelled = true; };
+  }, [activePage]);
+
   const handleLinkEnter = useCallback((link, e) => {
     setActiveHref(link.href);
     setActiveLabel(link.label);
@@ -210,9 +294,8 @@ const PageSidebar = ({
 
         {/* ── Update note — home page top (last updated now lives at the
               bottom of the sidebar, same position as on data pages).
-              No border here — the section that follows (virus toggle or
-              Jump to) supplies its own leading divider, so adding one here
-              too would stack two HRs back to back. ── */}
+              No border here — the card below ("This week's movers") has
+              its own border/background, so an extra divider isn't needed. ── */}
         {updateNote && activePage === "home" && (
           <div className="text-sm text-gray-700 leading-snug pl-1 mb-4">
             <p
@@ -295,25 +378,65 @@ const PageSidebar = ({
           </div>
         )}
 
-        {/* ── Jump to (home page only) ── */}
+        {/* ── Trending Data (home page only) ──
+              Ranked by biggest week-over-week % change rather than
+              hand-picked, so this list reflects whatever is moving most
+              right now (see rankFeaturedLinks.js). Styled as its own card
+              — distinct from the static nav sections above — since its
+              contents change with the data, not with user selection.
+              Label and delta badge share one line (label truncates via
+              min-w-0/flex-1 if it ever runs out of room); hairline
+              dividers between rows plus a hover/focus card treatment
+              (bg, border, shadow, chevron) mark each row as clickable. ── */}
         {activePage === "home" && (
-          <>
-            <div className="border-t border-gray-200 mb-4" />
-            <div className="flex flex-col gap-px mb-4">
-              <SectionLabel>Jump to</SectionLabel>
-              {featuredLinks.map((link) => (
-                <div
-                  key={link.href}
-                  onMouseEnter={canHover ? (e) => handleLinkEnter(link, e) : undefined}
-                  onMouseLeave={canHover ? handleLinkLeave : undefined}
-                >
-                  <TextLink onClick={() => router.push(link.href)}>
-                    {link.label}
-                  </TextLink>
-                </div>
-              ))}
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-2.5 mb-4">
+            <div className="flex items-center gap-1.5 px-1 mb-1.5 text-gray-500">
+              <TrendingIcon />
+              <span className="text-xs font-semibold tracking-[0.06em] uppercase">
+                Trending Data
+              </span>
             </div>
-          </>
+            <div className="flex flex-col divide-y divide-gray-200/80">
+              {jumpLinks === null && <JumpToSkeleton />}
+              {jumpLinks?.map((link) => {
+                const theme = getThemeByTitle(link.virus);
+                return (
+                  <div
+                    key={link.href}
+                    onMouseEnter={canHover ? (e) => handleLinkEnter(link, e) : undefined}
+                    onMouseLeave={canHover ? handleLinkLeave : undefined}
+                  >
+                    <button
+                      onClick={() => router.push(link.href)}
+                      className={[
+                        "group relative flex items-start justify-between gap-2 w-full pl-3 pr-6 py-[8px] rounded-md",
+                        "border border-transparent bg-transparent text-left text-[13.5px] text-gray-600",
+                        "cursor-pointer transition-all duration-150",
+                        "hover:text-gray-900 hover:bg-white hover:border-gray-200 hover:shadow-[0_1px_4px_rgba(0,0,0,0.06)]",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
+                      ].join(" ")}
+                    >
+                      {/* No `truncate` here on purpose — a fixed-width sidebar plus a
+                          variable-width badge means truncation keeps clipping labels
+                          mid-word. Long labels wrap to a second line instead so the
+                          full name is always readable; the badge still sits beside
+                          the first line since both are top-aligned (items-start). */}
+                      <span className="flex items-start gap-2 min-w-0 flex-1">
+                        <span
+                          aria-hidden="true"
+                          className="w-[7px] h-[7px] rounded-full flex-shrink-0 mt-[5px]"
+                          style={{ backgroundColor: theme.color }}
+                        />
+                        <span className="break-words leading-snug">{link.label}</span>
+                      </span>
+                      <ChangeBadge direction={link.direction} pctDisplay={link.pctDisplay} />
+                      <HoverChevron />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {/* ── Anchor nav (about page) ── */}

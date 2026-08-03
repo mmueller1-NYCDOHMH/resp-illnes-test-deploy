@@ -219,51 +219,55 @@ const AboutPageLayout = ({ config }) => {
                           style={{ background: isOpen ? "var(--blue-primary)" : "transparent" }}
                         />
 
-                        <button
-                          aria-expanded={isOpen}
-                          aria-controls={`${item.id}-body`}
-                          onClick={() => toggle(item.id)}
-                          onMouseEnter={(e) => { if (!isOpen) e.currentTarget.style.background = "var(--gray-100)"; }}
-                          onMouseLeave={(e) => { if (!isOpen) e.currentTarget.style.background = isOpen ? "rgba(30,64,175,0.04)" : "transparent"; }}
-                          className="w-full flex items-center justify-between gap-3 py-[15px] pr-1 pl-4 border-0 rounded-[0_6px_6px_0] cursor-pointer text-left font-body text-[1.05rem] font-semibold transition-[color,background] duration-150"
-                          style={{
-                            background: isOpen ? "rgba(30,64,175,0.04)" : "transparent",
-                            color: isOpen ? "var(--blue-primary)" : "var(--gray-700)",
-                          }}
-                        >
-                          <span className="flex items-center gap-3">
-                            {isGuide && item.iconPath && (
-                              <span
-                                className="inline-flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0 transition-colors duration-150"
-                                style={{
-                                  background: isOpen ? "color-mix(in srgb, var(--blue-primary) 12%, transparent)" : "var(--gray-100)",
-                                }}
-                              >
-                                <svg
-                                  width="14" height="14"
-                                  viewBox={item.iconViewBox || "0 0 24 24"}
-                                  fill="none"
-                                  stroke={isOpen ? "var(--blue-primary)" : "var(--gray-500)"}
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  aria-hidden="true"
+                        <h3 className="m-0 p-0 leading-none">
+                          <button
+                            id={`${item.id}-trigger`}
+                            aria-expanded={isOpen}
+                            aria-controls={`${item.id}-body`}
+                            onClick={() => toggle(item.id)}
+                            onMouseEnter={(e) => { if (!isOpen) e.currentTarget.style.background = "var(--gray-100)"; }}
+                            onMouseLeave={(e) => { if (!isOpen) e.currentTarget.style.background = isOpen ? "rgba(30,64,175,0.04)" : "transparent"; }}
+                            className="w-full flex items-center justify-between gap-3 py-[15px] pr-1 pl-4 border-0 rounded-[0_6px_6px_0] cursor-pointer text-left font-body text-[1.05rem] font-semibold transition-[color,background] duration-150"
+                            style={{
+                              background: isOpen ? "rgba(30,64,175,0.04)" : "transparent",
+                              color: isOpen ? "var(--blue-primary)" : "var(--gray-700)",
+                            }}
+                          >
+                            <span className="flex items-center gap-3">
+                              {isGuide && item.iconPath && (
+                                <span
+                                  className="inline-flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0 transition-colors duration-150"
+                                  style={{
+                                    background: isOpen ? "color-mix(in srgb, var(--blue-primary) 12%, transparent)" : "var(--gray-100)",
+                                  }}
                                 >
-                                  {item.iconPath.split(" M").map((seg, i) => (
-                                    <path key={i} d={i === 0 ? seg : `M${seg}`} />
-                                  ))}
-                                </svg>
-                              </span>
-                            )}
-                            {title}
-                          </span>
-                          <ChevronIcon open={isOpen} />
-                        </button>
+                                  <svg
+                                    width="14" height="14"
+                                    viewBox={item.iconViewBox || "0 0 24 24"}
+                                    fill="none"
+                                    stroke={isOpen ? "var(--blue-primary)" : "var(--gray-500)"}
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    aria-hidden="true"
+                                  >
+                                    {item.iconPath.split(" M").map((seg, i) => (
+                                      <path key={i} d={i === 0 ? seg : `M${seg}`} />
+                                    ))}
+                                  </svg>
+                                </span>
+                              )}
+                              {title}
+                            </span>
+                            <ChevronIcon open={isOpen} />
+                          </button>
+                        </h3>
 
                         {isOpen && (
                           <div
                             id={`${item.id}-body`}
                             role="region"
+                            aria-labelledby={`${item.id}-trigger`}
                             className="accordion-body pl-4 pb-5 pt-3"
                           >
                             <MarkdownRenderer

@@ -15,8 +15,10 @@
  * Map lifecycle, GeoJSON fetch, feature click/hover, search suggestions,
  * and the linked bar chart's view lifecycle are shared with NeighborhoodMap
  * (the home page map) via useChoroplethMap — see that file for the common
- * behavior. This component owns the parts unique to data pages: per-virus
- * color scales and the section-title-in-header layout.
+ * behavior. Pin-to-compare (PinIcon + CompareRows) mirrors NeighborhoodMap's
+ * implementation, swapped to this map's rate/count fields. This component
+ * owns the parts unique to data pages: per-virus color scales and the
+ * section-title-in-header layout.
  */
 
 import React, { useCallback, useMemo } from "react";
@@ -26,6 +28,8 @@ import DataAsOf from "../charts/DataAsOf";
 import { tokens } from "../../styles/tokens";
 import useChoroplethMap, { WEEK_ENDING } from "./useChoroplethMap";
 import { buildChoroplethBarSpec } from "./choroplethBarSpec";
+import { makeColorScale, domainFromValues, stopsToCssGradient } from "../../utils/colorScale";
+import PinIcon from "./PinIcon";
 
 const CITYWIDE_RATE = 9.8; // cases per 100,000 — placeholder
 
@@ -94,8 +98,9 @@ const LAB_CD_DATA = {
 };
 
 // ── Color scales per virus ────────────────────────────────────────────────────
+// Each array is a set of continuous gradient stops (low → high) — values are
+// interpolated smoothly across them rather than snapped into fixed bins.
 
-const COLOR_BREAKS = [8, 11, 14, 18];
 const HIGHLIGHT_STROKE = "#1a1a1a";
 
 const VIRUS_COLORS = {
@@ -124,6 +129,11 @@ const VIRUS_COLORS = {
 
 const FALLBACK_COLORS = ["#c6dbef", "#6baed6", "#2171b5", "#08519c", "#08306b"];
 
+// Shared across all viruses since they currently all read from the same
+// placeholder LAB_CD_DATA — swap to a per-virus domain once each virus has
+// its own real rate data.
+const RATE_DOMAIN = domainFromValues(Object.values(LAB_CD_DATA).map((d) => d.rate));
+
 // Fixed fill opacity across all states (default/hover/selected). Previously
 // selection bumped this to 1.0 (from 0.72), which reads as a color/value
 // change rather than a "this one is selected" cue — a district could look
@@ -138,11 +148,7 @@ function getColors(virus) {
 }
 
 function getColor(rate, colors) {
-  if (rate == null) return "#e5e7eb";
-  for (let i = 0; i < COLOR_BREAKS.length; i++) {
-    if (rate < COLOR_BREAKS[i]) return colors[i];
-  }
-  return colors[colors.length - 1];
+  return makeColorScale(colors, RATE_DOMAIN)(rate);
 }
 
 function featureStyle(geocode, selectedGeocode, colors) {
@@ -207,6 +213,79 @@ function SnapshotRows({ data }) {
   );
 }
 
+// ── Comparison rows (side-by-side with delta) ─────────────────────────────────
+// Same pattern as NeighborhoodMap's CompareRows, with rate/count in place of
+// that map's pct/rate fields.
+
+function CompareRows({ pinned, current }) {
+  const [hoveredRow, setHoveredRow] = React.useState(null);
+
+  const metrics = [
+    {
+      key:    "rate",
+      label:  "Cases / 100k",
+      aVal:   pinned.rate,
+      bVal:   current.rate,
+      delta:  +(current.rate - pinned.rate).toFixed(1),
+      suffix: "",
+    },
+    {
+      key:    "count",
+      label:  "Est. weekly cases",
+      aVal:   pinned.count,
+      bVal:   current.count,
+      delta:  current.count - pinned.count,
+      suffix: "",
+    },
+  ];
+
+  return (
+    <div className="px-3 py-1.5">
+      {/* Column headers */}
+      <div className="flex text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide pb-1">
+        <span className="flex-[2] min-w-0" />
+        <span className="w-16 text-right text-amber-700">Pinned</span>
+        <span className="w-9 text-center">Δ</span>
+        <span className="w-16 text-right text-blue-600">Selected</span>
+      </div>
+
+      {metrics.map(({ key, label, aVal, bVal, delta, suffix }) => {
+        const isHovered = hoveredRow === key;
+        const positive  = delta > 0;
+        const deltaStr  = `${positive ? "+" : ""}${delta}${suffix}`;
+        const dColor    = delta === 0 ? "var(--gray-600)" : positive ? "#b91c1c" : "#065f46";
+
+        return (
+          <div
+            key={key}
+            className="flex items-center gap-1 py-1 rounded transition-colors duration-100"
+            style={{ backgroundColor: isHovered ? "var(--gray-100)" : "transparent", cursor: "text", userSelect: "text" }}
+            onMouseEnter={() => setHoveredRow(key)}
+            onMouseLeave={() => setHoveredRow(null)}
+          >
+            <span className="flex-[2] text-xs font-body text-[var(--gray-600)] min-w-0 truncate">{label}</span>
+            <span className="w-16 text-right text-xs font-semibold font-body tabular-nums text-amber-700">{aVal}</span>
+            <span
+              className="w-9 text-center text-2xs font-semibold font-body tabular-nums transition-opacity duration-100"
+              style={{ color: dColor, opacity: isHovered ? 1 : 0.85 }}
+            >
+              {deltaStr}
+            </span>
+            <span className="w-16 text-right text-xs font-semibold font-body tabular-nums text-blue-700">{bVal}</span>
+          </div>
+        );
+      })}
+      <div
+        className="pt-1 pb-0.5 flex justify-between gap-2"
+        style={{ color: "var(--footnote-gray)" }}
+      >
+        <p className="text-2xs font-body">Δ = selected − pinned</p>
+        <p className="text-2xs font-body whitespace-nowrap"><DataAsOf date={WEEK_ENDING} /></p>
+      </div>
+    </div>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const LabCasesNeighborhoodMap = ({ virus = "Flu", sectionTitle }) => {
@@ -240,6 +319,9 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu", sectionTitle }) => {
     logPrefix: "[LabCasesNeighborhoodMap]",
   });
 
+  const [pinnedGeocode, setPinnedGeocode] = React.useState(null);
+  const [pinHovered, setPinHovered]       = React.useState(false);
+
   // ── Derived ───────────────────────────────────────────────────────────────
 
   const selectedData   = selectedGeocode != null ? LAB_CD_DATA[selectedGeocode] : null;
@@ -252,6 +334,12 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu", sectionTitle }) => {
       : selectedData.rate < CITYWIDE_RATE ? "less than"
       : "equal to"
     : null;
+
+  // Comparison mode: pinned + a different CD is selected/hovered — same
+  // pattern as NeighborhoodMap's pin-to-compare.
+  const compareData   = pinnedGeocode != null && pinnedGeocode !== selectedGeocode
+    ? LAB_CD_DATA[pinnedGeocode] : null;
+  const inCompareMode = Boolean(compareData && selectedData);
 
   // Vega-Lite chart data — static aside from the base per-rate color, which
   // depends on the virus's color scale. Selected/hover highlighting is
@@ -271,13 +359,7 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu", sectionTitle }) => {
     [colors]
   );
 
-  const legendItems = [
-    { label: `< ${COLOR_BREAKS[0]}`,                    color: colors[0] },
-    { label: `${COLOR_BREAKS[0]}–${COLOR_BREAKS[1]}`,   color: colors[1] },
-    { label: `${COLOR_BREAKS[1]}–${COLOR_BREAKS[2]}`,   color: colors[2] },
-    { label: `${COLOR_BREAKS[2]}–${COLOR_BREAKS[3]}`,   color: colors[3] },
-    { label: `≥ ${COLOR_BREAKS[3]}`,                    color: colors[4] },
-  ];
+  const gradientCss = useMemo(() => stopsToCssGradient(colors), [colors]);
 
   // ── Render ────────────────────────────────────────────────────────────────
   // Same layout as NeighborhoodMap on the home page: title left / search
@@ -359,18 +441,18 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu", sectionTitle }) => {
             <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide mb-1">
               Cases per 100k
             </p>
-            <div className="flex flex-col gap-[2px]">
-              {legendItems.map((item) => (
-                <div key={item.label} className="flex items-center gap-1">
-                  <span
-                    className="inline-block w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-2xs font-body text-[var(--gray-600)]">
-                    {item.label}
-                  </span>
-                </div>
-              ))}
+            <div
+              className="w-28 h-2 rounded-sm"
+              style={{ background: gradientCss }}
+              aria-hidden="true"
+            />
+            <div className="flex justify-between mt-0.5">
+              <span className="text-2xs font-body text-[var(--gray-600)]">
+                {RATE_DOMAIN[0].toFixed(0)}
+              </span>
+              <span className="text-2xs font-body text-[var(--gray-600)]">
+                {RATE_DOMAIN[1].toFixed(0)}
+              </span>
             </div>
           </div>
         </div>
@@ -400,8 +482,15 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu", sectionTitle }) => {
               the chart back up under the cursor, mouseover again — a
               genuine hover/layout feedback loop. */}
           <div
-            className="flex-shrink-0 grid min-h-[170px] rounded-lg border overflow-hidden transition-colors duration-200"
-            style={{ borderColor: showHoverLayer ? "#bfdbfe" : "var(--gray-300)" }}
+            className="flex-shrink-0 grid min-h-[170px] rounded-lg overflow-hidden transition-all duration-200"
+            style={{
+              border: inCompareMode
+                ? "1.5px solid #f59e0b"
+                : showHoverLayer
+                ? "1.5px solid #93c5fd"
+                : "1px solid var(--gray-300)",
+              boxShadow: inCompareMode ? "0 0 0 3px #fef3c766" : "none",
+            }}
           >
             {/* Hover layer */}
             <div
@@ -430,15 +519,71 @@ const LabCasesNeighborhoodMap = ({ virus = "Flu", sectionTitle }) => {
             >
               {selectedData ? (
                 <>
-                  <div className="px-3 py-2.5 border-b border-[var(--gray-200)] bg-[var(--gray-100)]">
-                    <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-widest mb-0.5">
-                      At a Glance
-                    </p>
-                    <p className="text-sm font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
-                      {selectedData.name}
-                    </p>
+                  <div className="px-3 py-2.5 border-b border-[var(--gray-200)] bg-[var(--gray-100)] flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-widest mb-0.5">
+                        {inCompareMode ? "Comparing" : "At a Glance"}
+                      </p>
+                      <p className="text-sm font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
+                        {selectedData.name}
+                      </p>
+                    </div>
+                    {/* Pin button */}
+                    {(() => {
+                      const isPinned = pinnedGeocode === selectedGeocode;
+                      return (
+                        <button
+                          onClick={() => setPinnedGeocode(isPinned ? null : selectedGeocode)}
+                          onMouseEnter={() => setPinHovered(true)}
+                          onMouseLeave={() => setPinHovered(false)}
+                          className="flex-shrink-0 flex items-center gap-1 rounded px-1.5 py-1 transition-all duration-150"
+                          style={{
+                            cursor: "pointer",
+                            backgroundColor: isPinned
+                              ? "#fef3c7"
+                              : pinHovered ? "var(--gray-200)" : "transparent",
+                            color: isPinned ? "#b45309" : pinHovered ? "var(--gray-700)" : "var(--gray-600)",
+                            border: isPinned ? "1px solid #fde68a" : "1px solid transparent",
+                          }}
+                          aria-label={isPinned ? "Unpin neighborhood" : "Pin for comparison"}
+                          title={isPinned ? "Unpin" : "Pin to compare with another neighborhood"}
+                        >
+                          <PinIcon filled={isPinned} size={12} />
+                          <span className="text-2xs font-semibold font-body whitespace-nowrap">
+                            {isPinned ? "Pinned" : "Pin to compare"}
+                          </span>
+                        </button>
+                      );
+                    })()}
                   </div>
-                  <SnapshotRows data={selectedData} />
+
+                  {/* Either the normal single-neighborhood snapshot, or —
+                      while comparing — the delta table instead of both
+                      stacked (the "Selected" column already covers the
+                      current stats, so showing SnapshotRows too was pure
+                      duplication). */}
+                  {inCompareMode ? (
+                    <>
+                      <div className="px-3 pt-2 pb-1 flex items-center justify-between gap-2">
+                        <p className="text-2xs font-body text-[var(--gray-600)] truncate">
+                          vs <span className="font-semibold text-amber-700">{compareData.name}</span>
+                        </p>
+                        <button
+                          onClick={() => setPinnedGeocode(null)}
+                          className="flex-shrink-0 text-[var(--gray-600)] hover:text-[var(--gray-700)] transition-colors text-2xs leading-none"
+                          style={{ cursor: "pointer" }}
+                          aria-label="Exit comparison"
+                          title="Exit comparison"
+                        >✕</button>
+                      </div>
+                      <CompareRows
+                        pinned={compareData}
+                        current={previewData ?? selectedData}
+                      />
+                    </>
+                  ) : (
+                    <SnapshotRows data={selectedData} />
+                  )}
                 </>
               ) : (
                 <div className="px-3 py-4 bg-[var(--gray-100)]">

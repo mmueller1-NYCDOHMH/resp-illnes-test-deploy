@@ -1,10 +1,15 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import StatCardRow, { ROW_GRID_COLS } from "../StatCardRow";
 import ToggleGroup from "../controls/ToggleGroup";
 import InfoModal from "../popups/InfoModal";
+import DownloadPanel from "../popups/DownloadPanel";
 import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
 import { resolveHTMLLabels, getText } from "../../utils/contentUtils";
-import { formatShortDate } from "../../utils/trendUtils";
+import { formatShortDate, getAbsoluteTrend } from "../../utils/trendUtils";
+import { getThemeByTitle } from "../../utils/themeUtils";
+import { flattenSectionData } from "../../utils/sectionDownload";
+import { downloadCSV, buildDownloadName } from "../../utils/downloadUtils";
+import { downloadStatGridImage, copyStatGridImageToClipboard } from "../../utils/exportStatGridImage";
 import DataAsOf from "../charts/DataAsOf";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -33,6 +38,8 @@ const seriesKeysForLabel = (label) => {
 const StatGrid = ({ data }) => {
   const [view, setView] = useState("visits");
   const [infoOpen, setInfoOpen] = useState(false);
+  const [downloadOpen, setDownloadOpen] = useState(false);
+  const vegaViewRefs = useRef({});
 
   if (!data) return null;
 
@@ -74,6 +81,63 @@ const StatGrid = ({ data }) => {
 
   const columnHeaderLabel = view === "hospitalizations" ? "Percent of hospitalizations" : "Percent of ED visits";
 
+  // ── Capture each row's live Vega view (keyed by virus) for PNG/clipboard export ──
+  const handleNewView = (key) => (vegaView) => {
+    vegaViewRefs.current[key] = vegaView;
+  };
+
+  // ── Export helpers ──────────────────────────────────────────────────────
+  const orderedCards = [primary, ...rest].filter(Boolean);
+
+  const handleDownloadCSV = () => {
+    const csvData = statCards.reduce((acc, { title, visitSeries, hospitalizationSeries }) => {
+      acc[`${title} visits`] = visitSeries;
+      acc[`${title} hospitalizations`] = hospitalizationSeries;
+      return acc;
+    }, {});
+    const rows = flattenSectionData(csvData);
+    if (!rows.length) return;
+    const fileName = buildDownloadName({
+      virus: "overview",
+      category: "stat-grid",
+      date: baseDate,
+      ext: "csv",
+      includeMetric: false,
+    });
+    downloadCSV(rows, fileName);
+  };
+
+  const buildImageExportRows = () =>
+    orderedCards.map(({ key, title, visitSeries, hospitalizationSeries }, idx) => {
+      const series = view === "visits" ? visitSeries : hospitalizationSeries;
+      const theme = getThemeByTitle(title);
+      return {
+        title,
+        color: theme.chartColor || theme.color,
+        isPrimary: idx === 0,
+        trend: getAbsoluteTrend(series, "value", title),
+        view: vegaViewRefs.current[key],
+      };
+    });
+
+  const imageExportOptions = () => ({
+    title: sectionTitle,
+    subtitle: `${sectionSubtitle} ${formattedDate}`,
+  });
+
+  const handleDownloadPNG = () => {
+    const fileName = buildDownloadName({
+      virus: "overview",
+      category: "stat-grid",
+      date: baseDate,
+      ext: "png",
+      includeMetric: false,
+    }).replace(/\.png$/, "");
+    downloadStatGridImage(buildImageExportRows(), { fileName, ...imageExportOptions() });
+  };
+
+  const handleCopyImage = () => copyStatGridImageToClipboard(buildImageExportRows(), imageExportOptions());
+
   return (
     <div className="stat-grid flex flex-col gap-xs w-full overflow-hidden">
 
@@ -105,18 +169,34 @@ const StatGrid = ({ data }) => {
           ariaLabel="Toggle between visits and hospitalizations"
           variant="pill"
         />
-        <button
-          type="button"
-          className="appearance-none bg-transparent border-0 p-0 cursor-pointer flex-shrink-0 text-gray-900 hover:text-gray-600 transition-colors duration-150"
-          aria-label="More info about emergency department data"
-          onClick={() => setInfoOpen(true)}
-        >
-          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5"/>
-            <circle cx="9" cy="6" r="1" fill="currentColor"/>
-            <line x1="9" y1="9" x2="9" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-        </button>
+        <div className="flex items-center gap-sm flex-shrink-0">
+          <button
+            type="button"
+            className="appearance-none bg-transparent border-0 p-0 cursor-pointer flex-shrink-0 text-gray-900 hover:text-gray-600 transition-colors duration-150"
+            aria-label="More info about emergency department data"
+            onClick={() => setInfoOpen(true)}
+          >
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5"/>
+              <circle cx="9" cy="6" r="1" fill="currentColor"/>
+              <line x1="9" y1="9" x2="9" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="appearance-none bg-transparent border-0 p-0 cursor-pointer flex-shrink-0 text-gray-900 hover:text-gray-600 transition-colors duration-150 hidden sm:inline-flex items-center"
+            aria-label="Download or copy this chart"
+            aria-haspopup="dialog"
+            aria-expanded={downloadOpen}
+            aria-controls="stat-grid-download-modal"
+            onClick={() => setDownloadOpen(true)}
+          >
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 3v8M6 8l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3 13h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* ── Unified stat card: one shared header, ORI heavy row, 3 compact rows ── */}
@@ -144,6 +224,7 @@ const StatGrid = ({ data }) => {
             valueLabel="Last week vs. this week"
             yAxisFormat={primary.key === "rsv" ? ".2f" : ".1f"}
             virusKey={primary.key}
+            onNewView={handleNewView(primary.key)}
           />
         )}
 
@@ -165,6 +246,7 @@ const StatGrid = ({ data }) => {
             valueLabel="Last week vs. this week"
             yAxisFormat={key === "rsv" ? ".2f" : ".1f"}
             virusKey={key}
+            onNewView={handleNewView(key)}
           />
         ))}
       </div>
@@ -202,6 +284,28 @@ const StatGrid = ({ data }) => {
           <MarkdownRenderer
             filePath="content/modals/emergency-dept-overview.md"
             showTitle={false}
+          />
+        }
+      />
+
+      {/* ── Export & Share modal ── */}
+      <InfoModal
+        id="stat-grid-download-modal"
+        isOpen={downloadOpen}
+        onClose={() => setDownloadOpen(false)}
+        title="Export &amp; Share"
+        maxContentHeight="42vh"
+        content={
+          <DownloadPanel
+            onConfirm={() => {
+              handleDownloadCSV();
+              setDownloadOpen(false);
+            }}
+            onDownloadPNG={() => {
+              handleDownloadPNG();
+              setDownloadOpen(false);
+            }}
+            onCopyImage={handleCopyImage}
           />
         }
       />

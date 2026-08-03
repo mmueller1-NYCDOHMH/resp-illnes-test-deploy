@@ -160,10 +160,18 @@ export default function JumpToPreview({ activeHref, activeLabel, activeLinkMeta,
     };
   }, [anchorEl, activeHref]);
 
+  // Some links (e.g. wastewater) are keyed by `pathogen` instead of
+  // `metric`/`submetric` — the CSV backing them has a different shape
+  // (date, pathogen, value) with no metric/submetric/display columns.
+  const buildCacheKey = (meta) =>
+    meta?.pathogen
+      ? `${meta.dataFile}::pathogen::${meta.pathogen}`
+      : `${meta.dataFile}::${meta.metric}::${meta.submetric ?? ''}`;
+
   // ── Data fetching ────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!activeLinkMeta?.dataFile || !activeLinkMeta?.metric) return;
-    const key = `${activeLinkMeta.dataFile}::${activeLinkMeta.metric}::${activeLinkMeta.submetric ?? ''}`;
+    if (!activeLinkMeta?.dataFile || !(activeLinkMeta?.metric || activeLinkMeta?.pathogen)) return;
+    const key = buildCacheKey(activeLinkMeta);
     if (chartCache.current[key]) return; // already loaded
 
     fetch(activeLinkMeta.dataFile)
@@ -172,8 +180,10 @@ export default function JumpToPreview({ activeHref, activeLabel, activeLinkMeta,
         const rows = parseCSV(text);
         const filtered = rows
           .filter(r =>
-            r.metric === activeLinkMeta.metric &&
-            (!activeLinkMeta.submetric || r.submetric === activeLinkMeta.submetric)
+            activeLinkMeta.pathogen
+              ? r.pathogen === activeLinkMeta.pathogen
+              : r.metric === activeLinkMeta.metric &&
+                (!activeLinkMeta.submetric || r.submetric === activeLinkMeta.submetric)
           )
           .slice(-52); // last 52 weeks
         chartCache.current[key] = filtered;
@@ -188,15 +198,22 @@ export default function JumpToPreview({ activeHref, activeLabel, activeLinkMeta,
   const theme   = getThemeByTitle(activeLinkMeta?.virus ?? '');
   const color   = theme.chartColor ?? theme.color ?? '#1E40AF';
 
-  const cacheKey = activeLinkMeta?.dataFile && activeLinkMeta?.metric
-    ? `${activeLinkMeta.dataFile}::${activeLinkMeta.metric}::${activeLinkMeta.submetric ?? ''}`
+  const cacheKey = activeLinkMeta?.dataFile && (activeLinkMeta?.metric || activeLinkMeta?.pathogen)
+    ? buildCacheKey(activeLinkMeta)
     : null;
   const series    = cacheKey ? chartCache.current[cacheKey] : null;
   const hasData   = series && series.length > 1;
 
-  // Latest value label (e.g. "0.82%") shown in the header
-  const latestRaw   = hasData ? parseFloat(series.at(-1).value) : null;
-  const latestLabel = Number.isFinite(latestRaw) ? `${latestRaw.toFixed(2)}%` : null;
+  // Latest value label shown in the header — formatted according to the
+  // row's own `display` column ("Percent" → "0.82%", "Number" → "2,221"),
+  // not assumed to always be a percent. Wastewater rows have no `display`
+  // column at all, so they fall back to a plain formatted number.
+  const latestRow    = hasData ? series.at(-1) : null;
+  const latestRaw     = latestRow ? parseFloat(latestRow.value) : null;
+  const latestIsPercent = latestRow?.display === 'Percent';
+  const latestLabel = Number.isFinite(latestRaw)
+    ? (latestIsPercent ? `${latestRaw.toFixed(2)}%` : latestRaw.toLocaleString('en-US'))
+    : null;
 
   return createPortal(
     <div
