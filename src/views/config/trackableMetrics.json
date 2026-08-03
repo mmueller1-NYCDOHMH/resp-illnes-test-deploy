@@ -1,0 +1,96 @@
+[
+  {
+    "label": "COVID ED Visits",
+    "href": "/data/covid-19#ed-trends",
+    "virus": "COVID-19",
+    "description": "Weekly % of ED visits with a COVID-19 diagnosis",
+    "dataFile": "/data/emergencyDeptData.csv",
+    "metric": "COVID-19 visits",
+    "submetric": "Overall"
+  },
+  {
+    "label": "COVID Lab Cases",
+    "href": "/data/covid-19?dataType=lab#case-reports-season",
+    "virus": "COVID-19",
+    "description": "Lab-confirmed COVID-19 cases reported by season",
+    "dataFile": "/data/caseData.csv",
+    "metric": "COVID-19 cases",
+    "submetric": "Total"
+  },
+  {
+    "label": "COVID Deaths",
+    "href": "/data/covid-19?dataType=death#deaths-season",
+    "virus": "COVID-19",
+    "description": "Confirmed COVID-19 deaths by season",
+    "dataFile": "/data/deathData.csv",
+    "metric": "COVID-19 deaths",
+    "submetric": "Total"
+  },
+  {
+    "label": "COVID Wastewater",
+    "href": "/data/covid-19?dataType=wastewater#wastewater-covid",
+    "virus": "COVID-19",
+    "description": "Normalized SARS-CoV-2 viral load in wastewater",
+    "dataFile": "/data/wastewaterData.csv",
+    "pathogen": "SC2"
+  },
+  {
+    "label": "Flu ED Visits",
+    "href": "/data/flu#ed-trends",
+    "virus": "Flu",
+    "description": "Weekly % of ED visits with an influenza diagnosis",
+    "dataFile": "/data/emergencyDeptData.csv",
+    "metric": "Influenza visits",
+    "submetric": "Overall"
+  },
+  {
+    "label": "Flu Lab Cases",
+    "href": "/data/flu?dataType=lab#case-reports-season",
+    "virus": "Flu",
+    "description": "Lab-confirmed influenza cases reported by season",
+    "dataFile": "/data/caseData.csv",
+    "metric": "Influenza cases",
+    "submetric": "Total"
+  },
+  {
+    "label": "Flu Wastewater",
+    "href": "/data/flu?dataType=wastewater#wastewater-flu",
+    "virus": "Flu",
+    "description": "Normalized influenza A viral load in wastewater",
+    "dataFile": "/data/wastewaterData.csv",
+    "pathogen": "Flu A"
+  },
+  {
+    "label": "RSV ED Visits",
+    "href": "/data/rsv#ed-trends",
+    "virus": "RSV",
+    "description": "Weekly % of ED visits with an RSV diagnosis",
+    "dataFile": "/data/emergencyDeptData.csv",
+    "metric": "RSV visits",
+    "submetric": "Overall"
+  },
+  {
+    "label": "RSV Lab Cases",
+    "href": "/data/rsv?dataType=lab#case-reports-season",
+    "virus": "RSV",
+    "description": "Lab-confirmed RSV cases reported by season",
+    "dataFile": "/data/caseData.csv",
+    "metric": "RSV cases",
+    "submetric": "Total"
+  },
+  {
+    "label": "RSV Wastewater",
+    "href": "/data/rsv?dataType=wastewater#wastewater-rsv",
+    "virus": "RSV",
+    "description": "Normalized RSV viral load in wastewater",
+    "dataFile": "/data/wastewaterData.csv",
+    "pathogen": "RSV"
+  },
+  {
+    "label": "Lab Cases by Neighborhood",
+    "href": "/data/covid-19?dataType=lab#case-reports-neighborhood",
+    "virus": "COVID-19",
+    "description": "COVID-19 cases mapped by NYC neighborhood",
+    "dataFile": null
+  }
+]
