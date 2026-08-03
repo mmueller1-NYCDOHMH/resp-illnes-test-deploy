@@ -10,16 +10,10 @@ Each stat card shows a colored chip based on week-over-week change:
 
 The percentages shown (e.g. *1.23% → 0.98%*) are the prior week and current week values respectively, expressed as a share of all ED visits or hospitalizations.
 
-#### Year-over-year comparison
-
-A smaller chip on some cards compares this week to the same week one year ago — for example, *↓ 42% vs. last year*. This helps put current levels in historical context.
-
-> Levels that look "high" week-over-week may still be well below the same period last year — check both chips together for the full picture.
-
 #### The neighborhood map
 
-The map on the home page shows lab-confirmed case rates by NYC neighborhood tabulation area (NTA). **Darker shading = higher case rates.** It reflects the most recent available data period.
+The map on the home page shows overall respiratory illness ED-visit rates by NYC Community District. **Darker shading = higher rates.** Click or search for a district to see its rate per 100,000 residents alongside the citywide figure, pin one district and select another to compare them side by side, and use the arrow keys to move between neighboring districts once one is selected. A separate neighborhood map for lab-confirmed cases appears further down each virus's Data page.
 
 #### Axis scales
 
-Charts use consistent y-axis scales within a data type so you can visually compare levels across viruses or time periods at a glance.
+By default, each chart's y-axis scales to fit its own data so small changes stay visible. On charts broken out by group (like age or race/ethnicity), a **Scale to group / Same scale** toggle above the chart lets you switch to a shared y-axis when you want to compare levels across groups directly.

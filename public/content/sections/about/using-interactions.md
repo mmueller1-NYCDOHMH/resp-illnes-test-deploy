@@ -13,13 +13,13 @@ Hospitalizations are a subset of visits and show lower percentages. The toggle u
 
 #### Hovering charts
 
-Hovering over a chart line reveals a **tooltip** with the exact date and value. On the neighborhood map, hovering shows the neighborhood name and case rate.
+Hovering over a chart line reveals a **tooltip** with the exact date and value. On a neighborhood map, hovering shows that district's name and rate.
 
-#### Filtering by demographics
+#### Viewing data by demographic group
 
-Where available, a **group selector** above the chart lets you filter by age group, sex, or race/ethnicity. The selector only appears when demographic data is available for that metric.
+Where available, lab-reported case data includes dedicated chart sections for **age group** and **race/ethnicity** (use the sidebar's Jump to links to go straight to one). Each shows every group side by side, with a toggle to switch between scaling each group's chart to its own range or sharing one scale across all of them.
 
-> Not all data sources include demographic breakdowns — ED visit data in particular often lacks race/ethnicity information.
+> Not all data sources include demographic breakdowns — ED visit data, for instance, is broken out by age but not by race/ethnicity.
 
 #### Sharing a deep link
 
