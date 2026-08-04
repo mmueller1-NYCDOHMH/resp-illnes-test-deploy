@@ -33,6 +33,7 @@ import useChoroplethMap, { WEEK_ENDING } from "./useChoroplethMap";
 import { buildChoroplethBarSpec } from "./choroplethBarSpec";
 import { makeColorScale, domainFromValues, stopsToCssGradient } from "../../utils/colorScale";
 import PinIcon from "./PinIcon";
+import CompareRows from "./CompareRows";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -203,77 +204,6 @@ function SnapshotRows({ data }) {
         <p className="text-2xs font-body whitespace-nowrap"><DataAsOf date={WEEK_ENDING} /></p>
       </div>
     </>
-  );
-}
-
-// ── Comparison rows (side-by-side with delta) ─────────────────────────────────
-
-function CompareRows({ pinned, current }) {
-  const [hoveredRow, setHoveredRow] = React.useState(null);
-
-  const metrics = [
-    {
-      key:    "pct",
-      label:  "% of ED visits",
-      aVal:   `${pinned.pct}%`,
-      bVal:   `${current.pct}%`,
-      delta:  +(current.pct - pinned.pct).toFixed(1),
-      suffix: " pts",
-    },
-    {
-      key:    "rate",
-      label:  "Rate / 100k",
-      aVal:   pinned.rate,
-      bVal:   current.rate,
-      delta:  +(current.rate - pinned.rate).toFixed(1),
-      suffix: "",
-    },
-  ];
-
-  return (
-    <div className="px-3 py-1.5">
-      {/* Column headers */}
-      <div className="flex text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide pb-1">
-        <span className="flex-[2] min-w-0" />
-        <span className="w-16 text-right text-amber-700">Pinned</span>
-        <span className="w-9 text-center">Δ</span>
-        <span className="w-16 text-right text-blue-600">Selected</span>
-      </div>
-
-      {metrics.map(({ key, label, aVal, bVal, delta, suffix }) => {
-        const isHovered = hoveredRow === key;
-        const positive  = delta > 0;
-        const deltaStr  = `${positive ? "+" : ""}${delta}${suffix}`;
-        const dColor    = delta === 0 ? "var(--gray-600)" : positive ? "#b91c1c" : "#065f46";
-
-        return (
-          <div
-            key={key}
-            className="flex items-center gap-1 py-1 rounded transition-colors duration-100"
-            style={{ backgroundColor: isHovered ? "var(--gray-100)" : "transparent", cursor: "text", userSelect: "text" }}
-            onMouseEnter={() => setHoveredRow(key)}
-            onMouseLeave={() => setHoveredRow(null)}
-          >
-            <span className="flex-[2] text-xs font-body text-[var(--gray-600)] min-w-0 truncate">{label}</span>
-            <span className="w-16 text-right text-xs font-semibold font-body tabular-nums text-amber-700">{aVal}</span>
-            <span
-              className="w-9 text-center text-2xs font-semibold font-body tabular-nums transition-opacity duration-100"
-              style={{ color: dColor, opacity: isHovered ? 1 : 0.85 }}
-            >
-              {deltaStr}
-            </span>
-            <span className="w-16 text-right text-xs font-semibold font-body tabular-nums text-blue-700">{bVal}</span>
-          </div>
-        );
-      })}
-      <div
-        className="pt-1 pb-0.5 flex justify-between gap-2"
-        style={{ color: "var(--footnote-gray)" }}
-      >
-        <p className="text-2xs font-body">Δ = selected − pinned</p>
-        <p className="text-2xs font-body whitespace-nowrap"><DataAsOf date={WEEK_ENDING} /></p>
-      </div>
-    </div>
   );
 }
 
@@ -592,6 +522,10 @@ const NeighborhoodMap = () => {
                     <CompareRows
                       pinned={compareData}
                       current={previewData ?? selectedData}
+                      fields={[
+                        { key: "pct", label: "% of ED visits", suffix: " pts", format: (v) => `${v}%` },
+                        { key: "rate", label: "Rate / 100k" },
+                      ]}
                     />
                   </>
                 ) : (

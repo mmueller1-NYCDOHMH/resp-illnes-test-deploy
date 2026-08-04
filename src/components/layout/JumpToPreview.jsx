@@ -9,11 +9,18 @@
  *  – Virus theme color + icon from themeUtils
  *  – Short description from featuredLinks metadata
  *  – Instant display (data is fetched once and cached; no page load required)
+ *
+ * Data source: resolved the same way rankFeaturedLinks.js ranks these same
+ * links — resolveDataUrl() + loadCSVData() — so a hover here shares the
+ * exact live URL and in-memory cache the sidebar ranking (and every data
+ * page) already uses. No separate fetch/parse path, no local fixture file.
  */
 
 import { createPortal } from 'react-dom';
 import { useEffect, useRef, useState } from 'react';
 import { getThemeByTitle } from '../../utils/themeUtils';
+import { resolveDataUrl } from '../../utils/rankFeaturedLinks';
+import { loadCSVData } from '../../utils/loadCSVData';
 
 // ── Dimensions ────────────────────────────────────────────────────────────────
 const PREVIEW_W = 280;
@@ -22,25 +29,6 @@ const CHART_H   = 118;
 const DESC_H    = 38;
 const TOTAL_H   = HEADER_H + CHART_H + DESC_H;
 const GAP       = 10;
-
-// ── Minimal CSV parser ────────────────────────────────────────────────────────
-function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.replace(/["\r\uFEFF]/g, '').trim());
-  return lines.slice(1).map(line => {
-    // Handle quoted values
-    const vals = [];
-    let cur = '', inQ = false;
-    for (const ch of line) {
-      if (ch === '"') { inQ = !inQ; continue; }
-      if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; continue; }
-      cur += ch;
-    }
-    vals.push(cur.replace(/\r/g, '').trim());
-    return Object.fromEntries(headers.map((h, i) => [h, vals[i] ?? '']));
-  });
-}
 
 // ── SVG Sparkline ─────────────────────────────────────────────────────────────
 function MiniSparkline({ series, color }) {
@@ -163,21 +151,23 @@ export default function JumpToPreview({ activeHref, activeLabel, activeLinkMeta,
   // Some links (e.g. wastewater) are keyed by `pathogen` instead of
   // `metric`/`submetric` — the CSV backing them has a different shape
   // (date, pathogen, value) with no metric/submetric/display columns.
-  const buildCacheKey = (meta) =>
+  const buildCacheKey = (meta, url) =>
     meta?.pathogen
-      ? `${meta.dataFile}::pathogen::${meta.pathogen}`
-      : `${meta.dataFile}::${meta.metric}::${meta.submetric ?? ''}`;
+      ? `${url}::pathogen::${meta.pathogen}`
+      : `${url}::${meta.metric}::${meta.submetric ?? ''}`;
 
   // ── Data fetching ────────────────────────────────────────────────────────────
+  // Resolved the same way rankFeaturedLinks.js resolves it for ranking (live
+  // DATA_PATHS URL per dataType, local fixture only for wastewater), and
+  // loaded through the shared loadCSVData cache — no separate fetch/parse.
   useEffect(() => {
-    if (!activeLinkMeta?.dataFile || !(activeLinkMeta?.metric || activeLinkMeta?.pathogen)) return;
-    const key = buildCacheKey(activeLinkMeta);
+    const url = resolveDataUrl(activeLinkMeta ?? {});
+    if (!url || !(activeLinkMeta?.metric || activeLinkMeta?.pathogen)) return;
+    const key = buildCacheKey(activeLinkMeta, url);
     if (chartCache.current[key]) return; // already loaded
 
-    fetch(activeLinkMeta.dataFile)
-      .then(r => r.text())
-      .then(text => {
-        const rows = parseCSV(text);
+    loadCSVData(url)
+      .then(rows => {
         const filtered = rows
           .filter(r =>
             activeLinkMeta.pathogen
@@ -198,8 +188,9 @@ export default function JumpToPreview({ activeHref, activeLabel, activeLinkMeta,
   const theme   = getThemeByTitle(activeLinkMeta?.virus ?? '');
   const color   = theme.chartColor ?? theme.color ?? '#1E40AF';
 
-  const cacheKey = activeLinkMeta?.dataFile && (activeLinkMeta?.metric || activeLinkMeta?.pathogen)
-    ? buildCacheKey(activeLinkMeta)
+  const activeDataUrl = resolveDataUrl(activeLinkMeta ?? {});
+  const cacheKey = activeDataUrl && (activeLinkMeta?.metric || activeLinkMeta?.pathogen)
+    ? buildCacheKey(activeLinkMeta, activeDataUrl)
     : null;
   const series    = cacheKey ? chartCache.current[cacheKey] : null;
   const hasData   = series && series.length > 1;
@@ -276,7 +267,7 @@ export default function JumpToPreview({ activeHref, activeLabel, activeLinkMeta,
       <div style={{ background: 'white' }}>
         {hasData ? (
           <MiniSparkline series={series} color={color} />
-        ) : activeLinkMeta?.dataFile ? (
+        ) : activeDataUrl ? (
           /* Loading state */
           <div style={{
             height:         CHART_H,

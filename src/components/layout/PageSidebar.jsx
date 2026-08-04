@@ -390,7 +390,7 @@ const PageSidebar = ({
               (bg, border, shadow, chevron) mark each row as clickable. ── */}
         {activePage === "home" && (
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-2.5 mb-4">
-            <div className="flex items-center gap-1.5 px-1 mb-1.5 text-gray-500">
+            <div className="flex items-center gap-1.5 px-1 mb-1.5 text-gray-600">
               <TrendingIcon />
               <span className="text-xs font-semibold tracking-[0.06em] uppercase">
                 Trending Data

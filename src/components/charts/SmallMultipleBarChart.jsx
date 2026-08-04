@@ -4,6 +4,11 @@ import { tokens } from "../../styles/tokens";
 import ChartFooter from "./ChartFooter";
 import { getVirusMetaByString } from "../../utils/virusRegistry";
 import { buildTooltipLineCalc, tooltipLineEntry, hideZeroLabelExpr } from "../../utils/tooltipUtils";
+import {
+  BASE_AXIS_LABEL_CONFIG,
+  BASE_CHART_VIEW,
+  BASE_LEGEND_CONFIG,
+} from "../../utils/vegaTheme";
 
 const { colors, typography } = tokens;
 
@@ -107,25 +112,16 @@ const specTemplate = {
     height: 75,
     config: {
       background: colors.white,
+      // Shared axis/legend/view boilerplate lives in vegaTheme.js — grid/ticks/domain
+      // stay local since this chart intentionally hides them (facet header style).
       axis: {
-        labelFont: typography.body,
-        titleFont: typography.heading,
-        labelColor: colors.gray700,
-        titleColor: colors.gray800,
+        ...BASE_AXIS_LABEL_CONFIG,
         grid: false,
         ticks: false,
         domain: false,
       },
-      view: { stroke: "transparent" },
-      legend: {
-        labelFont: typography.body,
-        titleFont: typography.heading,
-        labelColor: colors.gray600,
-        titleColor: colors.gray700,
-        symbolSize: 100,
-        symbolStrokeWidth: 5,
-        orient: "bottom",
-      },
+      view: { ...BASE_CHART_VIEW },
+      legend: { ...BASE_LEGEND_CONFIG },
       bar: { binSpacing: 0, stroke: null, continuousBandSize: 10 }
     },
     layer: [

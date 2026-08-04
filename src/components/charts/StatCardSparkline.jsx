@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import VegaLiteWrapper from "./VegaLiteWrapper";
 import { tokens } from "../../styles/tokens";
+import { BASE_AXIS_LABEL_CONFIG, BASE_AXIS_Y_CONFIG, BASE_CHART_VIEW } from "../../utils/vegaTheme";
 import "./StatCardSparkline.css";
 
 const { colors } = tokens;
@@ -96,16 +97,17 @@ const StatCardSparkline = ({
     autosize: { type: "fit", contains: "padding" },
     config: {
       background: "transparent",
-      view: { stroke: "transparent" },
+      view: { ...BASE_CHART_VIEW },
+      // Font/color pulled from the shared axis config; domain/tick colors and
+      // the axisX hidden-ticks style stay local — this sparkline is deliberately
+      // more minimal than the full-size charts (no x domain line, tighter y ticks).
       axis: {
-        labelFontSize: 12,
-        labelColor: colors.gray700,
-        titleColor: colors.gray800,
+        ...BASE_AXIS_LABEL_CONFIG,
         domainColor: "#E5E7EB",
         tickColor: "#E5E7EB",
       },
       axisX: { ticks: false, domain: false, grid: false },
-      axisY: { domain: false, ticks: false, tickCount: 2, orient: "left", zindex: 0 },
+      axisY: { ...BASE_AXIS_Y_CONFIG, tickCount: 2 },
       legend: { disable: true },
     },
     layer: [
