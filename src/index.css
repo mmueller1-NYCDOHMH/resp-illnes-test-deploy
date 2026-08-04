@@ -169,6 +169,47 @@ svg {
   text-underline-offset: 3px;
 }
 
+/* ── Footer link hover feedback ────────────────────────────────────────────
+   Tailwind's `hover:` utilities live in the `utilities` @layer, which always
+   loses the cascade to the unlayered `a { text-decoration: none }` reset
+   above (unlayered CSS beats layered CSS regardless of specificity/order).
+   Same fix as .body-links above: plain, unlayered, !important-backed rules. */
+.footer-nav-link {
+  color: var(--footer-link) !important;
+  text-decoration: none !important;
+  transition: color 150ms ease, text-decoration-color 150ms ease;
+}
+.footer-nav-link:hover {
+  color: var(--footer-link-hover) !important;
+  text-decoration: underline !important;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.footer-legal-link {
+  color: var(--footer-link) !important;
+  text-decoration: none !important;
+  transition: color 150ms ease;
+}
+.footer-legal-link:hover {
+  color: var(--footer-link-hover) !important;
+  text-decoration: underline !important;
+}
+
+.footer-icon-link svg {
+  transition: fill 150ms ease;
+}
+.footer-icon-link:hover svg {
+  fill: var(--footer-link-hover) !important;
+}
+
+.footer-logo-link {
+  transition: opacity 150ms ease;
+}
+.footer-logo-link:hover {
+  opacity: 0.7;
+}
+
 /* ── Chart width safety resets ──────────────────────────────────────────── */
 /* These override any stray sizing on Vega canvas elements                   */
 .chart-vega canvas {

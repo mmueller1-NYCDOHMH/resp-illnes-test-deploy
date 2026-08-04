@@ -14,6 +14,25 @@ import { loadCSVData } from "./loadCSVData";
 import { resolveAsset } from "./pathUtils";
 import { getWoWPercentChange, getTrendDirection, formatPercentChange } from "./trendUtils";
 import trackableMetrics from "../views/config/trackableMetrics.json";
+import { DATA_PATHS } from "../views/config/Data.config";
+
+// Same live GitHub-sourced URLs every data page loads through
+// loadConfigWithData → DATA_PATHS (see Data.config.js). Using the identical
+// URL here means this ranking shares loadCSVData's in-memory cache with the
+// rest of the app — one fetch, not a second copy of the data.
+//
+// NOTE: there is no live/published source for wastewater data in this repo
+// (nychealth/respiratory-illness-data doesn't include a wastewater CSV —
+// WastewaterChart.jsx also falls back to the bundled snapshot for the same
+// reason). Until that's published, wastewater entries keep reading the local
+// fixture and should be treated as potentially stale.
+const WASTEWATER_LOCAL_PATH = "data/wastewaterData.csv";
+
+export function resolveDataUrl(entry) {
+  if (!entry.dataType) return null;
+  if (entry.dataType === "wastewater") return resolveAsset(WASTEWATER_LOCAL_PATH);
+  return DATA_PATHS[entry.dataType] || null;
+}
 
 // Series under these floors in BOTH of the last two weeks are excluded from
 // ranking — at very low magnitude, a tiny absolute move registers as a huge
@@ -74,8 +93,9 @@ function isLowVolume(series) {
   return lastTwo.every((v) => Number.isFinite(v) && Math.abs(v) < floor);
 }
 
-function scoreEntry(entry, rowsByFile) {
-  const rows = rowsByFile[entry.dataFile] || [];
+function scoreEntry(entry, rowsByUrl) {
+  const url = resolveDataUrl(entry);
+  const rows = rowsByUrl[url] || [];
   const series = filterSeries(rows, entry);
   if (series.length < 2) return null;
 
@@ -106,18 +126,18 @@ function scoreEntry(entry, rowsByFile) {
 export async function getRankedJumpLinks({ limit = 4 } = {}) {
   if (cachedRanked) return cachedRanked.slice(0, limit);
 
-  const rankable = trackableMetrics.filter((entry) => entry.dataFile);
-  const dataFiles = [...new Set(rankable.map((entry) => entry.dataFile))];
+  const rankable = trackableMetrics.filter((entry) => resolveDataUrl(entry));
+  const dataUrls = [...new Set(rankable.map((entry) => resolveDataUrl(entry)))];
 
-  const rowsByFile = {};
+  const rowsByUrl = {};
   await Promise.all(
-    dataFiles.map(async (file) => {
-      rowsByFile[file] = await loadCSVData(resolveAsset(file));
+    dataUrls.map(async (url) => {
+      rowsByUrl[url] = await loadCSVData(url);
     })
   );
 
   const ranked = rankable
-    .map((entry) => scoreEntry(entry, rowsByFile))
+    .map((entry) => scoreEntry(entry, rowsByUrl))
     .filter(Boolean)
     .sort((a, b) => Math.abs(b.pctChange) - Math.abs(a.pctChange));
 
