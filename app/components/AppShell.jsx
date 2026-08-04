@@ -26,6 +26,7 @@ import Header from '../../src/components/Header/Header';
 import NavBar from '../../src/components/Header/NavBar';
 import Footer from '../../src/components/Footer/Footer';
 import PageTransition from './PageTransition';
+import BackToTopButton from '../../src/components/controls/BackToTopButton';
 
 export default function AppShell({ children }) {
   const navRef = useRef(null);
@@ -60,6 +61,8 @@ export default function AppShell({ children }) {
         </main>
         <Footer />
       </PageTransition>
+
+      <BackToTopButton />
     </>
   );
 }
