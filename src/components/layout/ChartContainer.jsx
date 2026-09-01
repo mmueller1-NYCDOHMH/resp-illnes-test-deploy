@@ -4,6 +4,7 @@ import AccessibleTable from "../accessibility/AccessibleTable";
 import { getText, interpolateTokens } from "../../utils/contentUtils";
 
 import ChartFooter from "../charts/ChartFooter";
+import MissingDataOverlay from "../charts/MissingDataOverlay";
 import "./ChartContainer.css"; // retains only: stack-sidebar cross-component overrides
 
 const ChartContainer = ({
@@ -23,17 +24,29 @@ const ChartContainer = ({
   uploadDate,
   footnote,
   onNewView,
+  onExportSpec,
+  missingDataOverlay,
 }) => {
 
+  // When the missing-data overlay is showing, the chart is visually covered —
+  // don't also expose the same unreliable breakdown via the a11y data table.
   const hasAltTable =
-    !disableAltTable && Array.isArray(altTableData) && altTableData.length > 0;
+    !disableAltTable &&
+    !missingDataOverlay &&
+    Array.isArray(altTableData) &&
+    altTableData.length > 0;
 const [resolvedMeta, setResolvedMeta] = React.useState(null);
 
 const chartWithProps = React.cloneElement(chart, {
   uploadDate: chart.props.uploadDate ?? uploadDate,
   footnote: chart.props.footnote ?? footnote,
   onNewView,
-  onResolveFootnote: setResolvedMeta, 
+  // Multi-panel small-multiples charts (e.g. WastewaterVariantChart) render
+  // N independent Vega views and can't hand onNewView a single one that
+  // represents the whole grid — they instead register a getter that builds
+  // one combined export-only spec on demand. See exportChartImage.js.
+  onExportSpec,
+  onResolveFootnote: setResolvedMeta,
 });
 
 const scaleMode = resolvedMeta?.scaleMode || "independent";
@@ -61,8 +74,15 @@ const resolvedFooter =
 
         <div className="chart-body flex-[1_1_auto] min-w-0">
           {chartWithProps && (
-            <div className="chart-vega w-full min-w-0 flex-1 touch-manipulation" aria-hidden="true">
+            <div className="chart-vega relative w-full min-w-0 flex-1 touch-manipulation" aria-hidden="true">
               {chartWithProps}
+              {missingDataOverlay && (
+                <MissingDataOverlay
+                  virus={missingDataOverlay.virus}
+                  unknownPct={missingDataOverlay.unknownPct}
+                  metricLabel={missingDataOverlay.metricLabel}
+                />
+              )}
             </div>
           )}
 
@@ -131,6 +151,12 @@ ChartContainer.propTypes = {
     PropTypes.object,
   ]),
   onNewView: PropTypes.func,
+  onExportSpec: PropTypes.func,
+  missingDataOverlay: PropTypes.shape({
+    virus: PropTypes.string,
+    unknownPct: PropTypes.number,
+    metricLabel: PropTypes.string,
+  }),
 };
 
 export default ChartContainer;

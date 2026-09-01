@@ -33,7 +33,12 @@ import HydratedDataContext from "../../context/HydratedDataContext";
 import { isSectionVisible } from "../../utils/sectionVisibility";
 import { getLatestWeek } from "../../utils/trendUtils";
 import { getText, resolveText } from "../../utils/contentUtils";
-import { exportVegaImage, copyVegaImageToClipboard } from "../../utils/exportChartImage";
+import {
+  exportVegaImage,
+  copyVegaImageToClipboard,
+  exportVegaSpecImage,
+  copyVegaSpecImageToClipboard,
+} from "../../utils/exportChartImage";
 import componentRegistry from "../../utils/componentRegistry";
 import { virusAccentColors } from "../../styles/tokens";
 
@@ -98,18 +103,40 @@ const ConfigDrivenPage = ({ config }) => {
 
   // ── Vega PNG export ───────────────────────────────────────────────────────
   const vegaViewRefs = useRef({});
+  // Multi-panel small-multiples sections (e.g. WastewaterVariantChart's
+  // per-variant grid) register a spec-getter here instead of a single view —
+  // there's no one Vega view that represents "the whole grid" to hand to
+  // exportVegaImage/copyVegaImageToClipboard. When a section has one, PNG/
+  // copy-image use it (building a fresh combined spec each click, since
+  // panel data/scale-mode can change) and fall back to vegaViewRefs
+  // otherwise. See exportChartImage.js's renderSpecToCanvas.
+  const vegaSpecGetterRefs = useRef({});
 
   const handleNewView = (sectionKey) => (vegaView) => {
     vegaViewRefs.current[sectionKey] = vegaView;
   };
 
+  const handleNewExportSpec = (sectionKey) => (specGetter) => {
+    vegaSpecGetterRefs.current[sectionKey] = specGetter;
+  };
+
   const handleDownloadPNG = (sectionKey, fileName, title, subtitle) => () => {
+    const specGetter = vegaSpecGetterRefs.current[sectionKey];
+    const spec = specGetter?.();
+    if (spec) {
+      exportVegaSpecImage(spec, "png", fileName.slice(0, -4), { title, subtitle });
+      return;
+    }
     const vegaView = vegaViewRefs.current[sectionKey];
     if (vegaView) exportVegaImage(vegaView, "png", fileName.slice(0, -4), { title, subtitle });
   };
 
-  const handleCopyImage = (sectionKey, title, subtitle) => () =>
-    copyVegaImageToClipboard(vegaViewRefs.current[sectionKey], { title, subtitle });
+  const handleCopyImage = (sectionKey, title, subtitle) => () => {
+    const specGetter = vegaSpecGetterRefs.current[sectionKey];
+    const spec = specGetter?.();
+    if (spec) return copyVegaSpecImageToClipboard(spec, { title, subtitle });
+    return copyVegaImageToClipboard(vegaViewRefs.current[sectionKey], { title, subtitle });
+  };
 
   // ── Group selection state (shared across sections) ────────────────────────
   const [groupSelections, setGroupSelections] = useState({});
@@ -284,6 +311,7 @@ const ConfigDrivenPage = ({ config }) => {
                 onNewView={handleNewView}
                 onDownloadPNG={handleDownloadPNG}
                 onCopyImage={handleCopyImage}
+                onExportSpec={handleNewExportSpec}
               />
             );
           })}

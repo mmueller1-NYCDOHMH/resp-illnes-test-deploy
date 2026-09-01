@@ -138,7 +138,7 @@ const TrendingIcon = () => (
 );
 
 // Chevron that slides in on hover/focus — same affordance StatCardRow uses
-// for its "More {title} data" links, reused here so a Trending Data row
+// for its "More {title} data" links, reused here so a Quick Links row
 // reads as clickable rather than as a plain info line.
 const HoverChevron = () => (
   <svg
@@ -177,7 +177,7 @@ const ChangeBadge = ({ direction, pctDisplay }) => {
         CHANGE_TEXT_COLOR[direction] ?? "text-gray-500",
       ].join(" ")}
     >
-      {CHANGE_ARROW[direction]} {pctDisplay}
+      {CHANGE_ARROW[direction]}
     </span>
   );
 };
@@ -268,7 +268,7 @@ const PageSidebar = ({
   useEffect(() => {
     if (activePage !== "home") return;
     let cancelled = false;
-    getRankedJumpLinks({ limit: 4 }).then((ranked) => {
+    getRankedJumpLinks({ limit: 3 }).then((ranked) => {
       if (!cancelled) setJumpLinks(ranked);
     });
     return () => { cancelled = true; };
@@ -378,7 +378,7 @@ const PageSidebar = ({
           </div>
         )}
 
-        {/* ── Trending Data (home page only) ──
+        {/* ── Quick Links (home page only) ──
               Ranked by biggest week-over-week % change rather than
               hand-picked, so this list reflects whatever is moving most
               right now (see rankFeaturedLinks.js). Styled as its own card
@@ -393,11 +393,11 @@ const PageSidebar = ({
             <div className="flex items-center gap-1.5 px-1 mb-1.5 text-gray-600">
               <TrendingIcon />
               <span className="text-xs font-semibold tracking-[0.06em] uppercase">
-                Trending Data
+                Quick Links
               </span>
             </div>
             <div className="flex flex-col divide-y divide-gray-200/80">
-              {jumpLinks === null && <JumpToSkeleton />}
+              {jumpLinks === null && <JumpToSkeleton count={3} />}
               {jumpLinks?.map((link) => {
                 const theme = getThemeByTitle(link.virus);
                 return (

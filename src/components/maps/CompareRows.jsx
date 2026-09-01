@@ -12,6 +12,10 @@ import { WEEK_ENDING } from "./useChoroplethMap";
  * `fields` describes which values to compare; the component handles the
  * shared render/hover/delta-coloring logic.
  *
+ * A field can be null on either side (RPU suppresses case rates computed
+ * from small numerators — see neighborhoodGeoData.js) — that row shows
+ * "Suppressed" instead of a value/delta rather than rendering NaN.
+ *
  * @param {object} pinned - Data row for the pinned neighborhood.
  * @param {object} current - Data row for the currently selected/hovered neighborhood.
  * @param {{ key: string, label: string, suffix?: string, decimals?: number, format?: (v: number) => string|number }[]} fields
@@ -23,12 +27,14 @@ export default function CompareRows({ pinned, current, fields }) {
     ({ key, label, suffix = "", decimals = 1, format = (v) => v }) => {
       const aRaw = pinned[key];
       const bRaw = current[key];
-      const delta = +(bRaw - aRaw).toFixed(decimals);
+      const suppressed = aRaw == null || bRaw == null;
+      const delta = suppressed ? null : +(bRaw - aRaw).toFixed(decimals);
       return {
         key,
         label,
-        aVal: format(aRaw),
-        bVal: format(bRaw),
+        suppressed,
+        aVal: aRaw == null ? null : format(aRaw),
+        bVal: bRaw == null ? null : format(bRaw),
         delta,
         suffix,
       };
@@ -45,11 +51,11 @@ export default function CompareRows({ pinned, current, fields }) {
         <span className="w-16 text-right text-blue-600">Selected</span>
       </div>
 
-      {metrics.map(({ key, label, aVal, bVal, delta, suffix }) => {
+      {metrics.map(({ key, label, suppressed, aVal, bVal, delta, suffix }) => {
         const isHovered = hoveredRow === key;
-        const positive = delta > 0;
-        const deltaStr = `${positive ? "+" : ""}${delta}${suffix}`;
-        const dColor = delta === 0 ? "var(--gray-600)" : positive ? "#b91c1c" : "#065f46";
+        const positive = !suppressed && delta > 0;
+        const deltaStr = suppressed ? "—" : `${positive ? "+" : ""}${delta}${suffix}`;
+        const dColor = suppressed || delta === 0 ? "var(--gray-600)" : positive ? "#b91c1c" : "#065f46";
 
         return (
           <div
@@ -60,14 +66,14 @@ export default function CompareRows({ pinned, current, fields }) {
             onMouseLeave={() => setHoveredRow(null)}
           >
             <span className="flex-[2] text-xs font-body text-[var(--gray-600)] min-w-0 truncate">{label}</span>
-            <span className="w-16 text-right text-xs font-semibold font-body tabular-nums text-amber-700">{aVal}</span>
+            <span className="w-16 text-right text-xs font-semibold font-body tabular-nums text-amber-700">{aVal ?? "—"}</span>
             <span
               className="w-9 text-center text-2xs font-semibold font-body tabular-nums transition-opacity duration-100"
               style={{ color: dColor, opacity: isHovered ? 1 : 0.85 }}
             >
               {deltaStr}
             </span>
-            <span className="w-16 text-right text-xs font-semibold font-body tabular-nums text-blue-700">{bVal}</span>
+            <span className="w-16 text-right text-xs font-semibold font-body tabular-nums text-blue-700">{bVal ?? "—"}</span>
           </div>
         );
       })}

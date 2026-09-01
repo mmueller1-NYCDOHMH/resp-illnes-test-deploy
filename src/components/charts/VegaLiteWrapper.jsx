@@ -95,6 +95,15 @@ const VegaLiteWrapper = ({
           if (key === "containerWidth") return containerWidth || 1;
           return dynamicFields[key] ?? val;
         }
+        // Embedded placeholder inside a larger string — e.g. a Vega
+        // expression like "min(36, {containerWidth} / 40)" used in a
+        // `calculate` transform. Unlike the whole-string case above (which
+        // can resolve to a non-string, such as the raw numeric
+        // containerWidth), this always stays a string since it's part of a
+        // larger expression.
+        if (typeof val === "string" && val.includes("{containerWidth}")) {
+          return val.replaceAll("{containerWidth}", String(containerWidth || 1));
+        }
         return val;
       }
     );

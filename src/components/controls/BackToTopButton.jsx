@@ -34,7 +34,7 @@ export default function BackToTopButton() {
   }, [handleScroll]);
 
   const scrollToTop = () => {
-    document.documentElement.scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleKeyDown = (e) => {

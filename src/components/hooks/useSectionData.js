@@ -13,7 +13,10 @@
 import { getGroupOptions } from "../../utils/getGroupOptions";
 import { toSourceVirus } from "../../utils/virusRegistry";
 import { coerceRowVirus, coerceRowView } from "../../utils/virusMap";
-import { getUnknownRaceEthnicityPercent } from "../../utils/footnoteUtils";
+import {
+  getUnknownRaceEthnicityPercent,
+  shouldShowMissingDataOverlay,
+} from "../../utils/footnoteUtils";
 import {
   getLastTwoValuesSameSeries,
   formatDate,
@@ -196,6 +199,14 @@ const useSectionData = (section, sectionKey, pageContext) => {
     data?.__raw || [],
     activeVirus
   );
+
+  // ── 9b. Missing-data overlay (replaces chart once missingness is too high)
+  // Opt-in per section via `missingDataOverlay: { enabled, thresholdPct }`
+  // so this doesn't silently apply to charts that don't want it.
+  const missingDataOverlayConfig = section.missingDataOverlay || null;
+  const showMissingDataOverlay =
+    !!missingDataOverlayConfig?.enabled &&
+    shouldShowMissingDataOverlay(unknownPct, missingDataOverlayConfig.thresholdPct);
 
   // ── 10. Trend pool selection ──────────────────────────────────────────────
   let trendPoolBase;
@@ -387,6 +398,7 @@ const useSectionData = (section, sectionKey, pageContext) => {
     // footer
     resolvedFooterHtml,
     unknownPct,
+    showMissingDataOverlay,
     // update helpers
     updateGroupForKey: (val) => updateGroup(sectionKey, val),
   };

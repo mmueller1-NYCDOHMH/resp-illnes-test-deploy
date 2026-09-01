@@ -10,7 +10,7 @@
     background: var(--color-bg-surface, #f9fafb);
     border: 1px solid var(--color-border, #e5e7eb);
     color: var(--color-primary, #355E81);
-    font-family: "Inter", sans-serif;
+    font-family: var(--font-sans);
     font-size: 0.85rem;
     font-weight: 500;
     border-radius: 6px;

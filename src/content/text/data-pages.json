@@ -66,8 +66,8 @@
       "reportsByRE": {
         "title": "{virus} <span class='dynamic-label'>Laboratory-Reported Cases</span> by Race and Ethnicity",
         "footer": {
-          "independent": "<p>Y-axis scales are different to clearly show trends for a given race and ethnicity.</p><p>During this period, <span class='bg-highlight'>{unknownPct}%</span> of {virus} cases had missing race and ethnicity data.</p>",
-          "shared": "<p>Y-axis scales are the same across groups to support comparison between race and ethnicity groups.</p><p>During this period, <span class='bg-highlight'>{unknownPct}%</span> of {virus} cases had missing race and ethnicity data.</p>"
+          "independent": "<p>Y-axis scales are different to clearly show trends for a given race and ethnicity.</p><p>During this period, <span class='bg-highlight'>{unknownPct}%</span> of {virus} cases had missing race/ethnicity information - too many to report reliable data.</p>",
+          "shared": "<p>Y-axis scales are the same across groups to support comparison between race and ethnicity groups.</p><p>During this period, <span class='bg-highlight'>{unknownPct}%</span> of {virus} cases had missing race/ethnicity information - too many to report reliable data.</p>"
         }
       }
     }
@@ -101,9 +101,14 @@
   },
 
   "wastewaterPage": {
+    "mainTitle": "{virus} Wastewater Data in NYC",
+
     "charts": {
       "viralLoad": {
-        "title": "{virus} <span class='dynamic-label'>Wastewater</span> Data"
+        "title": "Normalized viral load"
+      },
+      "variants": {
+        "title": "SARS-CoV-2 <span class='dynamic-label'>Variants</span> in Wastewater"
       }
     }
   }

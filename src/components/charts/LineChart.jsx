@@ -243,9 +243,13 @@ const LineChart = ({
         scale: { padding: 10 },
       };
 
+  // Suppressed weeks (small-number counts withheld for privacy) are flagged
+  // upstream in filterMetricData.js as `suppressed`. Per NYC Health decision
+  // 2026-08-27 (Montesano/Parton), these still chart as 0 but the tooltip
+  // shows the suppression range instead of a blank or literal "0".
   const valueDisplayCalc = isPercent
-    ? "datum.valueRaw != null ? (test(/%$/, '' + datum.valueRaw) ? '' + datum.valueRaw : ('' + datum.valueRaw) + '%') : (isValid(datum.value) ? format(datum.value, '.1f') + '%' : 'N/A')"
-    : "datum.valueRaw != null ? '' + datum.valueRaw : (isValid(datum.value) ? format(datum.value, ',.0f') : 'N/A')";
+    ? "datum.suppressed ? '1-4 (suppressed for privacy)' : (datum.valueRaw != null ? (test(/%$/, '' + datum.valueRaw) ? '' + datum.valueRaw : ('' + datum.valueRaw) + '%') : (isValid(datum.value) ? format(datum.value, '.1f') + '%' : 'N/A'))"
+    : "datum.suppressed ? '1-4 (suppressed for privacy)' : (datum.valueRaw != null ? '' + datum.valueRaw : (isValid(datum.value) ? format(datum.value, ',.0f') : 'N/A'))";
 
 // Combined "[series]: value of metric" tooltip line — series is the
 // colorField's per-point value when present, else the active virus. Only
@@ -262,6 +266,7 @@ const tooltipLineCalc = buildTooltipLineCalc({
   valueField: "valueDisplay",
   metricLabel: tooltipMetricLabel,
   isPercent,
+  includeSeriesInValue: false, // series now goes in the title, not the text
 });
 
 let sharedTooltip = [
@@ -273,7 +278,6 @@ let sharedTooltip = [
   },
 ];
 
-// If seasonal mode is on, add the Week tooltip
 if (seasonal === true) {
   sharedTooltip.push({
     field: "weekOfSeason",
@@ -282,7 +286,16 @@ if (seasonal === true) {
   });
 }
 
-sharedTooltip.push(tooltipLineEntry("tooltipLine"));
+// (deleted: sharedTooltip.push(tooltipLineEntry("tooltipLine"));)
+
+if (colorFieldVaries) {
+  sharedTooltip.push({
+    field: colorField,
+    type: "nominal",
+    title: columnLabels[colorField] || metricName,
+  });
+}
+sharedTooltip.push(tooltipLineEntry("tooltipLine", virus || metricName));
 
 
   // Add season field to data if it's a seasonal chart

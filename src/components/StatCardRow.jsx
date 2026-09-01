@@ -41,9 +41,10 @@ const StatCardRow = ({
   variant = "compact",
   showAxis = false,
   isLast = false,
-  chartLabel = "Percent of ED visits",
+  chartLabel = "Percent of emergency department visits",
   valueLabel = "Last week vs. this week",
   yAxisFormat = ".1f",
+  yDomain = null,
   virusKey,
   onNewView,
 }) => {
@@ -178,6 +179,7 @@ const StatCardRow = ({
                   showXAxis={showAxis}
                   showYAxis
                   yAxisFormat={yAxisFormat}
+                  yDomain={yDomain}
                   onNewView={onNewView}
                 />
               </div>

@@ -15,9 +15,10 @@ import DataAsOf from "../charts/DataAsOf";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const fmt = formatShortDate;
 
-// Temporarily hides the "More info" icon on the stat grid header. Flip back
-// to true to restore it — the button and its modal are left in place.
-const SHOW_STAT_GRID_INFO_ICON = false;
+// Shows the "More info" icon on the stat grid header, next to the download
+// icon. Flip back to false to hide it again — the button and its modal are
+// left in place either way.
+const SHOW_STAT_GRID_INFO_ICON = true;
 
 const toNum = (v) => {
   if (v == null) return null;
@@ -79,11 +80,33 @@ const StatGrid = ({ data }) => {
 
   const [primary, ...rest] = statCards;
 
+  // Shared y-scale for the by-virus (COVID/Flu/RSV) small multiples, so their
+  // sparkline heights are directly comparable. The primary ORI row keeps its
+  // own independent auto-scale — it's a different metric shown at a
+  // different visual weight, not part of this comparison.
+  const restValues = rest
+    .flatMap(({ visitSeries, hospitalizationSeries }) =>
+      view === "visits" ? visitSeries : hospitalizationSeries
+    )
+    .map((d) => toNum(d.value))
+    .filter((v) => v !== null);
+
+  const sharedVirusYDomain = restValues.length
+    ? (() => {
+        const lo = Math.min(...restValues);
+        const hi = Math.max(...restValues);
+        const pad = (hi - lo) * 0.1 || Math.abs(hi) * 0.1 || 1;
+        return [lo - pad, hi + pad];
+      })()
+    : null;
+
   const sectionTitle    = getText("overview.statGrid.title")    || "What's happening across the city?";
   const sectionSubtitle = getText("overview.statGrid.subtitle") || "Emergency Department trends for the week ending";
   const infoModalTitle  = getText("overview.statGrid.infoModalTitle") || "About Emergency Department Data";
 
-  const columnHeaderLabel = view === "hospitalizations" ? "Percent of hospitalizations" : "Percent of ED visits";
+  const columnHeaderLabel = view === "hospitalizations"
+    ? "Percent of hospitalizations from the emergency department"
+    : "Percent of emergency department visits";
 
   // ── Capture each row's live Vega view (keyed by virus) for PNG/clipboard export ──
   const handleNewView = (key) => (vegaView) => {
@@ -165,7 +188,7 @@ const StatGrid = ({ data }) => {
       <div className="flex items-center justify-between mb-lg">
         <ToggleGroup
           options={[
-            { label: "ED Visits", value: "visits" },
+            { label: "Visits", value: "visits" },
             { label: "Hospitalizations", value: "hospitalizations" },
           ]}
           value={view}
@@ -252,6 +275,7 @@ const StatGrid = ({ data }) => {
             chartLabel={columnHeaderLabel}
             valueLabel="Last week vs. this week"
             yAxisFormat={key === "rsv" ? ".2f" : ".1f"}
+            yDomain={sharedVirusYDomain}
             virusKey={key}
             onNewView={handleNewView(key)}
           />
@@ -313,6 +337,11 @@ const StatGrid = ({ data }) => {
               setDownloadOpen(false);
             }}
             onCopyImage={handleCopyImage}
+            // Matches the "stat-cards" section's anchorId in
+            // OverviewPage.config.js — DownloadPanel only shows the "Embed
+            // chart" option when sectionId is set, so without this the Share
+            // row was missing Embed (Copy chart as image only).
+            sectionId="ed-trends"
           />
         }
       />

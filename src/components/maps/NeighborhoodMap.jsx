@@ -10,8 +10,18 @@
  * alongside a right column holding the At-a-Glance/compare card, the caption
  * sentence, and the ranked bar chart stacked underneath it.
  *
- * Data: placeholder — swap CD_DATA for real API/CSV values when available.
- * Map:  GeoJSON from NYC Health EHDP repository (Community Districts).
+ * Data: real (as of 2026-08-19) — UHF42 neighborhood values built from
+ * RPU's staged emergencyDeptData.csv via useNeighborhoodGeoCsv +
+ * buildUhfDataByGeocode (src/utils/neighborhoodGeoData.js). Two fields per
+ * neighborhood: `pct` ("Respiratory illness visits by neighborhood") drives
+ * both the map color scale and the primary displayed stat; `hospPct`
+ * ("Respiratory illness hospitalizations by neighborhood") is a secondary
+ * stat, both percents (not per-100,000 rates — RPU's file doesn't carry a
+ * population-rate version of these two metrics, only percent-of-ED-visits).
+ * Neither metric is currently masked in RPU's file (unlike the per-virus
+ * case-rate metrics), but null-safe handling is still in place in case that
+ * changes.
+ * Map:  GeoJSON from NYC Health EHDP repository (UHF42 neighborhoods).
  * Tiles: CartoDB Positron no-labels (per RPU request: no city names).
  * Leaflet loaded dynamically from unpkg CDN to avoid bundling it.
  *
@@ -19,9 +29,9 @@
  * and the linked bar chart's view lifecycle are shared with
  * LabCasesNeighborhoodMap via useChoroplethMap — see that file for the
  * common behavior. Pin-to-compare (PinIcon + CompareRows pattern) is also
- * shared in spirit with LabCasesNeighborhoodMap, just with pct/rate swapped
- * for that map's rate/count fields. This component owns the parts unique to
- * the home page: fixed (non-virus) color scale and arrow-key navigation.
+ * shared in spirit with LabCasesNeighborhoodMap, just with pct/hospPct
+ * swapped for that map's rate field. This component owns the parts unique
+ * to the home page: fixed (non-virus) color scale and arrow-key navigation.
  */
 
 import React, { useEffect, useMemo } from "react";
@@ -32,94 +42,38 @@ import AccessibleTable from "../accessibility/AccessibleTable";
 import useChoroplethMap, { WEEK_ENDING } from "./useChoroplethMap";
 import { buildChoroplethBarSpec } from "./choroplethBarSpec";
 import { makeColorScale, domainFromValues, stopsToCssGradient } from "../../utils/colorScale";
+import useNeighborhoodGeoCsv from "../hooks/useNeighborhoodGeoCsv";
+import { buildUhfDataByGeocode, averageAcrossNeighborhoods, groupedWithNote } from "../../utils/neighborhoodGeoData";
 import PinIcon from "./PinIcon";
 import CompareRows from "./CompareRows";
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// ── Field specs for this map's two ED "by neighborhood" metrics ──────────────
+const FIELD_SPECS = [
+  { key: "pct", metric: "Respiratory illness visits by neighborhood" },
+  { key: "hospPct", metric: "Respiratory illness hospitalizations by neighborhood" },
+];
 
-const CITYWIDE_PCT = 8.4;
+// Fallback citywide reference (used only until real data loads) — replaced
+// by an unweighted average of the loaded neighborhoods' pct once available
+// (see averageAcrossNeighborhoods; not an official DOHMH citywide figure).
+const CITYWIDE_PCT_FALLBACK = 8.4;
 
-// ── Placeholder data (keyed by GEOCODE integer) ───────────────────────────────
-// pct  = % of ED visits with respiratory illness diagnosis
-// rate = rate per 100,000 residents
-
-const CD_DATA = {
-  101: { name: "Financial District",           pct:  7.2, rate: 11.8 },
-  102: { name: "Greenwich Village/SoHo",       pct:  6.8, rate: 10.2 },
-  103: { name: "Lower East Side/Chinatown",    pct:  9.4, rate: 16.1 },
-  104: { name: "Chelsea/Hell's Kitchen",       pct:  7.5, rate: 12.3 },
-  105: { name: "Midtown",                      pct:  6.1, rate:  9.4 },
-  106: { name: "Stuyvesant Town/Turtle Bay",   pct:  7.0, rate: 11.0 },
-  107: { name: "Upper West Side",              pct:  7.3, rate: 11.5 },
-  108: { name: "Upper East Side",              pct:  6.5, rate:  9.8 },
-  109: { name: "Morningside Hts/Hamilton Hts", pct:  9.8, rate: 17.2 },
-  110: { name: "Central Harlem",               pct: 11.2, rate: 20.8 },
-  111: { name: "East Harlem",                  pct: 12.1, rate: 23.4 },
-  112: { name: "Washington Heights/Inwood",    pct: 10.7, rate: 19.6 },
-  201: { name: "Mott Haven/Port Morris",       pct: 14.3, rate: 28.1 },
-  202: { name: "Hunts Point/Longwood",         pct: 15.8, rate: 31.9 },
-  203: { name: "Morrisania/Crotona",           pct: 13.9, rate: 27.0 },
-  204: { name: "Concourse/Highbridge",         pct: 12.4, rate: 23.8 },
-  205: { name: "Fordham/University Heights",   pct: 11.7, rate: 22.0 },
-  206: { name: "Belmont/East Tremont",         pct: 12.8, rate: 24.7 },
-  207: { name: "Kingsbridge Hts/Mosholu",      pct: 10.3, rate: 18.4 },
-  208: { name: "Riverdale/Fieldston",          pct:  7.6, rate: 12.2 },
-  209: { name: "Parkchester/Soundview",        pct: 13.1, rate: 25.3 },
-  210: { name: "Throgs Neck/Co-op City",       pct:  9.8, rate: 17.5 },
-  211: { name: "Morris Park/Bronxdale",        pct: 10.4, rate: 18.9 },
-  212: { name: "Williamsbridge/Baychester",    pct: 11.2, rate: 20.5 },
-  301: { name: "Williamsburg/Greenpoint",      pct:  8.7, rate: 14.8 },
-  302: { name: "Brooklyn Hts/Fort Greene",     pct:  7.4, rate: 11.9 },
-  303: { name: "Bedford Stuyvesant",           pct: 11.8, rate: 22.3 },
-  304: { name: "Bushwick",                     pct: 12.3, rate: 23.7 },
-  305: { name: "East New York/Starrett City",  pct: 14.7, rate: 29.1 },
-  306: { name: "Park Slope/Carroll Gardens",   pct:  6.9, rate: 10.6 },
-  307: { name: "Sunset Park",                  pct:  9.2, rate: 15.8 },
-  308: { name: "Crown Heights North",          pct: 11.5, rate: 21.4 },
-  309: { name: "Crown Heights South",          pct: 10.8, rate: 19.7 },
-  310: { name: "Bay Ridge/Dyker Heights",      pct:  8.4, rate: 13.9 },
-  311: { name: "Bensonhurst/Bath Beach",       pct:  8.9, rate: 14.7 },
-  312: { name: "Borough Park",                 pct:  9.7, rate: 16.8 },
-  313: { name: "Coney Island/Gravesend",       pct: 10.2, rate: 18.1 },
-  314: { name: "Flatbush/Midwood",             pct:  9.5, rate: 16.4 },
-  315: { name: "Sheepshead Bay",               pct:  8.6, rate: 14.3 },
-  316: { name: "Brownsville/Ocean Hill",       pct: 14.1, rate: 27.8 },
-  317: { name: "East Flatbush/Farragut",       pct: 12.6, rate: 24.1 },
-  318: { name: "Canarsie/Flatlands",           pct: 10.9, rate: 19.9 },
-  401: { name: "Astoria",                      pct:  8.3, rate: 13.6 },
-  402: { name: "Woodside/Sunnyside",           pct:  8.7, rate: 14.5 },
-  403: { name: "Jackson Heights",              pct:  9.1, rate: 15.6 },
-  404: { name: "Elmhurst/Corona",              pct: 10.4, rate: 18.8 },
-  405: { name: "Ridgewood/Maspeth",            pct:  8.8, rate: 14.9 },
-  406: { name: "Rego Park/Forest Hills",       pct:  7.9, rate: 12.8 },
-  407: { name: "Flushing/Whitestone",          pct:  8.5, rate: 14.1 },
-  408: { name: "Hillcrest/Fresh Meadows",      pct:  8.2, rate: 13.3 },
-  409: { name: "Ozone Park/Woodhaven",         pct:  9.6, rate: 16.6 },
-  410: { name: "Howard Beach/Rockaway Park",   pct:  8.9, rate: 15.0 },
-  411: { name: "Bayside/Douglaston",           pct:  7.6, rate: 12.0 },
-  412: { name: "Jamaica/Hollis",               pct: 12.8, rate: 24.9 },
-  413: { name: "Queens Village",               pct: 11.3, rate: 21.1 },
-  414: { name: "Rockaway/Broad Channel",       pct: 11.9, rate: 22.7 },
-  501: { name: "St. George/Stapleton",         pct:  9.4, rate: 16.2 },
-  502: { name: "South Beach/Willowbrook",      pct:  8.7, rate: 14.6 },
-  503: { name: "Tottenville/Great Kills",      pct:  7.8, rate: 12.5 },
-};
-
-// Mean rate across all 58 CDs — used as a reference line on the bar chart so
-// the bars have a benchmark to read against instead of floating unlabeled.
-const CD_RATE_VALUES = Object.values(CD_DATA).map((d) => d.rate);
-const AVG_RATE = +(CD_RATE_VALUES.reduce((sum, r) => sum + r, 0) / CD_RATE_VALUES.length).toFixed(1);
-
-// ── Choropleth color scale (ARI blue-teal gradient) ──────────────────────────
+// ── Choropleth color scale (ARI blue gradient) ────────────────────────────────
 // Continuous interpolation across these stops (low → high), scaled to the
-// actual min/max rate in CD_DATA — no hardcoded breakpoints, so two
-// neighborhoods a point apart never get bucketed into the same flat color.
-
-const COLORS = ["#cde8ec", "#629FAA", "#387781", "#1E5A6B", "#0D3D4D"];
+// actual min/max pct across loaded neighborhoods — no hardcoded
+// breakpoints, so two neighborhoods a point apart never get bucketed into
+// the same flat color.
+//
+// Previously this was ["#cde8ec", "#629FAA", "#387781", "#1E5A6B", "#0D3D4D"]
+// — the middle three stops were Flu's teal scale (tokens.colorScales.flu[3]
+// = #629FAA, flu[2] = #387781), not blue, which is why the map read as
+// green/teal instead of matching the blue used everywhere else for "Overall
+// respiratory illness" (colors.blueAccent = #1E40AF, e.g. the selected-
+// district stroke and the bar chart's selectedColor below). Replaced with a
+// blue gradient anchored on that same blueAccent.
+const COLORS = ["#dbe7fb", "#8fa8e8", "#3f5fc9", "#24399e", "#0D1F5C"];
 const HIGHLIGHT_STROKE = "#1E40AF";
-
-const RATE_DOMAIN = domainFromValues(Object.values(CD_DATA).map((d) => d.rate));
-const GRADIENT_CSS = stopsToCssGradient(COLORS);
+const PIN_STROKE = "#f59e0b"; // amber — matches the compare-mode accent used in the At-a-Glance card border
 
 // Fixed fill opacity across all states (default/hover/selected). Previously
 // selection bumped this to 1.0 (from 0.72), which reads as a color/value
@@ -130,38 +84,61 @@ const GRADIENT_CSS = stopsToCssGradient(COLORS);
 // the underlying rate regardless of interaction state.
 const FILL_OPACITY = 0.82;
 
-const getColor = makeColorScale(COLORS, RATE_DOMAIN);
-
-function featureStyle(geocode, selectedGeocode) {
-  const d   = CD_DATA[geocode];
-  const sel = geocode === selectedGeocode;
+function featureStyle(geocode, selectedGeocode, pinnedGeocode, dataByGeocode, getColor) {
+  const d      = dataByGeocode[geocode];
+  const sel    = geocode === selectedGeocode;
+  // Pinned district gets its own outline so both halves of a comparison are
+  // visible on the map at once — skipped if it's also the current selection,
+  // since the selected stroke already takes visual priority there.
+  const pinned = !sel && pinnedGeocode != null && geocode === pinnedGeocode;
   return {
-    fillColor:   getColor(d?.rate),
+    fillColor:   getColor(d?.pct),
     fillOpacity: FILL_OPACITY,
-    color:       sel ? HIGHLIGHT_STROKE : "#ffffff",
-    weight:      sel ? 2.5 : 0.8,
+    color:       sel ? HIGHLIGHT_STROKE : pinned ? PIN_STROKE : "#ffffff",
+    weight:      sel || pinned ? 2.5 : 0.8,
   };
 }
 
 // ── Vega-Lite histogram spec ──────────────────────────────────────────────────
-// Column orientation: neighborhoods run left→right along X, rate runs up the
-// Y axis. Reads like a skyline beneath the map instead of a narrow vertical
-// leaderboard. Shared with LabCasesNeighborhoodMap via buildChoroplethBarSpec
-// — see choroplethBarSpec.js for the hover/selection param mechanics.
-const HISTO_SPEC = buildChoroplethBarSpec([
-  { field: "name", title: "Neighborhood" },
-  { field: "rate", title: "Rate per 100,000" },
-]);
+// Column orientation: neighborhoods run left→right along X, % of ED visits
+// runs up the Y axis. Reads like a skyline beneath the map instead of a
+// narrow vertical leaderboard. Shared with LabCasesNeighborhoodMap via
+// buildChoroplethBarSpec — see choroplethBarSpec.js for the hover/selection
+// param mechanics. Plots "pct" (not a "rate") since this is ED-visit share,
+// not a per-100k rate — see FIELD_SPECS / buildUhfDataByGeocode above for
+// where the pct field comes from.
+const HISTO_SPEC = buildChoroplethBarSpec(
+  [
+    { field: "name", title: "Neighborhood" },
+    { field: "pctTooltip", title: "Overall respiratory illness" },
+  ],
+  "pct"
+);
 
 // ── At-a-Glance snapshot rows ─────────────────────────────────────────────────
 
-function SnapshotRows({ data }) {
-  const [hoveredRow, setHoveredRow] = React.useState(null);
+// Renders a stat value, or "Suppressed" (with a title tooltip explaining
+// why) when RPU has masked it for a small numerator. Neither of this map's
+// two metrics is currently masked in RPU's file, but per-neighborhood
+// suppression is a normal condition for this kind of data (see the
+// per-virus case-rate maps, which do have masked values today), so this
+// stays null-safe rather than assuming a number is always present.
+function StatValue({ value }) {
+  if (value == null) {
+    return (
+      <span
+        className="text-xs font-semibold font-body text-[var(--gray-500)] italic"
+        title="Rate suppressed — case count too small to report"
+      >
+        Suppressed
+      </span>
+    );
+  }
+  return <span className="text-xs font-semibold font-body text-[var(--gray-900)] tabular-nums">{value}%</span>;
+}
 
-  const diff      = data.pct - CITYWIDE_PCT;
-  const diffLabel = diff > 0 ? `+${diff.toFixed(1)} pts vs. citywide` : `${diff.toFixed(1)} pts vs. citywide`;
-  const diffColor = diff > 0 ? "#b91c1c" : "#065f46";
-  const diffBg    = diff > 0 ? "#fef2f2" : "#f0fdf4";
+function SnapshotRows({ data, groupNote }) {
+  const [hoveredRow, setHoveredRow] = React.useState(null);
 
   const rowStyle = (key) => ({
     display: "flex",
@@ -180,21 +157,24 @@ function SnapshotRows({ data }) {
     <>
       <div className="px-2 py-2 flex flex-col gap-0.5">
         <div style={rowStyle("pct")} onMouseEnter={() => setHoveredRow("pct")} onMouseLeave={() => setHoveredRow(null)}>
-          <span className="text-xs font-body text-[var(--gray-600)] leading-snug">% of ED visits</span>
-          <span className="text-xs font-semibold font-body text-[var(--gray-900)] tabular-nums">{data.pct}%</span>
+          <StatValue value={data.pct} /> 
+          <span className="text-xs font-body text-[var(--gray-600)] leading-snug">of ED visits</span>
+
         </div>
-        <div style={rowStyle("rate")} onMouseEnter={() => setHoveredRow("rate")} onMouseLeave={() => setHoveredRow(null)}>
-          <span className="text-xs font-body text-[var(--gray-600)] leading-snug">Rate per 100,000</span>
-          <span className="text-xs font-semibold font-body text-[var(--gray-900)] tabular-nums">{data.rate}</span>
+        <div style={rowStyle("hospPct")} onMouseEnter={() => setHoveredRow("hospPct")} onMouseLeave={() => setHoveredRow(null)}>
+          <StatValue value={data.hospPct} /> 
+          <span className="text-xs font-body text-[var(--gray-600)] leading-snug">of hospitalizations from the ED</span>
         </div>
-        <div style={rowStyle("diff")} onMouseEnter={() => setHoveredRow("diff")} onMouseLeave={() => setHoveredRow(null)}>
-          <span
-            className="text-2xs font-medium px-1.5 py-0.5 rounded-full leading-snug"
-            style={{ color: diffColor, backgroundColor: diffBg }}
-          >
-            {diffLabel}
-          </span>
-        </div>
+        {/* RPU reports 15 of the 42 UHF42 neighborhoods as part of a
+            combined UHF34 group (see neighborhoodGeoData.js's
+            groupedWithNote) — this value isn't independent of its
+            group-mates', so say so rather than let identical numbers
+            across 2-3 neighborhoods look like a coincidence. */}
+        {groupNote && (
+          <p className="px-1.5 pt-0.5 text-2xs font-body text-[var(--gray-600)] italic leading-snug">
+            {groupNote}
+          </p>
+        )}
       </div>
       <div
         className="px-3 pb-2 flex justify-between gap-2"
@@ -210,6 +190,44 @@ function SnapshotRows({ data }) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const NeighborhoodMap = () => {
+  const [pinnedGeocode, setPinnedGeocode] = React.useState(null);
+  const [pinHovered, setPinHovered]       = React.useState(false);
+
+  // ── Real UHF neighborhood data ────────────────────────────────────────────
+  // Loads RPU's staged emergencyDeptData.csv (see useNeighborhoodGeoCsv for
+  // why this reads from public/data instead of the live DATA_PATHS.ed feed
+  // for now) and turns its "by neighborhood" rows into a geocode-keyed
+  // lookup, splitting the 7 combined-UHF34 submetrics into their component
+  // UHF42 codes along the way (see neighborhoodGeoData.js).
+  const { edRows } = useNeighborhoodGeoCsv();
+  const dataByGeocode = useMemo(
+    () => buildUhfDataByGeocode(edRows, FIELD_SPECS),
+    [edRows]
+  );
+
+  // Domain/color scale depend on the loaded data, so — unlike the old
+  // hardcoded CD_DATA version — these can no longer be module-level
+  // constants. Falls back to a [0, 1] domain before any data has loaded so
+  // makeColorScale never divides by an Infinity/-Infinity range.
+  const pctDomain = useMemo(() => {
+    const values = Object.values(dataByGeocode)
+      .map((d) => d.pct)
+      .filter((v) => v != null);
+    return values.length ? domainFromValues(values) : [0, 1];
+  }, [dataByGeocode]);
+  const getColor = useMemo(() => makeColorScale(COLORS, pctDomain), [pctDomain]);
+  const gradientCss = useMemo(() => stopsToCssGradient(COLORS), []);
+
+  // Unweighted average of loaded neighborhoods' pct — see
+  // averageAcrossNeighborhoods's doc comment for why this isn't a true
+  // citywide statistic.
+  const citywidePct = averageAcrossNeighborhoods(dataByGeocode, "pct") ?? CITYWIDE_PCT_FALLBACK;
+
+  const getFeatureStyle = React.useCallback(
+    (geocode, selectedGeocode, pinned) => featureStyle(geocode, selectedGeocode, pinned, dataByGeocode, getColor),
+    [dataByGeocode, getColor]
+  );
+
   const {
     mapContainerRef,
     chartAreaRef,
@@ -226,77 +244,89 @@ const NeighborhoodMap = () => {
     suggestions,
     chartAreaHeight,
     handleChartNewView,
+    getNeighborInDirection,
   } = useChoroplethMap({
-    dataByGeocode: CD_DATA,
-    getFeatureStyle: featureStyle,
+    dataByGeocode,
+    getFeatureStyle,
     hoverStrokeColor: "#555",
     initialChartHeight: 388,
+    pinnedGeocode,
     logPrefix: "[NeighborhoodMap]",
   });
 
-  const [pinnedGeocode, setPinnedGeocode] = React.useState(null);
-  const [pinHovered, setPinHovered]       = React.useState(false);
-
   // ── Arrow-key neighborhood navigation ──────────────────────────────────────
-  // Geocodes sorted borough-first (hundreds digit) then district (ones/tens)
-  const sortedGeocodes = useMemo(
-    () => Object.keys(CD_DATA).map(Number).sort((a, b) => a - b),
-    []
-  );
-
+  // Moves to the nearest district whose centroid actually lies in the
+  // pressed direction (see useChoroplethMap's getNeighborInDirection).
+  // Previously this stepped ±1 through geocodes sorted borough-first, which
+  // meant crossing a borough boundary could jump somewhere geographically
+  // unrelated regardless of which arrow was pressed — e.g. Left from
+  // Williamsburg/Greenpoint (301) landed on Williamsbridge/Baychester (212,
+  // the last Bronx district before Brooklyn's start in that sort), and Right
+  // landed on Brooklyn Hts/Fort Greene (302) — both just "previous/next in
+  // the list," not actually left or right of Williamsburg.
   useEffect(() => {
     if (selectedGeocode == null) return;
     const handleKeyDown = (e) => {
-      if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) return;
+      if (!["ArrowUp", "ArrowDown"].includes(e.key)) return;
       // Only intercept when not typing in an input
       if (document.activeElement?.tagName === "INPUT") return;
+      const next = getNeighborInDirection(selectedGeocode, e.key);
+      if (next == null) return;
       e.preventDefault();
-      const idx = sortedGeocodes.indexOf(selectedGeocode);
-      if (idx === -1) return;
-      const delta = (e.key === "ArrowDown" || e.key === "ArrowRight") ? 1 : -1;
-      const next  = sortedGeocodes[(idx + delta + sortedGeocodes.length) % sortedGeocodes.length];
       setSelectedGeocode(next);
-      setSearch(CD_DATA[next]?.name ?? "");
+      setSearch(dataByGeocode[next]?.name ?? "");
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedGeocode, sortedGeocodes, setSelectedGeocode, setSearch]);
+  }, [selectedGeocode, getNeighborInDirection, setSelectedGeocode, setSearch, dataByGeocode]);
 
   // ── Derived values ──────────────────────────────────────────────────────────
-  const selectedData    = selectedGeocode != null ? CD_DATA[selectedGeocode] : null;
+  const selectedData    = selectedGeocode != null ? dataByGeocode[selectedGeocode] : null;
   const previewGeocode  = hoveredBar ?? mapHoveredGeocode;
-  const previewData     = previewGeocode != null ? CD_DATA[previewGeocode] : null;
+  const previewData     = previewGeocode != null ? dataByGeocode[previewGeocode] : null;
   const showHoverLayer  = Boolean(previewData && previewGeocode !== selectedGeocode);
 
-  // Vega-Lite chart data — static (doesn't depend on selection/hover state
-  // anymore). Selected/hover highlighting is handled natively inside the
-  // Vega spec via params (see HISTO_SPEC + useChoroplethMap's selectedSig
-  // effect), so this never needs to be recomputed on interaction.
+  // Vega-Lite chart data. Neighborhoods with a suppressed (null) pct are
+  // left out of the ranked bar chart / table entirely rather than plotted
+  // as zero — matches how the per-virus case-rate maps handle RPU's masked
+  // values. Recomputed when dataByGeocode or the color scale change (was
+  // `[]` when this read a static CD_DATA constant; now both are derived
+  // from the loaded CSV).
   const chartData = useMemo(
     () =>
-      Object.entries(CD_DATA).map(([geocode, d]) => ({
-        geocode,
-        name:       d.name,
-        pct:        d.pct,
-        rate:       d.rate,
-        fillColor:  getColor(d.rate),
-        barOpacity: 0.82,
-      })),
-    []
+      Object.entries(dataByGeocode)
+        .filter(([, d]) => d.pct != null)
+        .map(([geocode, d]) => ({
+          geocode,
+          name:       d.name,
+          pct:        d.pct,
+          hospPct:    d.hospPct,
+          fillColor:  getColor(d.pct),
+          barOpacity: 0.82,
+        })),
+    [dataByGeocode, getColor]
   );
+
+  const suppressedCount = Object.keys(dataByGeocode).length - chartData.length;
 
   // Same data as chartData, sorted for the AccessibleTable fallback (the
   // Vega bar chart is visually pre-sorted by its spec; the table needs that
   // order explicitly since it doesn't go through Vega's sort transform).
   const rankedTableData = useMemo(
-    () => [...chartData].sort((a, b) => b.rate - a.rate),
+    () => [...chartData].sort((a, b) => b.pct - a.pct),
     [chartData]
   );
 
   // Comparison mode: pinned + a different CD is selected/hovered
   const compareData    = pinnedGeocode != null && pinnedGeocode !== selectedGeocode
-    ? CD_DATA[pinnedGeocode] : null;
+    ? dataByGeocode[pinnedGeocode] : null;
   const inCompareMode  = Boolean(compareData && selectedData);
+  const compareGroupNote = inCompareMode
+    ? (() => { const n = groupedWithNote(compareData, dataByGeocode); return n ? `${compareData.name}: ${n}` : null; })()
+    : null;
+  const currentGroupNote = inCompareMode
+    ? (() => { const d = previewData ?? selectedData; const n = groupedWithNote(d, dataByGeocode); return n ? `${d.name}: ${n}` : null; })()
+    : null;
 
   // ── Render ──────────────────────────────────────────────────────────────────
   // v2 layout: header (title + inline search) → [map | At-a-Glance + caption]
@@ -308,7 +338,7 @@ const NeighborhoodMap = () => {
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-md mb-md">
         <div>
           <h3 className="text-[var(--content-title-size)] font-heading font-semibold tracking-tight text-[var(--content-title-color,var(--gray-900))]">
-            What&rsquo;s happening in your neighborhood?
+            What&rsquo;s happening in your neighborhood
           </h3>
           <p className="text-md font-body text-[var(--gray-700)] mt-xs">
             Overall respiratory illness ED visits in the past week
@@ -335,7 +365,7 @@ const NeighborhoodMap = () => {
           {/* Keyboard nav hint — shown only after a CD is selected */}
           {selectedGeocode != null && (
             <p className="mt-xs text-2xs font-body text-[var(--gray-600)] leading-tight text-right">
-              ↑ ↓ ← → to navigate neighborhoods
+              ↑ ↓ to navigate neighborhoods
             </p>
           )}
         </div>
@@ -356,8 +386,9 @@ const NeighborhoodMap = () => {
           <p id="neighborhood-map-instructions" className="sr-only">
             Interactive map of NYC neighborhoods. This map is not operable by
             keyboard — use the search box below to find and select a
-            neighborhood. Once a neighborhood is selected, use the arrow keys
-            to move to an adjacent one. A full ranked data table is also
+            neighborhood by name or ZIP code. Once a neighborhood is
+            selected, use the arrow keys to move to an adjacent one. A full
+            ranked data table is also
             available below the chart.
           </p>
           {mapError ? (
@@ -381,22 +412,22 @@ const NeighborhoodMap = () => {
             className="absolute top-2 left-2 bg-white rounded border border-[var(--gray-200)] px-2 py-1.5 shadow-sm"
             style={{ zIndex: 1000 }}
           >
-            <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide mb-1">
-              Rate per 100k
-            </p>
             <div
               className="w-28 h-2 rounded-sm"
-              style={{ background: GRADIENT_CSS }}
+              style={{ background: gradientCss }}
               aria-hidden="true"
             />
             <div className="flex justify-between mt-0.5">
               <span className="text-2xs font-body text-[var(--gray-600)]">
-                {RATE_DOMAIN[0].toFixed(0)}
+                {pctDomain[0].toFixed(1)}%
               </span>
               <span className="text-2xs font-body text-[var(--gray-600)]">
-                {RATE_DOMAIN[1].toFixed(0)}
+                {pctDomain[1].toFixed(1)}%
               </span>
             </div>
+            <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide mb-1">
+              of ED visits
+            </p>
           </div>
         </div>
 
@@ -417,16 +448,23 @@ const NeighborhoodMap = () => {
               taller. (Absolute+inset-0 previously forced the hover
               "Preview" layer to match the base layer's — usually shorter —
               height, clipping its content via overflow-hidden.)
-              min-h-[170px] pins the card to the height of its "full" content
-              (header + SnapshotRows) at all times, including the empty/
-              unselected placeholder. Without this, hovering a bar with
+              min-h-[170px] pins the stats area to the height of its "full"
+              content (header + SnapshotRows) at all times, including the
+              empty/unselected placeholder. Without this, hovering a bar with
               nothing selected grew the card (short placeholder → tall
               preview), which pushed the bar chart down out from under the
               cursor, firing mouseout, shrinking the card back, moving the
               chart back up under the cursor, mouseover again — a genuine
-              hover/layout feedback loop. */}
+              hover/layout feedback loop.
+
+              The dynamic caption paragraph used to be its own separate
+              bordered box below this card; it's now a second section inside
+              the same outer border so the stats + narrative read as one
+              card. It stays outside the hover/base grid swap above (i.e. it
+              doesn't flicker to a "preview" version on hover) since it's
+              describing the selection, not whatever's being hovered. */}
           <div
-            className="grid min-h-[170px] rounded-lg overflow-hidden transition-all duration-200 flex-shrink-0"
+            className="rounded-lg overflow-hidden transition-all duration-200 flex-shrink-0"
             style={{
               border: inCompareMode
                 ? "1.5px solid #f59e0b"
@@ -436,6 +474,7 @@ const NeighborhoodMap = () => {
               boxShadow: inCompareMode ? "0 0 0 3px #fef3c766" : "none",
             }}
           >
+          <div className="grid min-h-[170px]">
           {/* Hover layer — fades in when previewing a different CD */}
           <div
             className="col-start-1 row-start-1 flex flex-col bg-white transition-opacity duration-200 z-10"
@@ -453,7 +492,7 @@ const NeighborhoodMap = () => {
                 {previewData?.name ?? ""}
               </p>
             </div>
-            {previewData && <SnapshotRows data={previewData} />}
+            {previewData && <SnapshotRows data={previewData} groupNote={groupedWithNote(previewData, dataByGeocode)} />}
           </div>
 
           {/* Base layer */}
@@ -523,13 +562,22 @@ const NeighborhoodMap = () => {
                       pinned={compareData}
                       current={previewData ?? selectedData}
                       fields={[
-                        { key: "pct", label: "% of ED visits", suffix: " pts", format: (v) => `${v}%` },
-                        { key: "rate", label: "Rate / 100k" },
+                        { key: "pct", label: "ED visits", suffix: " pts", format: (v) => `${v}%` },
+                        { key: "hospPct", label: "Hospitalizations", suffix: " pts", format: (v) => `${v}%` },
                       ]}
                     />
+                    {/* Either side of a comparison can be one of the 15
+                        grouped neighborhoods — flag it so a "these two
+                        match exactly" read isn't mistaken for coincidence
+                        when it's actually the same underlying RPU value. */}
+                    {(compareGroupNote || currentGroupNote) && (
+                      <p className="px-3 pb-1.5 text-2xs font-body text-[var(--gray-600)] italic leading-snug">
+                        {[compareGroupNote, currentGroupNote].filter(Boolean).join(" ")}
+                      </p>
+                    )}
                   </>
                 ) : (
-                  <SnapshotRows data={selectedData} />
+                  <SnapshotRows data={selectedData} groupNote={groupedWithNote(selectedData, dataByGeocode)} />
                 )}
               </>
             ) : (
@@ -543,33 +591,50 @@ const NeighborhoodMap = () => {
               </div>
             )}
           </div>
-        </div>
+          </div>
 
-        {/* Dynamic caption — natural height, stays the width of this narrow
-            column (not stretched to the full-width bar chart below). */}
-        <div className="flex-shrink-0 rounded-md bg-[var(--gray-100)] border border-[var(--gray-200)] px-md py-md text-sm font-body text-[var(--gray-700)] leading-relaxed">
-          {selectedData ? (
-            <>
-              <p>
-                In <strong>{selectedData.name}</strong>, respiratory illnesses
-                accounted for{" "}
-                <strong className="text-[var(--blue-primary)]">{selectedData.pct}%</strong>{" "}
-                of ED visits for the week ending <strong>{WEEK_ENDING}</strong>.
-              </p>
-              <p className="mt-sm">
-                This is{" "}
-                <strong>
-                  {selectedData.pct > CITYWIDE_PCT ? "more than"
-                    : selectedData.pct < CITYWIDE_PCT ? "less than"
-                    : "equal to"}
-                </strong>{" "}
-                the Citywide value of <strong>{CITYWIDE_PCT}%</strong>.
-              </p>
-            </>
-          ) : (
-            <p className="text-[var(--gray-600)]">
-              Click a neighborhood on the map or search above to see local data.
-            </p>
+          {/* Dynamic caption — same card, second section. Only rendered once
+              something is selected; the empty-state placeholder above
+              already covers the "click a neighborhood" prompt, so repeating
+              it here would just duplicate that message within one card. */}
+          {selectedData && (
+            <div className="border-t border-[var(--gray-200)] bg-[var(--gray-100)] px-md py-md text-sm font-body text-[var(--gray-700)] leading-relaxed">
+              {selectedData.pct == null ? (
+                <p>
+                  RPU has suppressed this week's ED-visit rate for{" "}
+                  <strong>{selectedData.name}</strong> — the underlying case
+                  count is too small to report reliably.
+                </p>
+              ) : (
+                <>
+                  <p>
+                    In <strong>{selectedData.name}</strong>, respiratory illnesses
+                    were <strong>{selectedData.pct}%</strong> of ED
+                    visits for the week ending <strong>{WEEK_ENDING}</strong>.
+
+                    This is{" "}
+                    <strong
+                      style={{
+                        color:
+                          selectedData.pct > citywidePct ? "#b91c1c"
+                            : selectedData.pct < citywidePct ? "#065f46"
+                            : "inherit",
+                      }}
+                    >
+                      {selectedData.pct > citywidePct ? "more than"
+                        : selectedData.pct < citywidePct ? "less than"
+                        : "equal to"}
+                    </strong>{" "}
+                    the Citywide value of <strong>{citywidePct}%</strong>.
+                  </p>
+                </>
+              )}
+              {groupedWithNote(selectedData, dataByGeocode) && (
+                <p className="mt-sm text-xs italic">
+                  {groupedWithNote(selectedData, dataByGeocode)}
+                </p>
+              )}
+            </div>
           )}
         </div>
 
@@ -580,19 +645,19 @@ const NeighborhoodMap = () => {
         <div
           className="w-full flex-shrink-0 sm:mt-auto rounded-md border border-[var(--gray-200)] flex flex-col"
           style={{ height: "190px" }}
-          aria-label={`Neighborhood rates ranked, highest to lowest, with a dashed line at the citywide average of ${AVG_RATE} per 100,000 — hover for details, click to highlight on map`}
+          aria-label={`Neighborhoods ranked by percent of ED visits, highest to lowest, with a dashed line at the citywide value of ${citywidePct}%${suppressedCount ? `. ${suppressedCount} neighborhood(s) omitted — data suppressed` : ""} — hover for details, click to highlight on map`}
         >
           {/* Header */}
           <div className="bg-white border-b border-[var(--gray-200)] px-sm pt-sm pb-xs rounded-t-md flex-shrink-0 flex items-center justify-between gap-2">
             <div>
               <p className="text-xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide leading-tight">
-                Rate per 100,000 · Click to select
+                Click to select
               </p>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
               <span className="inline-block w-3 border-t border-dashed" style={{ borderColor: "#6b7280" }} aria-hidden="true" />
               <span className="text-2xs font-body text-[var(--gray-600)] whitespace-nowrap">
-                NYC avg ({AVG_RATE})
+                Citywide ({citywidePct}%)
               </span>
             </div>
           </div>
@@ -600,7 +665,9 @@ const NeighborhoodMap = () => {
           {/* Vega-Lite chart — decorative/visual only; the equivalent ranked
               data is exposed to screen readers via the AccessibleTable below,
               since neither this chart's bars nor the map's polygons are
-              keyboard- or screen-reader-operable. */}
+              keyboard- or screen-reader-operable. Suppressed neighborhoods
+              (null pct) are already filtered out of chartData, so they
+              simply don't appear as bars rather than plotting as 0. */}
           <div ref={chartAreaRef} className="flex-1 min-h-0 overflow-hidden" aria-hidden="true">
             <VegaLiteWrapper
               data={chartData}
@@ -608,9 +675,9 @@ const NeighborhoodMap = () => {
               dynamicFields={{
                 chartHeight: chartAreaHeight,
                 selectedColor: "#1E40AF",
-                hoverColor: "#387781",
-                benchmarkValue: AVG_RATE,
-                benchmarkLabel: `NYC average: ${AVG_RATE} / 100,000`,
+                hoverColor: "#3f5fc9",
+                benchmarkValue: citywidePct,
+                benchmarkLabel: `Citywide: ${citywidePct}%`,
               }}
               rendererMode="svg"
               onNewView={handleChartNewView}
@@ -618,17 +685,29 @@ const NeighborhoodMap = () => {
           </div>
 
           {/* Non-visual fallback — full ranked list, reachable by keyboard/
-              screen reader regardless of map or chart interaction. */}
+              screen reader regardless of map or chart interaction. Mirrors
+              the chart in excluding suppressed neighborhoods from the
+              ranking (rather than a screen-reader user seeing entries the
+              sighted chart doesn't show), with a plain-text note below
+              instead so the omission isn't silent either way. */}
           <AccessibleTable
             data={rankedTableData}
             columns={[
               { key: "name", header: "Neighborhood", format: "text" },
-              { key: "rate", header: "Rate per 100,000", format: "number" },
+              { key: "pct", header: "Percent of ED visits", format: "percent" },
+              { key: "hospPct", header: "percent of hospitalizations from the ED that are for ORI", format: "percent" },
             ]}
-            caption="Neighborhood respiratory illness ED-visit rates, ranked highest to lowest"
+            caption="Neighborhood respiratory illness, percent of ED visits, ranked highest to lowest"
             srOnly
             allowToggleForSighted
           />
+          {suppressedCount > 0 && (
+            <p className="sr-only">
+              {suppressedCount} additional neighborhood(s) omitted — RPU has
+              suppressed their ED-visit rate because the underlying case
+              count is too small to report reliably.
+            </p>
+          )}
         </div>
         </div>
       </div>

@@ -162,6 +162,8 @@ const CustomSection = ({
   customComponents,
   onNewView,
   onDownloadPNG,
+  onCopyImage,
+  onExportSpec,
   setView,
   latestDate,
 }) => {
@@ -173,6 +175,18 @@ const CustomSection = ({
     const chartProps = interpolateObject(section.chart?.props || {}, textVars);
     const compProps = interpolateObject(section.componentProps || {}, textVars);
     const resolvedTitle = resolveText(section.title, textVars);
+
+    // Plain-text title/subtitle for the "Copy chart as image" export header
+    // (same stripping ChartSection does for its own onCopyImage wiring —
+    // resolvedTitle/subtitle can carry HTML spans from resolveText/
+    // colorizeVirusInTitle that shouldn't leak into the exported image).
+    const _strip = (html = "") => {
+      const el = document.createElement("div");
+      el.innerHTML = html;
+      return (el.textContent || el.innerText || "").replace(/\s+/g, " ").trim();
+    };
+    const exportTitle = _strip(resolvedTitle);
+    const exportSubtitle = section.subtitle ? _strip(resolveText(section.subtitle, textVars)) : "";
     // When a section opts in via titleInComponent, the custom component
     // renders its own title (typically alongside other header controls,
     // like a search box, in the same row) instead of ContentContainer
@@ -251,6 +265,7 @@ const CustomSection = ({
               date: latestDate,
             })
         )}
+        onCopyImage={onCopyImage ? onCopyImage(sectionKey, exportTitle, exportSubtitle) : null}
       >
         {wrapInChart ? (
           <ChartContainer
@@ -266,6 +281,7 @@ const CustomSection = ({
               />
             }
             onNewView={onNewView(sectionKey)}
+            onExportSpec={onExportSpec ? onExportSpec(sectionKey) : undefined}
             {...(section.showSidebarToggle
               ? {
                   sidebar: (

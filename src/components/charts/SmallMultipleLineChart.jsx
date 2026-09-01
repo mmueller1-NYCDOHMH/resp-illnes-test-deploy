@@ -233,15 +233,20 @@ useEffect(() => {
   // Combined "[group]: value of metric" tooltip line — falls back to the
   // active virus if there's no per-point group field.
   const tooltipMetricLabel = columnLabels.value || metricName;
-  const valueDisplayCalc = isPercent
-    ? "datum.valueRaw != null ? (test(/%$/, '' + datum.valueRaw) ? '' + datum.valueRaw : ('' + datum.valueRaw) + '%') : (isValid(datum.value) ? format(datum.value, '.1f') + '%' : 'N/A')"
-    : "datum.valueRaw != null ? '' + datum.valueRaw : (isValid(datum.value) ? format(datum.value, ',.0f') : 'N/A')";
+// Suppressed weeks (small-number counts withheld for privacy) are flagged
+// upstream in filterMetricData.js as `suppressed`. Per NYC Health decision
+// 2026-08-27 (Montesano/Parton), these still chart as 0 but the tooltip
+// shows the suppression range instead of a plain "0".
+const valueDisplayCalc = isPercent
+  ? "datum.suppressed ? '1-4 (suppressed for privacy)' : (isValid(datum.value) ? (datum.value === 0 ? '0%' : (datum.valueRaw != null ? '' + datum.valueRaw : format(datum.value, '.1f') + '%')) : 'N/A')"
+  : "datum.suppressed ? '1-4 (suppressed for privacy)' : (isValid(datum.value) ? (datum.value === 0 ? '0' : (datum.valueRaw != null ? '' + datum.valueRaw : format(datum.value, ',.0f'))) : 'N/A')";
   const tooltipLineCalc = buildTooltipLineCalc({
-    seriesField: colorField || null,
+    seriesField: null,               // was colorField — redundant with the panel's own group title
     seriesLabel: virus || metricName,
     valueField: "valueDisplay",
     metricLabel: tooltipMetricLabel,
     isPercent,
+    includeSeriesInValue: false,     // series goes in the tooltip row's title instead
   });
 
   specTemplate.vconcat = groups.map((group) => {
@@ -303,6 +308,7 @@ useEffect(() => {
       width: "{containerWidth}",
       transform: [
         { filter: `datum['${colorField}'] === '${group}'` },
+        { calculate: "datum.value == null ? 0 : datum.value", as: "value" },
         { calculate: valueDisplayCalc, as: "valueDisplay" },
         { calculate: tooltipLineCalc, as: "tooltipLine" },
       ],
@@ -351,8 +357,8 @@ useEffect(() => {
           encoding: {
             color: { value: selectedColor },
             tooltip: [
-              { field: "date", type: "temporal", format: "%b %d, %Y", title: "Date" },
-              tooltipLineEntry("tooltipLine"),
+              { field: "date", type: "temporal", format: "%b %d, %Y", title: "Date." },
+              tooltipLineEntry("tooltipLine", virus || metricName),
             ],
             size: {
               condition: { param: "pointHover", empty: false, value: 150 },

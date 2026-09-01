@@ -19,7 +19,16 @@ export const PageStateProvider = ({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [view, setView] = useState("visits");
+  // Seed from ?view= query param on initial load (supports deep links) — same
+  // pattern as dataType below. Previously this was a bare useState("visits"),
+  // so `view` never read from or wrote to the URL: switching to
+  // Hospitalizations and clicking Share copied a link that silently reverted
+  // to Visits for whoever opened it, since the URL never reflected the
+  // change in the first place.
+  const [view, setView] = useState(() => {
+    const param = searchParams.get("view");
+    return param === "hospitalizations" ? "hospitalizations" : "visits";
+  });
 
   // The ONLY source of truth for activeVirus:
   const activeVirus = useMemo(() => {
@@ -59,6 +68,14 @@ export const PageStateProvider = ({
     if (param && param !== dataType) setDataType(param);
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Sync view when the URL search params change (same-page deep-link
+  // navigation, e.g. browser back/forward) — same pattern as dataType above.
+  useEffect(() => {
+    const param = searchParams.get("view");
+    const next = param === "hospitalizations" ? "hospitalizations" : "visits";
+    if (next !== view) setView(next);
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Data type fix for viruses that do not support deaths
   useEffect(() => {
     if ((activeVirus === "Flu" || activeVirus === "RSV") && dataType === "death") {
@@ -77,6 +94,21 @@ export const PageStateProvider = ({
     }
     history.replaceState(null, "", url.pathname + url.search + url.hash);
   }, [dataType, enableDataTypeToggle]);
+
+  // Sync view (visits/hospitalizations) to URL search params so Share
+  // captures the active toggle — same pattern as the dataType sync above.
+  // This is the actual fix for the Share/deep-link bug: without this effect
+  // `view` only ever lived in React state, so the URL never changed when the
+  // toggle did.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (!view || view === "visits") {
+      url.searchParams.delete("view");
+    } else {
+      url.searchParams.set("view", view);
+    }
+    history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }, [view]);
 
   const handleDownload = () => {
     const filtered = initialData.map(({ week, season, visits }) => ({

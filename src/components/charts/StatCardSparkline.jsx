@@ -24,6 +24,7 @@ const StatCardSparkline = ({
   showYAxis = true,        // set false to hide the %-axis (e.g. compact overview rows)
   yAxisFormat = ".1f",     // tick label format — e.g. ".2f" for series that need 2 decimal places
   yTickCount = 1,          // number of y-axis ticks — compact rows use 1 (just the max), expanded/modal views want more
+  yDomain = null,          // [min, max] — set to force a shared y-scale across sibling sparklines (e.g. the by-virus small multiples); leave null for independent auto-scaling
   onNewView,               // optional — exposes the underlying Vega view instance (e.g. for PNG/clipboard export)
 }) => {
   const data = useMemo(() => {
@@ -42,46 +43,62 @@ const StatCardSparkline = ({
 
   if (data.length < 2) return null;
 
+  // Set virus name for tooltips
+  const virusName = series[0]?.metric.includes("Respiratory illness")
+    ? "Overall respiratory illness"
+    : series[0]?.metric.includes("COVID-19")
+    ? "COVID-19"
+    : series[0]?.metric.includes("Influenza")
+    ? "Flu"
+    : "RSV";
+
   const minDate = data[0].date;
   const maxDate = data[data.length - 1].date;
 
   const values = data.map((d) => d.value);
   const maxVal = Math.max(...values);
   const minVal = Math.min(...values);
-  // Explicit tick values (rather than tickCount) so Vega-Lite's "nice"
-  // rounding never snaps a tick to 0 when the real data doesn't include it.
-  // Compact rows just show the max; expanded/modal charts spread evenly
-  // across the data range for more reference points.
-  const yTickValues = yTickCount > 1
-    ? Array.from(
-        { length: yTickCount },
-        (_, i) => minVal + ((maxVal - minVal) * i) / (yTickCount - 1)
-      )
-    : [maxVal];
+
+// Explicit tick values (rather than tickCount) so Vega-Lite's "nice"
+// rounding never snaps a tick to 0 when the real data doesn't include it.
+// Ticks are spaced evenly from 0 (not the data's min) to the max, so multiple
+// tick charts get a consistent, evenly-spaced axis rather than one anchored
+// to an arbitrary local minimum. Compact rows just show the max.
+const yTickValues = yTickCount > 1
+  ? Array.from(
+      { length: yTickCount },
+      (_, i) => (maxVal * i) / (yTickCount - 1)
+    )
+  : [maxVal];
 
   const yAxis = showYAxis ? {
     title: null,
     values: yTickValues,
     format: yAxisFormat,
-    labelExpr: "datum.label + '%'",
+    labelExpr: "datum.value === 0 ? '' : datum.label + '%'",
     grid: true,
     gridDash: [2],
   } : null;
 
   const xAxis = showXAxis ? {
     title: null,
-    format: "%b %d",
+    format: "%m/%d",
     tickCount: 6,
     labelAngle: 0,
     labelOverlap: "parity",
     labelPadding: 6,
     labelColor: colors.gray600,
     domain: false,
-    ticks: false,
+    ticks: true,
     grid: false,
   } : null;
 
-  const tooltipTitle = view === "hosps" ? "Percent of hospitalizations" : "Percent of ED visits";
+  const tooltipTitle = view === "hosps" ? "% of hospitalizations" : "% of ED visits";
+
+  // When a shared domain is supplied (by-virus small multiples), every
+  // sibling sparkline plots against the same y range so their heights are
+  // directly comparable. Otherwise each card auto-scales to its own data.
+  const yScale = yDomain ? { zero: false, domain: yDomain } : { zero: false };
 
   const specTemplate = {
     width: "container",
@@ -110,6 +127,12 @@ const StatCardSparkline = ({
       axisY: { ...BASE_AXIS_Y_CONFIG, tickCount: 2 },
       legend: { disable: true },
     },
+    transform: [
+      {
+        calculate: `format(datum.value, '.2f') + '${tooltipTitle}'`,
+        as: "valueLabel",
+      },
+    ],
     layer: [
       {
         mark: {
@@ -120,7 +143,7 @@ const StatCardSparkline = ({
         },
         encoding: {
           x: { field: "date", type: "temporal", axis: xAxis, scale: { padding: 10 } },
-          y: { field: "value", type: "quantitative", axis: yAxis, scale: { zero: false } },
+          y: { field: "value", type: "quantitative", axis: yAxis, scale: yScale },
         },
       },
       {
@@ -132,11 +155,13 @@ const StatCardSparkline = ({
         },
         encoding: {
           x: { field: "date", type: "temporal", axis: xAxis, scale: { padding: 10 } },
-          y: { field: "value", type: "quantitative", axis: yAxis, scale: { zero: false } },
+          y: { field: "value", type: "quantitative", axis: yAxis, scale: yScale },
+          /*
           tooltip: [
             { field: "date", type: "temporal", format: "%b %d, %Y", title: "Date" },
-            { field: "value", type: "quantitative", format: ".2f", title: tooltipTitle },
+            { field: "valueLabel", type: "nominal", format: ".2f", title: virusName },
           ],
+          */
         },
       },
       {
@@ -154,15 +179,16 @@ const StatCardSparkline = ({
         mark: { type: "point",  filled: true, color },
         encoding: {
           x: { field: "date", type: "temporal" },
-          y: { field: "value", type: "quantitative", scale: { zero: false } },
+          y: { field: "value", type: "quantitative", scale: yScale },
           color: { value: color },
           size: {
             condition: {param: "hover", empty: false, value: 150},
             value: 60
         },
+
           tooltip: [
             { field: "date", type: "temporal", format: "%b %d, %Y", title: "Date" },
-            { field: "value", type: "quantitative", format: ".2f", title: tooltipTitle },
+            { field: "valueLabel", type: "nominal", title: virusName },
           ],
         },
       },
@@ -180,7 +206,7 @@ const StatCardSparkline = ({
           encoding: {
             x: { field: "start", type: "temporal", scale: { padding: 10 } },
             x2: { field: "end" },
-            y: { field: "avg", type: "quantitative", scale: { zero: false } },
+            y: { field: "avg", type: "quantitative", scale: yScale },
           },
         },
         {
@@ -195,7 +221,7 @@ const StatCardSparkline = ({
             dy: -3,
           },
           encoding: {
-            y: { field: "avg", type: "quantitative", scale: { zero: false } },
+            y: { field: "avg", type: "quantitative", scale: yScale },
             x: { field: "end", type: "temporal", scale: { padding: 10 } },
             text: { field: "label" },
           },
@@ -215,6 +241,7 @@ const StatCardSparkline = ({
       />
     </div>
   );
+
 };
 
 StatCardSparkline.propTypes = {
@@ -232,5 +259,6 @@ StatCardSparkline.propTypes = {
   yTickCount:     PropTypes.number,
   onNewView:      PropTypes.func,
 };
+
 
 export default StatCardSparkline;

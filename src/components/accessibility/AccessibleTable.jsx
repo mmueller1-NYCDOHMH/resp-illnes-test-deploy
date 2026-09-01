@@ -104,8 +104,12 @@ export default function AccessibleTable({
   const fmt = useMemo(
     () => ({
       text: (v) => (v ?? "").toString(),
-      number: (v) =>
-        v == null || v === "" ? "" : new Intl.NumberFormat().format(+v),
+      number: (v, row) =>
+        row?.suppressed
+          ? "1-4 (suppressed for privacy)"
+          : v == null || v === ""
+          ? ""
+          : new Intl.NumberFormat().format(+v),
       percent: (v, row, col) => formatPercentSmart(v, row, col),
       date: (v) => (v ? new Date(v).toLocaleDateString() : ""),
       passthrough: (v) => v,

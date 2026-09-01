@@ -8,6 +8,11 @@
  * - Opens on typing; closes on outside click or Escape
  * - Results grouped by borough with borough headers
  * - Query text highlighted inside matching names
+ * - A 5-digit query is treated as a ZIP code lookup (see zipToUhf.js /
+ *   useChoroplethMap's `suggestions`) rather than a name filter — the
+ *   matching neighborhood shows a "ZIP {code}" badge instead of (or
+ *   alongside) the usual name-substring highlight, since the query text
+ *   itself won't appear inside the name.
  * - Slide-in dropdown animation (opacity + translateY)
  * - "/" keyboard shortcut to focus input
  * - ↑ ↓ Enter keyboard navigation (skips headers)
@@ -36,16 +41,19 @@ import PropTypes from "prop-types";
 
 // ── Borough ordering + derivation ─────────────────────────────────────────────
 
-const BOROUGH_ORDER = ["Manhattan", "Brooklyn", "Queens", "The Bronx", "Staten Island"];
+const BOROUGH_ORDER = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"];
 
-function getBoroughFromGeocode(geocode) {
-  const code = parseInt(geocode, 10);
-  if (code >= 101 && code <= 199) return "Manhattan";
-  if (code >= 201 && code <= 299) return "The Bronx";
-  if (code >= 301 && code <= 399) return "Brooklyn";
-  if (code >= 401 && code <= 499) return "Queens";
-  if (code >= 501 && code <= 599) return "Staten Island";
-  return "Other";
+// Reads the borough straight off each suggestion's data (see
+// uhfNeighborhoods.js — every UHF42 entry carries a `borough` field).
+// Previously this derived a borough from geocode number ranges tuned for
+// the old CD (Community District) numbering (101-199 = Manhattan, etc.) —
+// UHF42 uses a different numbering entirely (101-107 = Bronx, 201-211 =
+// Brooklyn, 301-310 = Manhattan, 401-410 = Queens, 501-504 = Staten
+// Island), so that range-based guess silently mis-grouped every result
+// once the maps switched to real UHF data. Reading the field directly
+// avoids re-encoding the numbering scheme a second time in this file.
+function getBoroughFromData(data) {
+  return data?.borough || "Other";
 }
 
 // ── Text highlight ────────────────────────────────────────────────────────────
@@ -73,7 +81,7 @@ const NeighborhoodSearchInput = ({
   onSelect,
   suggestions = [],
   selectedGeocode = null,
-  placeholder = "Search neighborhoods…",
+  placeholder = "Search neighborhoods or ZIP code…",
   id = "neighborhood-search",
 }) => {
   const [focusedIndex, setFocusedIndex] = useState(-1);
@@ -126,7 +134,7 @@ const NeighborhoodSearchInput = ({
     BOROUGH_ORDER.forEach((b) => { map[b] = []; });
 
     suggestions.forEach(([geocode, data]) => {
-      const borough = getBoroughFromGeocode(geocode);
+      const borough = getBoroughFromData(data);
       const key = map[borough] !== undefined ? borough : "Other";
       if (!map[key]) map[key] = [];
       map[key].push([geocode, data]);
@@ -207,7 +215,7 @@ const NeighborhoodSearchInput = ({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           role="combobox"
-          aria-label="Search neighborhoods"
+          aria-label="Search neighborhoods or ZIP code"
           aria-keyshortcuts="/"
           aria-autocomplete="list"
           aria-expanded={isOpen}
@@ -304,11 +312,18 @@ const NeighborhoodSearchInput = ({
                         <span className="font-medium">
                           <Highlight text={data.name} query={value.trim()} />
                         </span>
-                        {isCurrent && (
-                          <span className="text-2xs text-blue-primary font-semibold uppercase tracking-[0.08em] ml-2 flex-shrink-0 opacity-75">
-                            current
-                          </span>
-                        )}
+                        <span className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                          {data.matchedZip && (
+                            <span className="text-2xs text-gray-600 font-semibold tracking-[0.02em] bg-gray-100 rounded-[3px] py-px px-1.5">
+                              ZIP {data.matchedZip}
+                            </span>
+                          )}
+                          {isCurrent && (
+                            <span className="text-2xs text-blue-primary font-semibold uppercase tracking-[0.08em] opacity-75">
+                              current
+                            </span>
+                          )}
+                        </span>
                       </li>
                     );
                   })}

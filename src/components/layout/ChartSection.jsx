@@ -41,6 +41,7 @@ const ChartSection = ({
     metricLabelForInfo,
     isSeasonalChart,
     unknownPct,
+    showMissingDataOverlay,
     updateGroupForKey,
   } = useSectionData(section, sectionKey, pageContext);
 
@@ -175,7 +176,9 @@ const ChartSection = ({
           : {})}
         stackSidebarAbove={!!section.sidebarAboveChart}
         footnote={section.chart?.props?.footnote || section.footnote}
-        footer={section.chart?.footer}
+        // The missing-data overlay already explains the missing-% figure,
+        // so once it's showing, drop the (now redundant) footer note too.
+        footer={showMissingDataOverlay ? undefined : section.chart?.footer}
         footerVariables={{
           unknownPct,
           virusLowercase: activeVirus.toLowerCase(),
@@ -191,6 +194,15 @@ const ChartSection = ({
         }
         altTableSrOnly={section.chart?.altTable?.srOnly ?? true}
         disableAltTable={section.disableAltTable}
+        missingDataOverlay={
+          showMissingDataOverlay
+            ? {
+                virus: activeVirus,
+                unknownPct,
+                metricLabel: metricLabelForInfo?.toLowerCase(),
+              }
+            : null
+        }
       />
     </SectionWithChart>
   );

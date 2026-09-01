@@ -25,11 +25,24 @@
  *
  * @param {object[]} tooltipFields - Vega tooltip field defs, e.g.
  *   [{ field: "name", title: "Neighborhood" }, { field: "rate", title: "Rate per 100,000" }]
+ * @param {string} [valueField] - Data field plotted on the Y axis and used
+ *   to sort bars (descending). Defaults to "rate"; NeighborhoodMap passes
+ *   "pct" to plot % of ED visits instead.
  */
-export function buildChoroplethBarSpec(tooltipFields) {
+export function buildChoroplethBarSpec(tooltipFields, valueField = "rate") {
   return {
     params: [
       { name: "selectedSig", value: null },
+    ],
+        transform: [
+      {
+        calculate: "datum.pct + '% of ED visits'",
+        as: "pctTooltip",
+      },
+      {
+        calculate: "datum.rate + ' per 100,000 people'",
+        as: "rateTooltip",
+      },
     ],
     layer: [
       {
@@ -44,11 +57,11 @@ export function buildChoroplethBarSpec(tooltipFields) {
           x: {
             field: "name",
             type: "ordinal",
-            sort: { field: "rate", order: "descending" },
+            sort: { field: valueField, order: "descending" },
             axis: { title: null, labels: false, ticks: false, domain: false },
           },
           y: {
-            field: "rate",
+            field: valueField,
             type: "quantitative",
             scale: { zero: true },
             axis: {
