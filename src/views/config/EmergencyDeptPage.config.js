@@ -175,16 +175,17 @@ const edPageConfig = {
     },
 
     // --- RE Info Summary ---
-    {
-      id: "ed-disclaimer",
-      dataType: "ed",
-      renderAs: "custom",
-      component: "DisclaimerNote",
-      background: "transparent",
-      wrapInChart: false,
-      animateOnScroll: false,
-      componentProps: { textKey: "overview.edDisclaimer" },
-    },
+    // Footnote/disclaimer temporarily removed from the ED data pages — uncomment to restore.
+    // {
+    //   id: "ed-disclaimer",
+    //   dataType: "ed",
+    //   renderAs: "custom",
+    //   component: "DisclaimerNote",
+    //   background: "transparent",
+    //   wrapInChart: false,
+    //   animateOnScroll: false,
+    //   componentProps: { textKey: "overview.edDisclaimer" },
+    // },
 
   ],
 };

@@ -86,6 +86,7 @@ const covidDeathPageConfig = {
       },
     },
 
+    /*
     {
       id: "deaths-age-group",
       navLabel: "By Age",
@@ -184,55 +185,72 @@ const covidDeathPageConfig = {
         },
       },
     },
+    */
 
-    {
-      id: "deaths-re",
-      navLabel: "By Race & Ethnicity",
-      dataType: "death",
-      title: "covidDeathPage.charts.deathsByRE.title",
-      subtitle: null,
-      infoIcon: true,
-      downloadIcon: true,
-      animateOnScroll: true,
-      modal: {
-        title: "{virus} Deaths by Race and Ethnicity",
-        markdownPath: "content/modals/covid-deaths-explainer.md",
-      },
-      chart: {
-        type: "smallMultipleLineChart",
-        props: {
-          dataSourceKey: "covidDeathsByRE",
-          dataSource: null,
-          seasonal: null,
-          footnote: {
-            independent: "Y-axis scales are different to clearly show trends for each race and ethnicity.",
-            shared: "Y-axis scales are the same across groups to support comparison between race and ethnicity groups.",
-          }, 
-          metricName: "{virus} deaths by race and ethnicity",
-          groupField: "submetric",
-          xField: "date",
-          yField: "value",
-          colorField: "submetric",
-          tooltipFields: ["date", "value"],
-          defaultDisplay: "Number",
-          monthly: true,
-          columnLabels: {
-            date: "Date",
-            value: "Deaths",
-            submetric: "Race & Ethnicity",
-          },
-        },
-        altTable: {
-          caption: "{virus} deaths by race & ethnicity",
-          srOnly: true,
-          columns: [
-            { key: "date",      header: "Date",               format: "date" },
-            { key: "submetric", header: "Race & Ethnicity",   format: "text" },
-            { key: "value",     header: "Deaths",             format: "number" },
-          ],
-        },
-      },
-    },
+    // ─────────────────────────────────────────────────────────────────────
+    // "deaths-re" (By Race & Ethnicity) — REMOVED 2026-08-21 at Morgan's
+    // request. Monthly COVID-19 death counts by race/ethnicity have gotten
+    // small enough that breaking them out further by group isn't reliable
+    // to present right now. Nothing else in the app depends on this section
+    // (no other page config, nav entry, or stat card references it — the
+    // "deaths-re" id and "covidDeathsByRE" dataSourceKey are unique to this
+    // block), so it's commented out rather than deleted from the codebase.
+    // covidDeathsByRE + the underlying deathData.csv rows are untouched.
+    //
+    // TO RESTORE: uncomment the object below and put it back in this
+    // `sections` array (after "deaths-borough"). No other file needs to
+    // change — the chart type, footnote copy, modal, and alt-table config
+    // are all still here and still wired to the same data pipeline.
+    //
+    // {
+    //   id: "deaths-re",
+    //   navLabel: "By Race & Ethnicity",
+    //   dataType: "death",
+    //   title: "covidDeathPage.charts.deathsByRE.title",
+    //   subtitle: null,
+    //   infoIcon: true,
+    //   downloadIcon: true,
+    //   animateOnScroll: true,
+    //   modal: {
+    //     title: "{virus} Deaths by Race and Ethnicity",
+    //     markdownPath: "content/modals/covid-deaths-explainer.md",
+    //   },
+    //   chart: {
+    //     type: "smallMultipleLineChart",
+    //     props: {
+    //       dataSourceKey: "covidDeathsByRE",
+    //       dataSource: null,
+    //       seasonal: null,
+    //       footnote: {
+    //         independent: "Y-axis scales are different to clearly show trends for each race and ethnicity.",
+    //         shared: "Y-axis scales are the same across groups to support comparison between race and ethnicity groups.",
+    //       },
+    //       metricName: "{virus} deaths by race and ethnicity",
+    //       groupField: "submetric",
+    //       xField: "date",
+    //       yField: "value",
+    //       colorField: "submetric",
+    //       tooltipFields: ["date", "value"],
+    //       defaultDisplay: "Number",
+    //       monthly: true,
+    //       columnLabels: {
+    //         date: "Date",
+    //         value: "Deaths",
+    //         submetric: "Race & Ethnicity",
+    //       },
+    //     },
+    //     altTable: {
+    //       caption: "{virus} deaths by race & ethnicity",
+    //       srOnly: true,
+    //       columns: [
+    //         { key: "date",      header: "Date",               format: "date" },
+    //         { key: "submetric", header: "Race & Ethnicity",   format: "text" },
+    //         { key: "value",     header: "Deaths",             format: "number" },
+    //       ],
+    //     },
+    //   },
+    // },
+    // ─────────────────────────────────────────────────────────────────────
   ],
 };
 

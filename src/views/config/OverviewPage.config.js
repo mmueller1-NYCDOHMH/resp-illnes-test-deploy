@@ -93,17 +93,18 @@ const overviewConfig = {
       background: "white"
     },
 
-    {
-      id: "overview-disclaimer",
-      renderAs: "custom",
-      component: "DisclaimerNote",
-      background: "transparent",
-      wrapInChart: false,
-      animateOnScroll: false,
-      componentProps: {
-        markdownPath: "content/overview-disclaimer.md",
-      },
-    },
+    // Footnote/disclaimer temporarily removed from the home page — uncomment to restore.
+    // {
+    //   id: "overview-disclaimer",
+    //   renderAs: "custom",
+    //   component: "DisclaimerNote",
+    //   background: "transparent",
+    //   wrapInChart: false,
+    //   animateOnScroll: false,
+    //   componentProps: {
+    //     markdownPath: "content/overview-disclaimer.md",
+    //   },
+    // },
   ],
 };
 

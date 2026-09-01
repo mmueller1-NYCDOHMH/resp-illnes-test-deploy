@@ -32,7 +32,8 @@
     "virus": "COVID-19",
     "description": "Normalized SARS-CoV-2 viral load in wastewater",
     "dataType": "wastewater",
-    "pathogen": "SC2"
+    "metric": "SARS-CoV-2 viral load",
+    "submetric": "Citywide average"
   },
   {
     "label": "Flu ED Visits",
@@ -58,7 +59,8 @@
     "virus": "Flu",
     "description": "Normalized influenza A viral load in wastewater",
     "dataType": "wastewater",
-    "pathogen": "Flu A"
+    "metric": "Flu A viral load",
+    "submetric": "Citywide average"
   },
   {
     "label": "RSV ED Visits",
@@ -84,7 +86,8 @@
     "virus": "RSV",
     "description": "Normalized RSV viral load in wastewater",
     "dataType": "wastewater",
-    "pathogen": "RSV"
+    "metric": "RSV viral load",
+    "submetric": "Citywide average"
   },
   {
     "label": "Lab Cases by Neighborhood",

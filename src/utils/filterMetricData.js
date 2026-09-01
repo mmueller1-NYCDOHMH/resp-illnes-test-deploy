@@ -74,8 +74,13 @@ export const getMetricData = memoize(function (
 
   return filtered.map((d) => ({
     date: parseLocalISO(d.date),
-    value: +d.value,
+    value: +d.value, // blank cells (`+"" === 0`) chart as 0, same as a genuine 0 count
     valueRaw: d.valueRaw ?? d.value,
+    // Suppressed / not-yet-reported cells come through as an empty string in
+    // the source CSV (distinct from a genuine "0"). Flag them here, before
+    // the numeric coercion above collapses that distinction, so charts can
+    // show a "suppressed" tooltip instead of a blank or a misleading 0.
+    suppressed: d.value === "" || d.value == null,
     metric: d.metric, // 👈 ADD: Preserve original metric name
     submetric: d.submetric, // 👈 ADD: Preserve original submetric
     ...(groupField && d[groupField] ? { [groupField]: d[groupField] } : {}),

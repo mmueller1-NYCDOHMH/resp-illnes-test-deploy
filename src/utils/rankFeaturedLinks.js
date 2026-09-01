@@ -54,9 +54,6 @@ const MIN_PERCENT_POINT = 0.2;
 let cachedRanked = null;
 
 function filterSeries(rows, entry) {
-  if (entry.pathogen) {
-    return rows.filter((r) => r.pathogen === entry.pathogen);
-  }
   return rows.filter(
     (r) => r.metric === entry.metric && (!entry.submetric || r.submetric === entry.submetric)
   );
@@ -99,9 +96,13 @@ function scoreEntry(entry, rowsByUrl) {
   const series = filterSeries(rows, entry);
   if (series.length < 2) return null;
 
-  const pctChange = entry.pathogen
-    ? getSmoothedPercentChange(series)
-    : getWoWPercentChange(series);
+  // Wastewater is noisier week-to-week than clinical metrics (see
+  // getSmoothedPercentChange's comment) — smooth by dataType, not by the
+  // now-removed `pathogen` field wastewater entries used to be keyed on.
+  const pctChange =
+    entry.dataType === "wastewater"
+      ? getSmoothedPercentChange(series)
+      : getWoWPercentChange(series);
   if (pctChange === null) return null;
 
   const direction = getTrendDirection(pctChange);
@@ -119,14 +120,19 @@ function scoreEntry(entry, rowsByUrl) {
 
 /**
  * Returns the top `limit` trackable metrics, ranked by absolute WoW %
- * change (biggest movers first). Entries with no data file (e.g. the
- * neighborhood map link), too little data, no real change, or too little
- * volume to be meaningful are excluded.
+ * change (biggest movers first, regardless of direction). Entries with no
+ * data file (e.g. the neighborhood map link), too little data, no real
+ * change, or too little volume to be meaningful are excluded. Wastewater
+ * entries are excluded outright — there's no live/published wastewater
+ * source yet (see WASTEWATER_LOCAL_PATH above), so they shouldn't surface
+ * in the home page's data-driven Quick Links list.
  */
-export async function getRankedJumpLinks({ limit = 4 } = {}) {
+export async function getRankedJumpLinks({ limit = 3 } = {}) {
   if (cachedRanked) return cachedRanked.slice(0, limit);
 
-  const rankable = trackableMetrics.filter((entry) => resolveDataUrl(entry));
+  const rankable = trackableMetrics.filter(
+    (entry) => entry.dataType !== "wastewater" && resolveDataUrl(entry)
+  );
   const dataUrls = [...new Set(rankable.map((entry) => resolveDataUrl(entry)))];
 
   const rowsByUrl = {};

@@ -1,5 +1,6 @@
 import edPageConfig from "../EmergencyDeptPage.config";
 import caseDataPageConfig from "../CaseDataPage.config";
+import { resolveAsset } from "../../../utils/pathUtils";
 
 
 const RSV_CONTEXT = {
@@ -32,7 +33,7 @@ const rsvPageConfig = {
     ed:         "emergencyDeptPage.mainTitle",
     lab:        "caseDataPage.mainTitle",
     death:      "covidDeathPage.mainTitle",
-    wastewater: "wastewaterPage.charts.viralLoad.title",
+    wastewater: "wastewaterPage.mainTitle",
   },
 
   dataPath: {
@@ -49,6 +50,12 @@ const rsvPageConfig = {
   summary: {
     ed:  { ...edPageConfig.summary },
     lab: { ...caseDataPageConfig.summary },
+    wastewater: {
+      title: "Page Overview",
+      markdownPath: "content/sections/wastewaterSectionText-rsv.md",
+      showTrendArrow: false,
+      showSecondaryTitle: false,
+    },
   },
 
   sections: [
@@ -63,10 +70,18 @@ const rsvPageConfig = {
       renderAs: "custom",
       component: "WastewaterChart",
       background: "white",
-      wrapInChart: false,
       disableAltTable: true,
       animateOnScroll: true,
-      componentProps: { virus: "RSV" },
+      downloadIcon: true,
+      componentProps: {
+        virus: "RSV",
+        // WastewaterChart self-fetches from this same file, so there's no
+        // filtered row set for the CSV button to export — this path feeds
+        // the "raw file" fallback in buildDownloadHandler instead.
+        dataPath: resolveAsset("data/wastewaterData.csv"),
+        downloadDescription:
+          "Downloads the full wastewater dataset (all viruses and metrics).",
+      },
     },
   ],
 };

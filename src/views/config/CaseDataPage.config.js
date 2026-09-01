@@ -267,6 +267,14 @@ const caseDataPageConfig = {
       infoIcon: true,
       downloadIcon: true,
       animateOnScroll: true,
+      // Once missing race/ethnicity data hits this share, the breakdown is
+      // considered too unreliable to chart — MissingDataOverlay replaces the
+      // chart (and its a11y table) with an explanation instead.
+      // See footnoteUtils.MISSING_RACE_ETHNICITY_OVERLAY_THRESHOLD.
+      missingDataOverlay: {
+        enabled: true,
+        thresholdPct: 40,
+      },
       modal: {
         title: "caseDataPage.charts.reportsByRE.title",
         markdownPath: "content/modals/cases-explainer.md",

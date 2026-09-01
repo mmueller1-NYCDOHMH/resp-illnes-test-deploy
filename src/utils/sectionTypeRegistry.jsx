@@ -63,7 +63,7 @@ const sectionTypeRegistry = {
 
   // Custom component or simple paragraph
   custom: (props) => {
-    const { section, sectionKey, pageContext, customComponents, onNewView, onDownloadPNG } = props;
+    const { section, sectionKey, pageContext, customComponents, onNewView, onDownloadPNG, onCopyImage, onExportSpec } = props;
     const ctx = resolveCustomContext(section, pageContext);
     return (
       <CustomSection
@@ -73,6 +73,8 @@ const sectionTypeRegistry = {
         customComponents={customComponents}
         onNewView={onNewView}
         onDownloadPNG={onDownloadPNG}
+        onCopyImage={onCopyImage}
+        onExportSpec={onExportSpec}
         {...ctx}
       />
     );

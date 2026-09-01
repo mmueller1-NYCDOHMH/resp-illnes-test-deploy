@@ -23,6 +23,7 @@ import CombinedVirusChart from "../components/charts/CombinedVirusChart";
 import DynamicParagraph from "../components/sections/DynamicParagraph";
 import SeasonalBullet from "../components/bullets/SeasonalBullet";
 import WastewaterChart from "../components/charts/WastewaterChart";
+import WastewaterVariantChart from "../components/charts/WastewaterVariantChart";
 import DisclaimerNote from "../components/sections/DisclaimerNote";
 
 // Leaflet maps touch `window` at module load time — must be client-only.
@@ -44,6 +45,7 @@ const componentRegistry = {
   NeighborhoodMap,
   LabCasesNeighborhoodMap,
   WastewaterChart,
+  WastewaterVariantChart,
   DisclaimerNote,
 };
 

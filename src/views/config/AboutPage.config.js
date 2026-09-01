@@ -72,6 +72,11 @@ const aboutPageConfig = {
           markdownPath: resolveContentPath('content/sections/about/flu-peds-deaths.md'),
         },
         {
+          id: "wastewater",
+          titleKey: "Wastewater Surveillance",
+          markdownPath: resolveContentPath('content/sections/about/wastewater.md'),
+        },
+        {
           id: "inequities",
           titleKey: "Health Inequities",
           markdownPath: resolveContentPath('content/sections/about/inequities.md'),

@@ -1,4 +1,6 @@
 // src/utils/exportChartImage.js
+import { compile } from "vega-lite";
+import { parse, View } from "vega";
 
 /** Strip HTML tags and collapse whitespace to produce plain text. */
 function stripHtml(html = "") {
@@ -9,10 +11,30 @@ function stripHtml(html = "") {
 }
 
 /**
+ * Compile + run a Vega-Lite spec off-screen (no DOM attachment — renderer
+ * "none" so this works headless) and rasterize it to a canvas.
+ *
+ * Used for multi-panel small-multiples charts (e.g. WastewaterVariantChart's
+ * per-variant grid) where the on-screen chart is actually N independent Vega
+ * views, one per panel — there's no single `view` to hand to
+ * exportVegaImage/copyVegaImageToClipboard that would capture the whole
+ * grouping. Those components instead build ONE combined Vega-Lite `concat`
+ * spec (all panels' data inlined) on demand and hand it here, so the
+ * exported/copied image matches the entire on-screen grid rather than just
+ * whichever single panel happened to have a registered view.
+ */
+async function renderSpecToCanvas(spec, scaleFactor = 2) {
+  const vegaSpec = compile(spec).spec;
+  const view = new View(parse(vegaSpec), { renderer: "none" });
+  await view.runAsync();
+  return view.toCanvas(scaleFactor);
+}
+
+/**
  * Build a canvas that stacks: [header block] + [chart].
  * Header block = title (bold) + optional subtitle (lighter, smaller).
  *
- * @param {Object}  view        Vega view instance
+ * @param {HTMLCanvasElement} chartCanvas  Already-rendered chart canvas
  * @param {Object}  opts
  * @param {string}  opts.title      Chart title (may contain HTML — stripped automatically)
  * @param {string}  [opts.subtitle] Chart subtitle (may contain HTML)
@@ -20,8 +42,7 @@ function stripHtml(html = "") {
  * @param {string}  [opts.bg="#ffffff"]    Background colour
  * @returns {Promise<HTMLCanvasElement>}
  */
-async function buildCanvas(view, { title = "", subtitle = "", scaleFactor = 2, bg = "#ffffff" } = {}) {
-  const chartCanvas = await view.toCanvas(scaleFactor);
+async function buildCanvasFromChart(chartCanvas, { title = "", subtitle = "", scaleFactor = 2, bg = "#ffffff" } = {}) {
   const s = scaleFactor;
 
   const plainTitle    = stripHtml(title);
@@ -76,23 +97,41 @@ async function buildCanvas(view, { title = "", subtitle = "", scaleFactor = 2, b
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
+function downloadCanvasBlob(canvas, type, filename) {
+  canvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement("a"), {
+      href: url, download: `${filename}.${type}`,
+    });
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, `image/${type}`);
+}
+
+function copyCanvasBlobToClipboard(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(async (blob) => {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
+    }, "image/png");
+  });
+}
+
 /**
  * Download a Vega chart as PNG (with optional title + subtitle header).
  */
 export async function exportVegaImage(view, type = "png", filename = "chart", options = {}) {
   if (!view) { console.error("No Vega view provided"); return; }
   try {
-    const canvas = await buildCanvas(view, options);
-    canvas.toBlob((blob) => {
-      const url = URL.createObjectURL(blob);
-      const a = Object.assign(document.createElement("a"), {
-        href: url, download: `${filename}.${type}`,
-      });
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, `image/${type}`);
+    const chartCanvas = await view.toCanvas(options.scaleFactor ?? 2);
+    const canvas = await buildCanvasFromChart(chartCanvas, options);
+    downloadCanvasBlob(canvas, type, filename);
   } catch (err) {
     console.error("Failed to export chart:", err);
   }
@@ -107,15 +146,35 @@ export const exportVegaImageWithTitle = exportVegaImage;
  */
 export async function copyVegaImageToClipboard(view, options = {}) {
   if (!view) throw new Error("No Vega view provided");
-  const canvas = await buildCanvas(view, options);
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(async (blob) => {
-      try {
-        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-        resolve();
-      } catch (err) {
-        reject(err);
-      }
-    }, "image/png");
-  });
+  const chartCanvas = await view.toCanvas(options.scaleFactor ?? 2);
+  const canvas = await buildCanvasFromChart(chartCanvas, options);
+  return copyCanvasBlobToClipboard(canvas);
+}
+
+/**
+ * Download a whole small-multiples grid (a combined Vega-Lite `concat` spec,
+ * one panel per variant/category, each panel's data inlined) as a single
+ * PNG — see renderSpecToCanvas() for why this exists instead of reusing
+ * exportVegaImage.
+ */
+export async function exportVegaSpecImage(spec, type = "png", filename = "chart", options = {}) {
+  if (!spec) { console.error("No Vega-Lite spec provided"); return; }
+  try {
+    const chartCanvas = await renderSpecToCanvas(spec, options.scaleFactor ?? 2);
+    const canvas = await buildCanvasFromChart(chartCanvas, options);
+    downloadCanvasBlob(canvas, type, filename);
+  } catch (err) {
+    console.error("Failed to export chart grid:", err);
+  }
+}
+
+/**
+ * Copy a whole small-multiples grid to the clipboard as one PNG — the
+ * spec-based counterpart to copyVegaImageToClipboard, see renderSpecToCanvas.
+ */
+export async function copyVegaSpecImageToClipboard(spec, options = {}) {
+  if (!spec) throw new Error("No Vega-Lite spec provided");
+  const chartCanvas = await renderSpecToCanvas(spec, options.scaleFactor ?? 2);
+  const canvas = await buildCanvasFromChart(chartCanvas, options);
+  return copyCanvasBlobToClipboard(canvas);
 }

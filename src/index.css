@@ -219,22 +219,56 @@ svg {
   display: block;
 }
 
-/* Vega tooltip: always above modals/headers, never captures pointer events  */
+/* Vega tooltip: always above modals/headers, never captures pointer events.
+   Explicit visual styling (matches the CHP project's tooltip theme) since
+   vega-embed's tooltip CSS isn't bundled automatically via dynamic import. */
+/* vega-tooltip's Handler is instantiated with a theme option (see
+   VegaLiteWrapper.jsx), which makes the library inject its own light/dark
+   theme <style> at runtime targeting this same #vg-tooltip-element id. That
+   stylesheet lands in the DOM after this one and ties on specificity, so it
+   wins the cascade unless we use !important here too (same reason z-index
+   already needed it above). */
 #vg-tooltip-element {
-  z-index: 9999 !important;
+  z-index: 10000 !important;
   pointer-events: none;
   position: fixed;
   max-width: min(280px, 92vw);
-  font-size: 12px;
-  line-height: 1.35;
-  padding: 8px 10px;
+  font-size: 11px !important;
+  font-family: inherit !important;
+  line-height: 1.35 !important;
+  padding: 6px 8px !important;
+  background-color: #ffffff !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+  color: #374151 !important;
   white-space: normal;
   word-break: break-word;
   box-sizing: border-box;
 }
 
+#vg-tooltip-element table {
+  border-collapse: collapse !important;
+}
+
+#vg-tooltip-element td {
+  padding: 2px 6px !important;
+  vertical-align: top !important;
+}
+
+#vg-tooltip-element td.key {
+  color: #6b7280 !important;
+  font-weight: 500 !important;
+  padding-right: 10px !important;
+}
+
+#vg-tooltip-element td.value {
+  color: #111827 !important;
+  font-weight: 600 !important;
+}
+
 @media (max-width: 768px) {
-  #vg-tooltip-element { font-size: 12px; max-width: 92vw; }
+  #vg-tooltip-element { max-width: 92vw; }
 }
 
 /* ── Google Translate suppression (moved from TopBar.css) ───────────────── */

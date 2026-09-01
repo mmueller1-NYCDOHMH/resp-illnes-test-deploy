@@ -41,6 +41,7 @@ export function buildTooltipLineCalc({
   valueField = "valueDisplay",
   metricLabel,
   isPercent = false,
+  includeSeriesInValue = true,
 } = {}) {
   const seriesExpr = seriesField
     ? `datum['${seriesField}']`
@@ -48,8 +49,12 @@ export function buildTooltipLineCalc({
 
   let unitExpr = "";
   if (metricLabel) {
-    const label = escapeForVegaString(lowerFirst(metricLabel));
+    const label = escapeForVegaString(metricLabel.toLowerCase());
     unitExpr = isPercent ? ` + ' of ${label}'` : ` + ' ${label}'`;
+  }
+
+  if (!includeSeriesInValue) {
+    return `datum['${valueField}']${unitExpr}`;
   }
 
   return `${seriesExpr} + ': ' + datum['${valueField}']${unitExpr}`;
@@ -67,8 +72,8 @@ export function buildTooltipLineCalc({
  * key/value table markup as every other row, but the key column renders
  * blank instead of showing text.
  */
-export function tooltipLineEntry(as = "tooltipLine") {
-  return { field: as, type: "nominal", title: " " };
+export function tooltipLineEntry(as = "tooltipLine", title = " ") {
+  return { field: as, type: "nominal", title };
 }
 
 /**
