@@ -1,158 +1,280 @@
-date,pathogen,value
-5/31/2025,Flu A,2597427
-5/31/2025,SC2,23366860
-6/7/2025,SC2,23759901
-6/7/2025,RSV,5172645
-6/7/2025,Flu A,1722429
-6/7/2025,Flu B,956364
-6/14/2025,SC2,23280239
-6/21/2025,SC2,19355963
-6/21/2025,Flu A,682251
-6/28/2025,SC2,22929131
-6/28/2025,Flu A,6663050
-7/5/2025,SC2,30681516
-7/5/2025,Flu A,1071985
-7/12/2025,SC2,21498522
-7/12/2025,Flu A,901698
-7/19/2025,SC2,32974898
-7/26/2025,SC2,34655346
-7/26/2025,Flu A,1140670
-7/26/2025,RSV,4721536
-8/2/2025,SC2,22142255
-8/2/2025,RSV,982119
-8/2/2025,Flu A,1158997
-8/9/2025,SC2,28205046
-8/16/2025,SC2,35562245
-8/16/2025,Flu A,642026
-8/23/2025,SC2,29883635
-8/23/2025,Flu A,1566006
-8/30/2025,SC2,28758670
-9/6/2025,SC2,27740006
-9/13/2025,SC2,41107050
-9/13/2025,Flu A,1035172
-9/20/2025,SC2,29046411
-9/20/2025,RSV,692879
-9/27/2025,SC2,31806949
-9/27/2025,RSV,3530730
-10/4/2025,SC2,23673579
-10/4/2025,Flu A,1446991
-10/4/2025,RSV,5477022
-10/11/2025,SC2,14960383
-10/11/2025,Flu A,1065656
-10/11/2025,RSV,12125241
-10/18/2025,SC2,20276110
-10/18/2025,RSV,2304523
-10/25/2025,SC2,8375029
-10/25/2025,RSV,1101906
-10/25/2025,Flu A,1521415
-11/1/2025,SC2,6785698
-11/1/2025,Flu A,840572
-11/1/2025,RSV,1330835
-11/8/2025,SC2,4204285
-11/8/2025,Flu A,1088318
-11/8/2025,RSV,797308
-11/15/2025,SC2,3899146
-11/15/2025,Flu A,1263930
-11/15/2025,RSV,1232133
-11/22/2025,SC2,8903158
-11/22/2025,Flu A,3486676
-11/22/2025,RSV,978649
-11/29/2025,RSV,2854663
-11/29/2025,SC2,4657496
-11/29/2025,Flu A,4555061
-11/29/2025,Flu B,1569193
-12/6/2025,SC2,4351832
-12/6/2025,Flu A,5565322
-12/13/2025,SC2,4743288
-12/13/2025,Flu A,6987103
-12/13/2025,RSV,2959018
-12/20/2025,SC2,5501484
-12/20/2025,Flu A,18511495
-12/20/2025,RSV,1986309
-12/20/2025,Flu B,1564714
-12/27/2025,SC2,7553885
-12/27/2025,Flu A,14581694
-12/27/2025,RSV,3153385
-1/3/2026,SC2,4509341
-1/3/2026,Flu A,10577791
-1/3/2026,RSV,4423826
-1/3/2026,Flu B,3957167
-1/10/2026,SC2,5942780
-1/10/2026,Flu A,3291194
-1/10/2026,RSV,2108927
-1/17/2026,SC2,11782505
-1/17/2026,Flu A,6312545
-1/17/2026,RSV,4040470
-1/17/2026,Flu B,725964
-1/24/2026,SC2,6095745
-1/24/2026,RSV,9774041
-1/24/2026,Flu A,2195804
-1/31/2026,SC2,7426776
-1/31/2026,Flu A,2427919
-1/31/2026,RSV,4373230
-1/31/2026,Flu B,900770
-2/7/2026,SC2,5778145
-2/7/2026,RSV,4375041
-2/7/2026,Flu B,1330530
-2/7/2026,Flu A,2436198
-2/14/2026,SC2,8749356
-2/14/2026,Flu B,1051262
-2/14/2026,RSV,4961624
-2/14/2026,Flu A,2752658
-2/21/2026,SC2,9249389
-2/21/2026,Flu B,2107270
-2/21/2026,RSV,4076167
-2/21/2026,Flu A,3283899
-2/28/2026,SC2,10671950
-2/28/2026,Flu A,6794134
-2/28/2026,Flu B,2209645
-2/28/2026,RSV,8111764
-3/7/2026,SC2,8744360
-3/7/2026,RSV,4809351
-3/7/2026,Flu A,3777395
-3/7/2026,Flu B,1460767
-3/14/2026,SC2,8083405
-3/14/2026,RSV,3775027
-3/14/2026,Flu B,1921703
-3/14/2026,Flu A,2244235
-3/21/2026,SC2,14368543
-3/21/2026,Flu B,3275936
-3/21/2026,RSV,4545023
-3/21/2026,Flu A,6452785
-3/28/2026,SC2,6903853
-3/28/2026,Flu B,2182539
-3/28/2026,RSV,3673763
-3/28/2026,Flu A,7923526
-4/4/2026,SC2,7978443
-4/4/2026,Flu B,1614435
-4/4/2026,RSV,1605664
-4/4/2026,Flu A,4451011
-4/11/2026,SC2,7486073
-4/11/2026,Flu A,5303520
-4/11/2026,Flu B,1854130
-4/11/2026,RSV,2278973
-4/18/2026,SC2,7205480
-4/18/2026,RSV,1066262
-4/18/2026,Flu B,5435657
-4/18/2026,Flu A,1241009
-4/25/2026,SC2,4647178
-4/25/2026,RSV,1324571
-4/25/2026,Flu B,1118489
-4/25/2026,Flu A,745956
-5/2/2026,SC2,3719211
-5/2/2026,RSV,1111850
-5/2/2026,Flu B,1288320
-5/2/2026,Flu A,2044066
-5/9/2026,SC2,6271429
-5/9/2026,Flu B,1067908
-5/9/2026,RSV,734396
-5/9/2026,Flu A,1953832
-5/16/2026,SC2,4346812
-5/16/2026,RSV,980564
-5/16/2026,Flu B,853226
-5/16/2026,Flu A,558388
-5/23/2026,SC2,3518249
-5/23/2026,RSV,3530055
-5/23/2026,Flu B,1284697
-5/23/2026,Flu A,2952871
-5/30/2026,SC2,3858778
+"date","metric","submetric","display","value"
+2025-08-23,"SARS-CoV-2 viral load","Citywide average","Number","29883635"
+2025-08-30,"SARS-CoV-2 viral load","Citywide average","Number","28758670"
+2025-09-06,"SARS-CoV-2 viral load","Citywide average","Number","27740006"
+2025-09-13,"SARS-CoV-2 viral load","Citywide average","Number","41107050"
+2025-09-20,"SARS-CoV-2 viral load","Citywide average","Number","29046411"
+2025-09-27,"SARS-CoV-2 viral load","Citywide average","Number","31806949"
+2025-10-04,"SARS-CoV-2 viral load","Citywide average","Number","23673579"
+2025-10-11,"SARS-CoV-2 viral load","Citywide average","Number","14960383"
+2025-10-18,"SARS-CoV-2 viral load","Citywide average","Number","20276110"
+2025-10-25,"SARS-CoV-2 viral load","Citywide average","Number","8375029"
+2025-11-01,"SARS-CoV-2 viral load","Citywide average","Number","6785698"
+2025-11-08,"SARS-CoV-2 viral load","Citywide average","Number","4204285"
+2025-11-15,"SARS-CoV-2 viral load","Citywide average","Number","3899146"
+2025-11-22,"SARS-CoV-2 viral load","Citywide average","Number","8903158"
+2025-11-29,"SARS-CoV-2 viral load","Citywide average","Number","4657496"
+2025-12-06,"SARS-CoV-2 viral load","Citywide average","Number","4351832"
+2025-12-13,"SARS-CoV-2 viral load","Citywide average","Number","4743288"
+2025-12-20,"SARS-CoV-2 viral load","Citywide average","Number","5501484"
+2025-12-27,"SARS-CoV-2 viral load","Citywide average","Number","7553885"
+2026-01-03,"SARS-CoV-2 viral load","Citywide average","Number","4509341"
+2026-01-10,"SARS-CoV-2 viral load","Citywide average","Number","5942780"
+2026-01-17,"SARS-CoV-2 viral load","Citywide average","Number","11782505"
+2026-01-24,"SARS-CoV-2 viral load","Citywide average","Number","6095745"
+2026-01-31,"SARS-CoV-2 viral load","Citywide average","Number","7426776"
+2026-02-07,"SARS-CoV-2 viral load","Citywide average","Number","5778145"
+2026-02-14,"SARS-CoV-2 viral load","Citywide average","Number","8749356"
+2026-02-21,"SARS-CoV-2 viral load","Citywide average","Number","9249389"
+2026-02-28,"SARS-CoV-2 viral load","Citywide average","Number","10671950"
+2026-03-07,"SARS-CoV-2 viral load","Citywide average","Number","8744360"
+2026-03-14,"SARS-CoV-2 viral load","Citywide average","Number","8083405"
+2026-03-21,"SARS-CoV-2 viral load","Citywide average","Number","14368543"
+2026-03-28,"SARS-CoV-2 viral load","Citywide average","Number","6903853"
+2026-04-04,"SARS-CoV-2 viral load","Citywide average","Number","7978443"
+2026-04-11,"SARS-CoV-2 viral load","Citywide average","Number","7486073"
+2026-04-18,"SARS-CoV-2 viral load","Citywide average","Number","7200454"
+2026-04-25,"SARS-CoV-2 viral load","Citywide average","Number","4658205"
+2026-05-02,"SARS-CoV-2 viral load","Citywide average","Number","3787387"
+2026-05-09,"SARS-CoV-2 viral load","Citywide average","Number","6275892"
+2026-05-16,"SARS-CoV-2 viral load","Citywide average","Number","4343609"
+2026-05-23,"SARS-CoV-2 viral load","Citywide average","Number","3488437"
+2026-05-30,"SARS-CoV-2 viral load","Citywide average","Number","3839839"
+2026-06-06,"SARS-CoV-2 viral load","Citywide average","Number","7811183"
+2026-06-13,"SARS-CoV-2 viral load","Citywide average","Number","3697636"
+2026-06-20,"SARS-CoV-2 viral load","Citywide average","Number","5173215"
+2026-06-27,"SARS-CoV-2 viral load","Citywide average","Number","2535964"
+2026-07-04,"SARS-CoV-2 viral load","Citywide average","Number","3244639"
+2026-07-11,"SARS-CoV-2 viral load","Citywide average","Number",""
+2026-07-18,"SARS-CoV-2 viral load","Citywide average","Number","5074122"
+2026-07-25,"SARS-CoV-2 viral load","Citywide average","Number","9390317"
+2026-08-01,"SARS-CoV-2 viral load","Citywide average","Number","10337061"
+2026-08-08,"SARS-CoV-2 viral load","Citywide average","Number","6898799"
+2026-08-15,"SARS-CoV-2 viral load","Citywide average","Number","15656140"
+2025-08-23,"Flu A viral load","Citywide average","Number","1566006"
+2025-08-30,"Flu A viral load","Citywide average","Number","< LOD"
+2025-09-06,"Flu A viral load","Citywide average","Number","< LOD"
+2025-09-13,"Flu A viral load","Citywide average","Number","1035172"
+2025-09-20,"Flu A viral load","Citywide average","Number","< LOD"
+2025-09-27,"Flu A viral load","Citywide average","Number","< LOD"
+2025-10-04,"Flu A viral load","Citywide average","Number","1446991"
+2025-10-11,"Flu A viral load","Citywide average","Number","1065656"
+2025-10-18,"Flu A viral load","Citywide average","Number","< LOD"
+2025-10-25,"Flu A viral load","Citywide average","Number","1521415"
+2025-11-01,"Flu A viral load","Citywide average","Number","840572"
+2025-11-08,"Flu A viral load","Citywide average","Number","1088318"
+2025-11-15,"Flu A viral load","Citywide average","Number","1263930"
+2025-11-22,"Flu A viral load","Citywide average","Number","3486676"
+2025-11-29,"Flu A viral load","Citywide average","Number","4555061"
+2025-12-06,"Flu A viral load","Citywide average","Number","5565322"
+2025-12-13,"Flu A viral load","Citywide average","Number","6987103"
+2025-12-20,"Flu A viral load","Citywide average","Number","18511495"
+2025-12-27,"Flu A viral load","Citywide average","Number","14581694"
+2026-01-03,"Flu A viral load","Citywide average","Number","10577791"
+2026-01-10,"Flu A viral load","Citywide average","Number","3291194"
+2026-01-17,"Flu A viral load","Citywide average","Number","6312545"
+2026-01-24,"Flu A viral load","Citywide average","Number","2195804"
+2026-01-31,"Flu A viral load","Citywide average","Number","2427919"
+2026-02-07,"Flu A viral load","Citywide average","Number","2436198"
+2026-02-14,"Flu A viral load","Citywide average","Number","2752658"
+2026-02-21,"Flu A viral load","Citywide average","Number","3283899"
+2026-02-28,"Flu A viral load","Citywide average","Number","7643400"
+2026-03-07,"Flu A viral load","Citywide average","Number","3777395"
+2026-03-14,"Flu A viral load","Citywide average","Number","2244235"
+2026-03-21,"Flu A viral load","Citywide average","Number","6452785"
+2026-03-28,"Flu A viral load","Citywide average","Number","7923526"
+2026-04-04,"Flu A viral load","Citywide average","Number","4451011"
+2026-04-11,"Flu A viral load","Citywide average","Number","5303520"
+2026-04-18,"Flu A viral load","Citywide average","Number","1241009"
+2026-04-25,"Flu A viral load","Citywide average","Number","745956"
+2026-05-02,"Flu A viral load","Citywide average","Number","2044066"
+2026-05-09,"Flu A viral load","Citywide average","Number","1953832"
+2026-05-16,"Flu A viral load","Citywide average","Number","542434"
+2026-05-23,"Flu A viral load","Citywide average","Number","2912968"
+2026-05-30,"Flu A viral load","Citywide average","Number","< LOD"
+2026-06-06,"Flu A viral load","Citywide average","Number","< LOD"
+2026-06-13,"Flu A viral load","Citywide average","Number","< LOD"
+2026-06-20,"Flu A viral load","Citywide average","Number","< LOD"
+2026-06-27,"Flu A viral load","Citywide average","Number","< LOD"
+2026-07-04,"Flu A viral load","Citywide average","Number","< LOD"
+2026-07-11,"Flu A viral load","Citywide average","Number",""
+2026-07-18,"Flu A viral load","Citywide average","Number","< LOD"
+2026-07-25,"Flu A viral load","Citywide average","Number","< LOD"
+2026-08-01,"Flu A viral load","Citywide average","Number","2654154"
+2026-08-08,"Flu A viral load","Citywide average","Number","< LOD"
+2026-08-15,"Flu A viral load","Citywide average","Number","< LOD"
+2025-08-23,"Flu B viral load","Citywide average","Number","< LOD"
+2025-08-30,"Flu B viral load","Citywide average","Number","< LOD"
+2025-09-06,"Flu B viral load","Citywide average","Number","< LOD"
+2025-09-13,"Flu B viral load","Citywide average","Number","< LOD"
+2025-09-20,"Flu B viral load","Citywide average","Number","< LOD"
+2025-09-27,"Flu B viral load","Citywide average","Number","< LOD"
+2025-10-04,"Flu B viral load","Citywide average","Number","< LOD"
+2025-10-11,"Flu B viral load","Citywide average","Number","< LOD"
+2025-10-18,"Flu B viral load","Citywide average","Number","< LOD"
+2025-10-25,"Flu B viral load","Citywide average","Number","< LOD"
+2025-11-01,"Flu B viral load","Citywide average","Number","< LOD"
+2025-11-08,"Flu B viral load","Citywide average","Number","< LOD"
+2025-11-15,"Flu B viral load","Citywide average","Number","< LOD"
+2025-11-22,"Flu B viral load","Citywide average","Number","< LOD"
+2025-11-29,"Flu B viral load","Citywide average","Number","1569193"
+2025-12-06,"Flu B viral load","Citywide average","Number",""
+2025-12-13,"Flu B viral load","Citywide average","Number","< LOD"
+2025-12-20,"Flu B viral load","Citywide average","Number","1564714"
+2025-12-27,"Flu B viral load","Citywide average","Number","< LOD"
+2026-01-03,"Flu B viral load","Citywide average","Number","3957167"
+2026-01-10,"Flu B viral load","Citywide average","Number","< LOD"
+2026-01-17,"Flu B viral load","Citywide average","Number","725964"
+2026-01-24,"Flu B viral load","Citywide average","Number","< LOD"
+2026-01-31,"Flu B viral load","Citywide average","Number","900770"
+2026-02-07,"Flu B viral load","Citywide average","Number","1330530"
+2026-02-14,"Flu B viral load","Citywide average","Number","1051262"
+2026-02-21,"Flu B viral load","Citywide average","Number","2107270"
+2026-02-28,"Flu B viral load","Citywide average","Number","2455161"
+2026-03-07,"Flu B viral load","Citywide average","Number","1460767"
+2026-03-14,"Flu B viral load","Citywide average","Number","1921703"
+2026-03-21,"Flu B viral load","Citywide average","Number","3275936"
+2026-03-28,"Flu B viral load","Citywide average","Number","2182539"
+2026-04-04,"Flu B viral load","Citywide average","Number","1614435"
+2026-04-11,"Flu B viral load","Citywide average","Number","1854130"
+2026-04-18,"Flu B viral load","Citywide average","Number","5434465"
+2026-04-25,"Flu B viral load","Citywide average","Number","1118489"
+2026-05-02,"Flu B viral load","Citywide average","Number","1317609"
+2026-05-09,"Flu B viral load","Citywide average","Number","1064870"
+2026-05-16,"Flu B viral load","Citywide average","Number","853226"
+2026-05-23,"Flu B viral load","Citywide average","Number","1290111"
+2026-05-30,"Flu B viral load","Citywide average","Number","< LOD"
+2026-06-06,"Flu B viral load","Citywide average","Number","627357"
+2026-06-13,"Flu B viral load","Citywide average","Number","697913"
+2026-06-20,"Flu B viral load","Citywide average","Number","2056547"
+2026-06-27,"Flu B viral load","Citywide average","Number","< LOD"
+2026-07-04,"Flu B viral load","Citywide average","Number","< LOD"
+2026-07-11,"Flu B viral load","Citywide average","Number",""
+2026-07-18,"Flu B viral load","Citywide average","Number","1096293"
+2026-07-25,"Flu B viral load","Citywide average","Number","< LOD"
+2026-08-01,"Flu B viral load","Citywide average","Number","< LOD"
+2026-08-08,"Flu B viral load","Citywide average","Number","< LOD"
+2026-08-15,"Flu B viral load","Citywide average","Number","901154"
+2025-08-23,"RSV viral load","Citywide average","Number","< LOD"
+2025-08-30,"RSV viral load","Citywide average","Number","< LOD"
+2025-09-06,"RSV viral load","Citywide average","Number","< LOD"
+2025-09-13,"RSV viral load","Citywide average","Number","< LOD"
+2025-09-20,"RSV viral load","Citywide average","Number","692879"
+2025-09-27,"RSV viral load","Citywide average","Number","3530730"
+2025-10-04,"RSV viral load","Citywide average","Number","5477022"
+2025-10-11,"RSV viral load","Citywide average","Number","12125241"
+2025-10-18,"RSV viral load","Citywide average","Number","2304523"
+2025-10-25,"RSV viral load","Citywide average","Number","1101906"
+2025-11-01,"RSV viral load","Citywide average","Number","1330835"
+2025-11-08,"RSV viral load","Citywide average","Number","797308"
+2025-11-15,"RSV viral load","Citywide average","Number","1232133"
+2025-11-22,"RSV viral load","Citywide average","Number","978649"
+2025-11-29,"RSV viral load","Citywide average","Number","2854663"
+2025-12-06,"RSV viral load","Citywide average","Number",""
+2025-12-13,"RSV viral load","Citywide average","Number","2959018"
+2025-12-20,"RSV viral load","Citywide average","Number","1986309"
+2025-12-27,"RSV viral load","Citywide average","Number","3153385"
+2026-01-03,"RSV viral load","Citywide average","Number","4423826"
+2026-01-10,"RSV viral load","Citywide average","Number","2108927"
+2026-01-17,"RSV viral load","Citywide average","Number","4040470"
+2026-01-24,"RSV viral load","Citywide average","Number","9774041"
+2026-01-31,"RSV viral load","Citywide average","Number","4373230"
+2026-02-07,"RSV viral load","Citywide average","Number","4375041"
+2026-02-14,"RSV viral load","Citywide average","Number","4961624"
+2026-02-21,"RSV viral load","Citywide average","Number","4076167"
+2026-02-28,"RSV viral load","Citywide average","Number","8735746"
+2026-03-07,"RSV viral load","Citywide average","Number","4809351"
+2026-03-14,"RSV viral load","Citywide average","Number","3775027"
+2026-03-21,"RSV viral load","Citywide average","Number","4545023"
+2026-03-28,"RSV viral load","Citywide average","Number","3673763"
+2026-04-04,"RSV viral load","Citywide average","Number","1605664"
+2026-04-11,"RSV viral load","Citywide average","Number","2278973"
+2026-04-18,"RSV viral load","Citywide average","Number","1064031"
+2026-04-25,"RSV viral load","Citywide average","Number","1324571"
+2026-05-02,"RSV viral load","Citywide average","Number","1126895"
+2026-05-09,"RSV viral load","Citywide average","Number","729076"
+2026-05-16,"RSV viral load","Citywide average","Number","967865"
+2026-05-23,"RSV viral load","Citywide average","Number","3225017"
+2026-05-30,"RSV viral load","Citywide average","Number","< LOD"
+2026-06-06,"RSV viral load","Citywide average","Number","818627"
+2026-06-13,"RSV viral load","Citywide average","Number","< LOD"
+2026-06-20,"RSV viral load","Citywide average","Number","< LOD"
+2026-06-27,"RSV viral load","Citywide average","Number","3163695"
+2026-07-04,"RSV viral load","Citywide average","Number","< LOD"
+2026-07-11,"RSV viral load","Citywide average","Number",""
+2026-07-18,"RSV viral load","Citywide average","Number","8236942"
+2026-07-25,"RSV viral load","Citywide average","Number","< LOD"
+2026-08-01,"RSV viral load","Citywide average","Number","597990"
+2026-08-08,"RSV viral load","Citywide average","Number","767361"
+2026-08-15,"RSV viral load","Citywide average","Number","< LOD"
+2026-05-16,"SARS-CoV-2 variants","Other","Percent","29.7"
+2026-05-16,"SARS-CoV-2 variants","RW.1","Percent","12.4"
+2026-05-16,"SARS-CoV-2 variants","XFG.1","Percent","20.4"
+2026-05-16,"SARS-CoV-2 variants","JN.1","Percent","9.2"
+2026-05-16,"SARS-CoV-2 variants","XFG","Percent","7"
+2026-05-16,"SARS-CoV-2 variants","XFG.14","Percent","7.1"
+2026-05-16,"SARS-CoV-2 variants","XFJ.3","Percent","7"
+2026-05-16,"SARS-CoV-2 variants","RE.2","Percent","7.1"
+2026-05-23,"SARS-CoV-2 variants","Other","Percent","44.7"
+2026-05-23,"SARS-CoV-2 variants","RW.1","Percent","12.5"
+2026-05-23,"SARS-CoV-2 variants","XFG.1","Percent","9.9"
+2026-05-23,"SARS-CoV-2 variants","JN.1","Percent","11.8"
+2026-05-23,"SARS-CoV-2 variants","XFG.14","Percent","8.2"
+2026-05-23,"SARS-CoV-2 variants","XFJ.3","Percent","12.9"
+2026-05-30,"SARS-CoV-2 variants","Other","Percent","16.7"
+2026-05-30,"SARS-CoV-2 variants","RW.1","Percent","25.1"
+2026-05-30,"SARS-CoV-2 variants","XFG.1","Percent","8.8"
+2026-05-30,"SARS-CoV-2 variants","XFG.6","Percent","7.6"
+2026-05-30,"SARS-CoV-2 variants","JN.1","Percent","7.1"
+2026-05-30,"SARS-CoV-2 variants","XFG","Percent","12.8"
+2026-05-30,"SARS-CoV-2 variants","XFJ.3","Percent","21.9"
+2026-06-06,"SARS-CoV-2 variants","Other","Percent","26.7"
+2026-06-06,"SARS-CoV-2 variants","RW.1","Percent","25.7"
+2026-06-06,"SARS-CoV-2 variants","XFG.1","Percent","13.7"
+2026-06-06,"SARS-CoV-2 variants","JN.1","Percent","6.9"
+2026-06-06,"SARS-CoV-2 variants","XFG","Percent","10.8"
+2026-06-06,"SARS-CoV-2 variants","XFG.14","Percent","9.7"
+2026-06-06,"SARS-CoV-2 variants","XFJ.3","Percent","6.4"
+2026-06-13,"SARS-CoV-2 variants","Other","Percent","26.5"
+2026-06-13,"SARS-CoV-2 variants","RW.1","Percent","24.7"
+2026-06-13,"SARS-CoV-2 variants","XFG.1","Percent","6.3"
+2026-06-13,"SARS-CoV-2 variants","JN.1","Percent","13.8"
+2026-06-13,"SARS-CoV-2 variants","XFG","Percent","5.4"
+2026-06-13,"SARS-CoV-2 variants","XFG.14","Percent","7.9"
+2026-06-13,"SARS-CoV-2 variants","XFJ.3","Percent","15.4"
+2026-06-20,"SARS-CoV-2 variants","Other","Percent","40"
+2026-06-20,"SARS-CoV-2 variants","RW.1","Percent","24.7"
+2026-06-20,"SARS-CoV-2 variants","JN.1","Percent","6.5"
+2026-06-20,"SARS-CoV-2 variants","XFG","Percent","7.3"
+2026-06-20,"SARS-CoV-2 variants","XFJ.3","Percent","14.7"
+2026-06-20,"SARS-CoV-2 variants","RE.2","Percent","6.7"
+2026-06-27,"SARS-CoV-2 variants","Other","Percent","46.3"
+2026-06-27,"SARS-CoV-2 variants","RW.1","Percent","26.8"
+2026-06-27,"SARS-CoV-2 variants","XFG.1","Percent","6"
+2026-06-27,"SARS-CoV-2 variants","JN.1","Percent","6.7"
+2026-06-27,"SARS-CoV-2 variants","XFJ.3","Percent","14.2"
+2026-07-04,"SARS-CoV-2 variants","Other","Percent","32.9"
+2026-07-04,"SARS-CoV-2 variants","RW.1","Percent","22"
+2026-07-04,"SARS-CoV-2 variants","XFG.1","Percent","6.9"
+2026-07-04,"SARS-CoV-2 variants","XFG.6","Percent","7.5"
+2026-07-04,"SARS-CoV-2 variants","JN.1","Percent","14.5"
+2026-07-04,"SARS-CoV-2 variants","LF.7","Percent","6.5"
+2026-07-04,"SARS-CoV-2 variants","XFJ.3","Percent","9.6"
+2026-07-11,"SARS-CoV-2 variants","No sequencing data","Percent","100"
+2026-07-18,"SARS-CoV-2 variants","Other","Percent","41.7"
+2026-07-18,"SARS-CoV-2 variants","RW.1","Percent","26.1"
+2026-07-18,"SARS-CoV-2 variants","XFG.1","Percent","6.4"
+2026-07-18,"SARS-CoV-2 variants","JN.1","Percent","14.2"
+2026-07-18,"SARS-CoV-2 variants","XFJ.3","Percent","11.6"
+2026-07-25,"SARS-CoV-2 variants","Other","Percent","31.4"
+2026-07-25,"SARS-CoV-2 variants","RW.1","Percent","26.1"
+2026-07-25,"SARS-CoV-2 variants","XFG.6","Percent","11.6"
+2026-07-25,"SARS-CoV-2 variants","JN.1","Percent","6.4"
+2026-07-25,"SARS-CoV-2 variants","RV.1","Percent","5.7"
+2026-07-25,"SARS-CoV-2 variants","XFJ.3","Percent","13.2"
+2026-07-25,"SARS-CoV-2 variants","SW.2","Percent","5.6"
+2026-08-01,"SARS-CoV-2 variants","Other","Percent","46.4"
+2026-08-01,"SARS-CoV-2 variants","RW.1","Percent","24.5"
+2026-08-01,"SARS-CoV-2 variants","XFG.6","Percent","8.1"
+2026-08-01,"SARS-CoV-2 variants","JN.1","Percent","6.2"
+2026-08-01,"SARS-CoV-2 variants","XFJ.3","Percent","14.8"
