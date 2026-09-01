@@ -229,14 +229,20 @@ export default function useChoroplethMap({
     });
     mapInstanceRef.current = map;
 
-    // CartoDB Positron — no city-name labels (RPU request)
+    // Esri Light Gray Canvas ("World_Light_Gray_Base") — no city-name
+    // labels (RPU request), same look as the old CartoDB Positron
+    // "light_nolabels" tile this replaced 2026-09-01. Switched because
+    // CARTO's basemaps.cartocdn.com now requires an API key and this app
+    // never had one wired up, so every map showed a repeated "API key
+    // required" watermark. Esri's Canvas basemaps need no key/signup.
+    // Native tile zoom tops out at 16 (this map never zooms past 13 via
+    // fitBounds, so that's not a practical limit).
     L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
       {
         attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: "abcd",
-        maxZoom: 19,
+          'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors, and the GIS community',
+        maxZoom: 16,
       }
     ).addTo(map);
 

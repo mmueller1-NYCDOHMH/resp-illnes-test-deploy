@@ -22,7 +22,9 @@
  * case-rate metrics), but null-safe handling is still in place in case that
  * changes.
  * Map:  GeoJSON from NYC Health EHDP repository (UHF42 neighborhoods).
- * Tiles: CartoDB Positron no-labels (per RPU request: no city names).
+ * Tiles: Esri Light Gray Canvas, no-labels layer (per RPU request: no city
+ *        names). Was CartoDB Positron no-labels until 2026-09-01, switched
+ *        because CARTO now requires an API key. See useChoroplethMap.js.
  * Leaflet loaded dynamically from unpkg CDN to avoid bundling it.
  *
  * Map lifecycle, GeoJSON fetch, feature click/hover, search suggestions,
@@ -611,7 +613,8 @@ const NeighborhoodMap = () => {
                     In <strong>{selectedData.name}</strong>, respiratory illnesses
                     were <strong>{selectedData.pct}%</strong> of ED
                     visits for the week ending <strong>{WEEK_ENDING}</strong>.
-
+                  </p>
+                  <p className="mt-sm">
                     This is{" "}
                     <strong
                       style={{

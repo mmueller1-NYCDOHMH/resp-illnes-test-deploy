@@ -18,7 +18,9 @@
  * no masked neighborhoods in RPU's current file; Flu and (heavily) RSV do
  * — see isSuppressed/StatValue below for how a masked neighborhood renders.
  * Map: GeoJSON from NYC Health EHDP (UHF42 neighborhoods).
- * Tiles: CartoDB Positron no-labels.
+ * Tiles: Esri Light Gray Canvas, no-labels layer. Was CartoDB Positron
+ *        no-labels until 2026-09-01, switched because CARTO now requires
+ *        an API key. See useChoroplethMap.js.
  *
  * Map lifecycle, GeoJSON fetch, feature click/hover, search suggestions,
  * and the linked bar chart's view lifecycle are shared with NeighborhoodMap
@@ -841,7 +843,8 @@ const LabCasesNeighborhoodMap = ({
                       </strong>{" "}
                       for the week ending{" "}
                       <strong>{WEEK_ENDING}</strong>.
-
+                    </p>
+                    <p className="mt-sm">
                       This is{" "}
                       <strong
                         style={{
