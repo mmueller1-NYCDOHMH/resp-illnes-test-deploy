@@ -21,6 +21,7 @@ import {
   getLastTwoValuesSameSeries,
   formatDate,
   formatTrendPhrase,
+  formatTrendPhraseHTML,
   coerceNoChange,
   getTrendInfo,
   getLatestWeekFromData,
@@ -364,7 +365,14 @@ const useSectionData = (section, sectionKey, pageContext) => {
       ? `in ${groupDisplay}`
       : `across ${normalizedLabel.toLowerCase()}`;
 
-  const trendText = trendObj ? formatTrendPhrase(trendObj) : "not available";
+  // `{trend}` is substituted into subtitle templates that get rendered via
+  // dangerouslySetInnerHTML (see ContentContainer's resolveText path), so it
+  // needs the HTML-wrapped variant — plain formatTrendPhrase() here was why
+  // "increased"/"decreased" stopped coloring and the "33%" stopped bolding
+  // once the subtitle stopped going through contentUtils' key-aware
+  // resolvePageHTML. formatTrendPhrase() itself is left alone for the
+  // plain-text uses elsewhere (PNG/CSV export subtitles, aria-labels).
+  const trendText = trendObj ? formatTrendPhraseHTML(trendObj) : "not available";
 
   // ── 14. Full interpolation variables ─────────────────────────────────────
   const fullVars = {
