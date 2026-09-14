@@ -248,24 +248,30 @@ export function getTrendFromTimeSeries(data, key = "value") {
 
   const [current, previous] = pair;
 
+  // current/previous are attached to every returned object below (not just
+  // computed and discarded) so a caller feeding this into
+  // buildStyledTrendSentence doesn't hit the same "undefined reads as N/A"
+  // bug fixed in useSectionData.js's own copy of this prev-is-zero logic
+  // (see project memory: "RVP trend 'not available' mismatch fixed") — a
+  // real, present 0 must not look like missing data downstream.
   if (previous === 0) {
     if (current === 0) {
-      return { label: "not changed", value: "0%", direction: "same" };
+      return { label: "not changed", value: "0%", direction: "same", current, previous };
     }
     // Direction only; no numeric percent
-    return { label: "increased", value: "", direction: "up" };
+    return { label: "increased", value: "", direction: "up", current, previous };
   }
 
   const rawChangePct = ((current - previous) / previous) * 100;
 
   if (Math.abs(rawChangePct) < EPSILON_NO_CHANGE) {
-    return { label: "not changed", value: "0%", direction: "same" };
+    return { label: "not changed", value: "0%", direction: "same", current, previous };
   }
 
   const rounded = Math.round(rawChangePct);
   return rounded > 0
-    ? { label: "increased", value: `${rounded}%`, direction: "up" }
-    : { label: "decreased", value: `${Math.abs(rounded)}%`, direction: "down" };
+    ? { label: "increased", value: `${rounded}%`, direction: "up", current, previous }
+    : { label: "decreased", value: `${Math.abs(rounded)}%`, direction: "down", current, previous };
 }
 
 /** =====================================================================

@@ -3,6 +3,11 @@ import caseDataPageConfig from "../CaseDataPage.config";
 import covidDeathPageConfig from "../CovidDeathPage.config";
 import { resolveAsset } from "../../../utils/pathUtils";
 
+// TEMP (Morgan, 2026-09-14): COVID wastewater Variants tab pulled while
+// stakeholders discuss it. Flip this back to true to restore the section —
+// nothing else needs to change.
+const SHOW_COVID_VARIANTS_SECTION = false;
+
 const covidPageConfig = {
   id: "covidPage",
 
@@ -65,30 +70,34 @@ const covidPageConfig = {
     },
     // COVID-only: RPU's variant breakdown only exists for SARS-CoV-2
     // wastewater sequencing, not Flu/RSV — see WastewaterVariantChart.jsx.
-    {
-      id: "wastewater-covid-variants",
-      navLabel: "Variants",
-      dataType: "wastewater",
-      title: "wastewaterPage.charts.variants.title",
-      renderAs: "custom",
-      component: "WastewaterVariantChart",
-      background: "white",
-      disableAltTable: true,
-      animateOnScroll: true,
-      infoIcon: true,
-      downloadIcon: true,
-      modal: {
-        title: "About SARS-CoV-2 variants in wastewater",
-        markdownPath: "content/modals/wastewater-variants-explainer.md",
-      },
-      componentProps: {
-        // Same self-fetching situation as WastewaterChart — this feeds
-        // buildDownloadHandler's "raw file" fallback for the CSV button.
-        dataPath: resolveAsset("data/wastewaterData.csv"),
-        downloadDescription:
-          "Downloads the full wastewater dataset (all viruses and metrics).",
-      },
-    },
+    ...(SHOW_COVID_VARIANTS_SECTION
+      ? [
+          {
+            id: "wastewater-covid-variants",
+            navLabel: "Variants",
+            dataType: "wastewater",
+            title: "wastewaterPage.charts.variants.title",
+            renderAs: "custom",
+            component: "WastewaterVariantChart",
+            background: "white",
+            disableAltTable: true,
+            animateOnScroll: true,
+            infoIcon: true,
+            downloadIcon: true,
+            modal: {
+              title: "About SARS-CoV-2 variants in wastewater",
+              markdownPath: "content/modals/wastewater-variants-explainer.md",
+            },
+            componentProps: {
+              // Same self-fetching situation as WastewaterChart — this feeds
+              // buildDownloadHandler's "raw file" fallback for the CSV button.
+              dataPath: resolveAsset("data/wastewaterData.csv"),
+              downloadDescription:
+                "Downloads the full wastewater dataset (all viruses and metrics).",
+            },
+          },
+        ]
+      : []),
   ],
 };
 

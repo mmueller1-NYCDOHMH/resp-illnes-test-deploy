@@ -2,8 +2,11 @@
  * dataTypeOptions
  *
  * Single source of truth for data-type navigation options.
- * Imported by TopControls, PageSidebar, and FloatingTogglePill.
- * Add new data types here — all three components update automatically.
+ * Imported by PageSidebar. (TopControls.jsx and FloatingTogglePill also used
+ * to import this — TopControls is dead code with no importers, and
+ * FloatingTogglePill no longer exists in this repo; see the code-audit
+ * notes, 2026-09-14.)
+ * Add new data types here — PageSidebar updates automatically.
  */
 
 export const ALL_DATA_TYPE_OPTIONS = [
