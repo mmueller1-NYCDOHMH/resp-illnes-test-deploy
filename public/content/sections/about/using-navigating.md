@@ -8,8 +8,8 @@ The site is organized into three main areas, accessible from the top navigation 
 
 On any Data page, the left sidebar has two controls:
 
-- **Virus** — select COVID-19, Flu, or RSV to load data for that illness.
-- **Data type** — choose how illness activity is measured: *Emergency Department visits*, *Lab-reported cases*, *Deaths* (COVID-19 only), or *Wastewater* (available for COVID-19, Flu, and RSV).
+- **Virus** — select COVID-19, flu, or RSV to load data for that illness.
+- **Data type** — select measurement: Emergency Department, Lab-reported cases, Deaths (COVID-19 only), or Wastewater.
 
 > On mobile, tap the **☰ sliders icon** at the top left to open the sidebar controls.
 

@@ -11,12 +11,9 @@ The underlying data files are served from this site at:
 - `/data/emergencyDeptData.csv` — ED visits and hospitalizations
 - `/data/caseData.csv` — lab-confirmed cases
 - `/data/deathData.csv` — COVID-19 deaths
-- `/data/otherRespData.csv` — respiratory panel results
-- `/data/wastewaterData.csv` — wastewater viral load by pathogen
+- `/data/wastewaterData.csv` — wastewater viral load
 
 The first four files share a consistent format with columns: `date`, `metric`, `submetric`, `value`, `display`. The **`metric`** column identifies the illness and measure (e.g. *COVID-19 visits*). The **`submetric`** column identifies the demographic group or area (e.g. *Overall*, *18–44 years*, *Bronx*). The wastewater file uses a simpler format instead: `date`, `pathogen`, `value`.
-
-> Data is updated every **Thursday** with values through the previous Saturday. All figures are preliminary and may be revised as additional reports arrive.
 
 #### GitHub repository
 
