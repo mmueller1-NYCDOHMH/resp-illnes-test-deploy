@@ -34,7 +34,7 @@ import ChartFooter from "./ChartFooter";
 import ToggleGroup from "../controls/ToggleGroup";
 import { tokens } from "../../styles/tokens";
 import { resolveAsset } from "../../utils/pathUtils";
-import { buildTooltipLineCalc, tooltipLineEntry, hideZeroLabelExpr } from "../../utils/tooltipUtils";
+import { buildTooltipLineCalc, tooltipLineEntry, hideZeroLabelExpr, escapeForVegaString } from "../../utils/tooltipUtils";
 import {
   BASE_AXIS_LABEL_CONFIG,
   BASE_AXIS_X_CONFIG,
@@ -63,9 +63,6 @@ const VIRUS_METRICS = {
 };
 
 const CITYWIDE_SUBMETRIC = "Citywide average";
-
-const escapeForVega = (str = "") =>
-  String(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 
 // ── Vega-Lite spec builder ────────────────────────────────────────────────────
 // Shared axis/view boilerplate lives in vegaTheme.js (BASE_AXIS_LABEL_CONFIG
@@ -151,7 +148,7 @@ const tooltipLineCalc = `
       },
 
       {
-        calculate: `'${escapeForVega(label)}'`,
+        calculate: `'${escapeForVegaString(label)}'`,
         as: "pathogenLabel",
       },
 

@@ -95,15 +95,15 @@ export function StatValue({ value, suffix = "", size = "sm" }) {
  *   LabCasesNeighborhoodMap renders the row statically.
  * - `showDataAsOf` + `weekEnding` control the footer — only
  *   LabCasesNeighborhoodMap shows a date there today.
- * - `groupNote` is now always rendered when present. NeighborhoodMap's
- *   original copy accepted this prop at both call sites but never rendered
- *   it (a regression from an earlier edit this session, caught during this
- *   extraction) — LabCasesNeighborhoodMap's copy, the clearly-intended
- *   behavior, always did.
+ * - No grouped-neighborhood note here (per Morgan, 2026-09-14) — the
+ *   combined-UHF34-group disclosure ("Reported together with X — data are
+ *   not distinguished...") only belongs in the caption below the dynamic
+ *   sentence, which both maps build separately via groupedWithNote(); it
+ *   used to also render here via a `groupNote` prop, which duplicated that
+ *   line in the top At-a-Glance card.
  */
 export function SnapshotRows({
   data,
-  groupNote,
   valueField,
   suffix = "",
   size = "sm",
@@ -146,17 +146,6 @@ export function SnapshotRows({
             {label}
           </span>
         </div>
-
-        {/* RPU reports 15 of the 42 UHF42 neighborhoods as part of a
-            combined UHF34 group (see neighborhoodGeoData.js's
-            groupedWithNote) — this rate isn't independent of its
-            group-mates', so say so rather than let identical numbers
-            across 2-3 neighborhoods look like a coincidence. */}
-        {groupNote && (
-          <p className="text-2xs font-body text-[var(--gray-600)] italic leading-snug">
-            {groupNote}
-          </p>
-        )}
       </div>
 
       <div

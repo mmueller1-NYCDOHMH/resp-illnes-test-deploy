@@ -19,9 +19,11 @@
  * useChoroplethMap's selectedSig effect).
  *
  * `selectedColor` / `hoverColor` / `chartHeight` / `benchmarkValue` /
- * `benchmarkLabel` are resolved at render time via VegaLiteWrapper's
- * `dynamicFields`, so the same spec object works for a fixed palette
- * (home page) or a per-virus palette (data pages) alike.
+ * `benchmarkLabel` (e.g. "NYC 5.6%" — used for both the on-chart text next
+ * to the benchmark line and the rule's hover tooltip) are resolved at
+ * render time via VegaLiteWrapper's `dynamicFields`, so the same spec
+ * object works for a fixed palette (home page) or a per-virus palette
+ * (data pages) alike.
  *
  * @param {object[]} tooltipFields - Vega tooltip field defs, e.g.
  *   [{ field: "name", title: "Neighborhood" }, { field: "rate", title: "Rate per 100,000" }]
@@ -91,12 +93,76 @@ export function buildChoroplethBarSpec(tooltipFields, valueField = "rate") {
         },
       },
       {
-        // Single dashed reference line at the citywide benchmark.
+        // Single dashed reference line at the citywide benchmark. Tooltip
+        // and the on-chart label (below) now share the same text —
+        // `benchmarkLabel` carries the value, e.g. "NYC 5.6%".
         data: { values: [{}] },
         mark: { type: "rule", strokeDash: [4, 3], color: "#6b7280", size: 1 },
         encoding: {
           y: { datum: "{benchmarkValue}", type: "quantitative" },
           tooltip: { value: "{benchmarkLabel}" },
+        },
+      },
+      {
+        // "NYC x%" label, TRUE right-alignment: `align: "right"` makes the
+        // text's RIGHT edge the anchor point (text-anchor="end" in the
+        // rendered SVG), planted at the plot's own right edge
+        // (`x: {value:{expr:"width"}}`, same right edge the bars and the
+        // dashed rule line already reach) — flush right, not just "right of
+        // center". Sits just above the benchmark line itself (not beside
+        // it): `baseline: "bottom"` + a small negative `dy` means the
+        // line's own y-value acts as the text's bottom edge with a few px
+        // of clearance, so the label reads as an annotation ON the line.
+        //
+        // A prior pass (verified live via Morgan's own browser devtools —
+        // see the actual rendered <text text-anchor="middle"
+        // transform="translate(223.82,...)"> in her report) used
+        // `align: "center"` with `x` at 62% of plot width. That position
+        // WAS exactly correct per that spec (361 * 0.62 = 223.82, confirmed
+        // live) — but `align: "center"` is CENTER-anchored text, not
+        // right-anchored, so the label straddled its x point symmetrically
+        // rather than sitting flush against a right-side edge. That's very
+        // likely why every "shift right" pass before this one kept looking
+        // wrong even once the x position itself was proven correct:
+        // "shifted right of center" and "right-aligned" are not the same
+        // thing when `align` stays "center". This pass fixes the actual
+        // `align` property, not just the x position.
+        //
+        // Padding note: `padding.right` stays at 8 (matching the other 3
+        // sides) — a prior pass widened it to 60 to make room for a `dx`
+        // offset and that visibly narrowed the bar chart itself
+        // (VegaLiteWrapper's autosize treats the given width as the TOTAL
+        // view size including padding). Anchoring the text at its own right
+        // edge via `align:"right"` needs no reserved margin at all — the
+        // text naturally draws leftward from `x:width`, staying inside the
+        // existing plot area. See project memory
+        // project_rvp_citywide_label_on_line.md for the full history.
+        //
+        // IMPORTANT — positional-channel gotcha (bit us once already, see
+        // project memory project_rvp_citywide_label_on_line.md): any
+        // expression-driven x/y position here MUST be written as
+        // `{ value: { expr: "..." } }`, NOT `{ expr: "..." }` — the bare
+        // form is silently dropped by Vega-Lite (doesn't count as a data
+        // field/datum/value/signal for a positional channel) and falls back
+        // to a centered default with no warning. Verified correct not just
+        // by compiling this exact spec with the vega-lite package but by
+        // actually running it through vega's renderer and reading the real
+        // SVG output (`view.toSVG()`), confirming the rendered text's pixel
+        // position rather than just the compiled expression string.
+        data: { values: [{}] },
+        mark: {
+          type: "text",
+          align: "right",
+          baseline: "bottom",
+          dy: -3,
+          fontSize: 12.5,
+          fontWeight: 700,
+        },
+        encoding: {
+          x: { value: { expr: "width" } },
+          y: { datum: "{benchmarkValue}", type: "quantitative" },
+          text: { value: "{benchmarkLabel}" },
+          color: { value: "#1f2937" },
         },
       },
     ],

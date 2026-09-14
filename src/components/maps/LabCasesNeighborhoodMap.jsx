@@ -560,10 +560,6 @@ const LabCasesNeighborhoodMap = ({
                 {previewData && (
                   <SnapshotRows
                     data={previewData}
-                    groupNote={groupedWithNote(
-                      previewData,
-                      dataByGeocode
-                    )}
                     valueField="rate"
                     label="cases per 100,000 people"
                     showDataAsOf
@@ -716,10 +712,6 @@ const LabCasesNeighborhoodMap = ({
                     ) : (
                       <SnapshotRows
                         data={selectedData}
-                        groupNote={groupedWithNote(
-                          selectedData,
-                          dataByGeocode
-                        )}
                         valueField="rate"
                         label="cases per 100,000 people"
                         showDataAsOf
@@ -809,26 +801,16 @@ const LabCasesNeighborhoodMap = ({
                 : ""
             } — hover for details, click to highlight on map`}
           >
-            {/* Header */}
+            {/* Header — was "Click to select"; now a data label describing
+                what the Y axis actually plots (the "Citywide (x)" note that
+                used to live here is now drawn directly on the benchmark
+                line inside the chart itself, as a "NYC x" label — see
+                choroplethBarSpec.js). */}
             <div className="bg-white border-b border-[var(--gray-200)] px-sm pt-sm pb-xs rounded-t-md flex-shrink-0 flex items-center justify-between gap-2">
               <div>
                 <p className="text-xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide leading-tight">
-                  Click to select
+                  Cases per 100,000 people
                 </p>
-              </div>
-
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <span
-                  className="inline-block w-3 border-t border-dashed"
-                  style={{
-                    borderColor: "#6b7280",
-                  }}
-                  aria-hidden="true"
-                />
-
-                <span className="text-2xs font-body text-[var(--gray-600)] whitespace-nowrap">
-                  Citywide ({citywideRate})
-                </span>
               </div>
             </div>
 
@@ -845,7 +827,7 @@ const LabCasesNeighborhoodMap = ({
                   selectedColor: colors[4],
                   hoverColor: colors[2],
                   benchmarkValue: citywideRate,
-                  benchmarkLabel: `Citywide: ${citywideRate} / 100,000`,
+                  benchmarkLabel: `NYC ${citywideRate}`,
                 }}
                 rendererMode="svg"
                 onNewView={handleChartNewView}

@@ -83,9 +83,6 @@ const OTHER_LABEL = "Other";
 // multiples don't need a categorical palette here.
 const PANEL_COLOR = tokens.colorScales.covid[2];
 
-const escapeForVega = (str = "") =>
-  String(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-
 /**
  * Groups consecutive "no sequencing data" dates into contiguous
  * {start, end} bands — used to draw a greyed-out "no data available" rect

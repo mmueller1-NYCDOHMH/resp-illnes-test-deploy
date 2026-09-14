@@ -4,6 +4,7 @@ import { tokens } from "../../styles/tokens";
 import ChartFooter from "./ChartFooter";
 import { toSourceVirus } from "../../utils/virusRegistry";
 import { buildTooltipLineCalc, tooltipLineEntry, hideZeroLabelExpr } from "../../utils/tooltipUtils";
+import { getISOWeek } from "../../utils/trendUtils";
 import {
   BASE_AXIS_LABEL_CONFIG,
   BASE_AXIS_X_CONFIG,
@@ -13,15 +14,6 @@ import {
 } from "../../utils/vegaTheme";
 
 const { colors } = tokens;
-
-function getISOWeek(date) {
-  const target = new Date(date.valueOf());
-  const dayNumber = (date.getDay() + 6) % 7;
-  target.setDate(target.getDate() - dayNumber + 3);
-  const firstThursday = new Date(target.getFullYear(), 0, 4);
-  const diff = target - firstThursday;
-  return 1 + Math.round(diff / (7 * 24 * 60 * 60 * 1000));
-}
 
 const SmallMultipleLineChart = ({
   data,

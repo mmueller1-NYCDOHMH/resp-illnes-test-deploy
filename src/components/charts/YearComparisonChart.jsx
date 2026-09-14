@@ -2,7 +2,9 @@
 import React from "react";
 import VegaLiteWrapper from "./VegaLiteWrapper";
 import { tokens } from "../../styles/tokens";
-import { hideZeroLabelExpr } from "../../utils/tooltipUtils";
+import { hideZeroLabelExpr, escapeForVegaString } from "../../utils/tooltipUtils";
+import { getISOWeek } from "../../utils/trendUtils";
+import useMedia from "../hooks/useMedia";
 import {
   BASE_AXIS_LABEL_CONFIG,
   BASE_AXIS_X_CONFIG,
@@ -12,39 +14,6 @@ import {
 } from "../../utils/vegaTheme";
 
 const { colors } = tokens;
-
-function getISOWeek(date) {
-  const target = new Date(date.valueOf());
-  const dayNumber = (date.getDay() + 6) % 7;
-  target.setDate(target.getDate() - dayNumber + 3);
-  const firstThursday = new Date(target.getFullYear(), 0, 4);
-  const diff = target - firstThursday;
-  return 1 + Math.round(diff / (7 * 24 * 60 * 60 * 1000));
-}
-
-const useMedia = (query) => {
-  const get = () =>
-    typeof window !== "undefined" &&
-    typeof window.matchMedia !== "undefined" &&
-    window.matchMedia(query).matches;
-
-  const [matches, setMatches] = React.useState(get);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia === "undefined") return;
-    const mql = window.matchMedia(query);
-    const onChange = (e) => setMatches(e.matches);
-    if (mql.addEventListener) mql.addEventListener("change", onChange);
-    else mql.addListener(onChange);
-    setMatches(mql.matches);
-    return () => {
-      if (mql.removeEventListener) mql.removeEventListener("change", onChange);
-      else mql.removeListener(onChange);
-    };
-  }, [query]);
-
-  return matches;
-};
 
 // Flu A shown first (far left) in the legend, Flu B second — domain order
 // drives legend order. Stack position (B on bottom, A on top) is controlled
@@ -192,8 +161,6 @@ const YearComparisonChart = ({
   // constants joined onto every row for a date (see buildABTransforms), so
   // the same two lines compute identically whether the hovered datum is the
   // Influenza A row or the Influenza B row.
-  const escapeForVegaString = (str = "") =>
-    String(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
   const tooltipMetricLabel = columnLabels.value || metricName || "cases";
   const metricLabelLower = escapeForVegaString(
     tooltipMetricLabel.charAt(0).toLowerCase() + tooltipMetricLabel.slice(1)

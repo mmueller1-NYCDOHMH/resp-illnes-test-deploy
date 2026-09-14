@@ -3,6 +3,7 @@ import VegaLiteWrapper from "./VegaLiteWrapper";
 import { tokens } from "../../styles/tokens";
 import ChartFooter from "./ChartFooter";
 import { buildTooltipLineCalc, tooltipLineEntry, hideZeroLabelExpr } from "../../utils/tooltipUtils";
+import useMedia from "../hooks/useMedia";
 import {
   BASE_AXIS_LABEL_CONFIG,
   BASE_AXIS_X_CONFIG,
@@ -13,30 +14,6 @@ import {
 
 const { covid, flu, rsv, ari } = tokens.colorScales;
 const { colors } = tokens;
-
-const useMedia = (query) => {
-  const get = () =>
-    typeof window !== "undefined" &&
-    typeof window.matchMedia !== "undefined" &&
-    window.matchMedia(query).matches;
-
-  const [matches, setMatches] = React.useState(get);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia === "undefined") return;
-    const mql = window.matchMedia(query);
-    const onChange = (e) => setMatches(e.matches);
-    if (mql.addEventListener) mql.addEventListener("change", onChange);
-    else mql.addListener(onChange);
-    setMatches(mql.matches);
-    return () => {
-      if (mql.removeEventListener) mql.removeEventListener("change", onChange);
-      else mql.removeListener(onChange);
-    };
-  }, [query]);
-
-  return matches;
-};
 
 const getXAxisFormat = (data, xKey) => {
   if (!data || data.length < 2) return "%b %d";

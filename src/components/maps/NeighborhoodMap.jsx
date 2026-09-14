@@ -86,16 +86,19 @@ const HIGHLIGHT_STROKE = "#1E40AF";
 // runs up the Y axis. Reads like a skyline beneath the map instead of a
 // narrow vertical leaderboard. Shared with LabCasesNeighborhoodMap via
 // buildChoroplethBarSpec — see choroplethBarSpec.js for the hover/selection
-// param mechanics. Plots "pct" (not a "rate") since this is ED-visit share,
-// not a per-100k rate — see FIELD_SPECS / buildUhfDataByGeocode above for
-// where the pct field comes from.
-const HISTO_SPEC = buildChoroplethBarSpec(
-  [
-    { field: "name", title: "Neighborhood" },
-    { field: "pctTooltip", title: "Overall respiratory illness" },
-  ],
-  "pct"
-);
+// param mechanics and for the "NYC x%" benchmark label (positioned at 62%
+// of the plot width, see that file's comments for why). Plots "pct" (not a
+// "rate") since this is ED-visit share, not a per-100k rate — see
+// FIELD_SPECS / buildUhfDataByGeocode above for where the pct field comes
+// from.
+//
+// Built inside the component via useMemo (previously a module-level
+// const evaluated once at import) rather than outside it — no behavior
+// difference (tooltipFields/valueField are static, so this still only runs
+// once per mount), but ties its recomputation to the component's own
+// render/Fast-Refresh boundary instead of module-eval time, which is the
+// more conventional pattern for anything derived from an imported builder
+// function in a Next.js app.
 
 // ── At-a-Glance snapshot rows ─────────────────────────────────────────────────
 // StatValue + SnapshotRows now live in the shared MapSnapshot.jsx (see that
@@ -110,6 +113,18 @@ const NeighborhoodMap = () => {
   const [pinnedGeocode, setPinnedGeocode] = React.useState(null);
   const [pinHovered, setPinHovered]       = React.useState(false);
   const [infoOpen, setInfoOpen]           = useState(false);
+
+  const HISTO_SPEC = useMemo(
+    () =>
+      buildChoroplethBarSpec(
+        [
+          { field: "name", title: "Neighborhood" },
+          { field: "pctTooltip", title: "Overall respiratory illness" },
+        ],
+        "pct"
+      ),
+    []
+  );
 
   // ── Real UHF neighborhood data ────────────────────────────────────────────
   // Loads RPU's staged emergencyDeptData.csv (see useNeighborhoodGeoCsv for
@@ -484,7 +499,6 @@ const NeighborhoodMap = () => {
             {previewData && (
               <SnapshotRows
                 data={previewData}
-                groupNote={groupedWithNote(previewData, dataByGeocode)}
                 valueField="pct"
                 suffix="%"
                 size="lg"
@@ -580,7 +594,6 @@ const NeighborhoodMap = () => {
                 ) : (
                   <SnapshotRows
                     data={selectedData}
-                    groupNote={groupedWithNote(selectedData, dataByGeocode)}
                     valueField="pct"
                     suffix="%"
                     size="lg"
@@ -621,18 +634,16 @@ const NeighborhoodMap = () => {
           style={{ height: "190px" }}
           aria-label={`Neighborhoods ranked by percent of ED visits, highest to lowest, with a dashed line at the citywide value of ${citywidePct}%${suppressedCount ? `. ${suppressedCount} neighborhood(s) omitted — data suppressed` : ""} — hover for details, click to highlight on map`}
         >
-          {/* Header */}
+          {/* Header — was "Click to select"; now a data label describing
+              what the Y axis actually plots (the "Citywide (x%)" note that
+              used to live here is now drawn directly on the benchmark line
+              inside the chart itself, as a "NYC x%" label — see
+              choroplethBarSpec.js). */}
           <div className="bg-white border-b border-[var(--gray-200)] px-sm pt-sm pb-xs rounded-t-md flex-shrink-0 flex items-center justify-between gap-2">
             <div>
               <p className="text-xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide leading-tight">
-                Click to select
+                Percent of ED visits
               </p>
-            </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <span className="inline-block w-3 border-t border-dashed" style={{ borderColor: "#6b7280" }} aria-hidden="true" />
-              <span className="text-2xs font-body text-[var(--gray-600)] whitespace-nowrap">
-                Citywide ({citywidePct}%)
-              </span>
             </div>
           </div>
 
@@ -651,7 +662,7 @@ const NeighborhoodMap = () => {
                 selectedColor: "#1E40AF",
                 hoverColor: "#3f5fc9",
                 benchmarkValue: citywidePct,
-                benchmarkLabel: `Citywide: ${citywidePct}%`,
+                benchmarkLabel: `NYC ${citywidePct}%`,
               }}
               rendererMode="svg"
               onNewView={handleChartNewView}
