@@ -263,6 +263,13 @@ const NeighborhoodMap = () => {
   const compareData    = pinnedGeocode != null && pinnedGeocode !== selectedGeocode
     ? dataByGeocode[pinnedGeocode] : null;
   const inCompareMode  = Boolean(compareData && selectedData);
+  // The At-a-Glance card only needs its anti-flicker min-height floor (see
+  // the render comment below) while the base layer could plausibly be
+  // shorter than the hover/preview layer: no neighborhood selected yet, or
+  // the (shorter) compare-mode table. Once one neighborhood is selected and
+  // it isn't being compared, base and preview are the same shape, so the
+  // floor is dropped and the card shrinks to fit its actual content.
+  const NEEDS_HEIGHT_FLOOR = !selectedData || inCompareMode;
   const compareGroupNote = inCompareMode
     ? (() => { const n = groupedWithNote(compareData, dataByGeocode); return n ? `${compareData.name}: ${n}` : null; })()
     : null;
@@ -461,6 +468,18 @@ const NeighborhoodMap = () => {
               chart back up under the cursor, mouseover again — a genuine
               hover/layout feedback loop.
 
+              That floor is now only applied while it's actually needed —
+              i.e. whenever the base layer's content could be shorter than
+              the hover/preview layer's (no selection yet, or the shorter
+              compare-mode table). Once a single neighborhood is selected
+              and not being compared, the base layer already renders the
+              same header+SnapshotRows shape the preview layer would show
+              for any other hovered neighborhood, so nothing ever grows on
+              hover there — the 170px floor was just leaving dead white
+              space between the stat and the caption below it (visible once
+              hospPct's row was dropped from SnapshotRows, shrinking the
+              "full" content well under 170px). See NEEDS_HEIGHT_FLOOR.
+
               The dynamic caption paragraph used to be its own separate
               bordered box below this card; it's now a second section inside
               the same outer border so the stats + narrative read as one
@@ -478,7 +497,7 @@ const NeighborhoodMap = () => {
               boxShadow: inCompareMode ? "0 0 0 3px #fef3c766" : "none",
             }}
           >
-          <div className="grid min-h-[170px]">
+          <div className={`grid ${NEEDS_HEIGHT_FLOOR ? "min-h-[170px]" : ""}`}>
           {/* Hover layer — fades in when previewing a different CD */}
           <div
             className="col-start-1 row-start-1 flex flex-col bg-white transition-opacity duration-200 z-10"

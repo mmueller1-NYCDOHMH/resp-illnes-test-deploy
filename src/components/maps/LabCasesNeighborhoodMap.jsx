@@ -324,6 +324,15 @@ const LabCasesNeighborhoodMap = ({
     compareData && selectedData
   );
 
+  // The At-a-Glance card's anti-flicker min-height floor (see the render
+  // comment near the card) is only needed while the base layer could be
+  // shorter than the hover/preview layer: no neighborhood selected yet, or
+  // the shorter compare-mode table. Once a single neighborhood is selected
+  // and it isn't being compared, base and preview render the same shape, so
+  // the floor is dropped and the card shrinks to fit its actual content
+  // instead of leaving empty space above the caption below it.
+  const NEEDS_HEIGHT_FLOOR = !selectedData || inCompareMode;
+
   const compareGroupNote = inCompareMode
     ? (() => {
         const n = groupedWithNote(
@@ -534,7 +543,7 @@ const LabCasesNeighborhoodMap = ({
             }}
           >
             {/* Hover + base layers */}
-            <div className="grid min-h-[170px]">
+            <div className={`grid ${NEEDS_HEIGHT_FLOOR ? "min-h-[170px]" : ""}`}>
 
               {/* Hover layer */}
               <div
