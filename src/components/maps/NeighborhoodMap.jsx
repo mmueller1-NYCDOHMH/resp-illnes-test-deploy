@@ -37,7 +37,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import NeighborhoodSearchInput from "./NeighborhoodSearchInput";
 import VegaLiteWrapper from "../charts/VegaLiteWrapper";
-import DataAsOf from "../charts/DataAsOf";
 import AccessibleTable from "../accessibility/AccessibleTable";
 import InfoModal from "../popups/InfoModal";
 import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
@@ -48,6 +47,7 @@ import useNeighborhoodGeoCsv from "../hooks/useNeighborhoodGeoCsv";
 import { buildUhfDataByGeocode, averageAcrossNeighborhoods, groupedWithNote } from "../../utils/neighborhoodGeoData";
 import PinIcon from "./PinIcon";
 import CompareRows from "./CompareRows";
+import { featureStyle, SnapshotRows } from "./MapSnapshot";
 
 // ── Field specs for this map's two ED "by neighborhood" metrics ──────────────
 const FIELD_SPECS = [
@@ -74,32 +74,12 @@ const CITYWIDE_PCT_FALLBACK = 8.4;
 // district stroke and the bar chart's selectedColor below). Replaced with a
 // blue gradient anchored on that same blueAccent.
 const COLORS = ["#dbe7fb", "#8fa8e8", "#3f5fc9", "#24399e", "#0D1F5C"];
+// This map's highlight stroke — LabCasesNeighborhoodMap uses a different
+// color (near-black) for its own selected-district outline; both are passed
+// into the shared featureStyle from MapSnapshot.jsx rather than hardcoded
+// there. Fill opacity and pin-stroke color are identical between the two
+// maps, so those just use MapSnapshot's defaults (0.82 / amber).
 const HIGHLIGHT_STROKE = "#1E40AF";
-const PIN_STROKE = "#f59e0b"; // amber — matches the compare-mode accent used in the At-a-Glance card border
-
-// Fixed fill opacity across all states (default/hover/selected). Previously
-// selection bumped this to 1.0 (from 0.72), which reads as a color/value
-// change rather than a "this one is selected" cue — a district could look
-// like it jumped up a category next to an unselected neighbor in the same
-// bin. Selection is now communicated only via stroke (color + weight) plus
-// the existing fly-to-selection zoom, so fill color stays a true read of
-// the underlying rate regardless of interaction state.
-const FILL_OPACITY = 0.82;
-
-function featureStyle(geocode, selectedGeocode, pinnedGeocode, dataByGeocode, getColor) {
-  const d      = dataByGeocode[geocode];
-  const sel    = geocode === selectedGeocode;
-  // Pinned district gets its own outline so both halves of a comparison are
-  // visible on the map at once — skipped if it's also the current selection,
-  // since the selected stroke already takes visual priority there.
-  const pinned = !sel && pinnedGeocode != null && geocode === pinnedGeocode;
-  return {
-    fillColor:   getColor(d?.pct),
-    fillOpacity: FILL_OPACITY,
-    color:       sel ? HIGHLIGHT_STROKE : pinned ? PIN_STROKE : "#ffffff",
-    weight:      sel || pinned ? 2.5 : 0.8,
-  };
-}
 
 // ── Vega-Lite histogram spec ──────────────────────────────────────────────────
 // Column orientation: neighborhoods run left→right along X, % of ED visits
@@ -118,63 +98,11 @@ const HISTO_SPEC = buildChoroplethBarSpec(
 );
 
 // ── At-a-Glance snapshot rows ─────────────────────────────────────────────────
-
-// Renders a stat value, or "Suppressed" (with a title tooltip explaining
-// why) when RPU has masked it for a small numerator. Neither of this map's
-// two metrics is currently masked in RPU's file, but per-neighborhood
-// suppression is a normal condition for this kind of data (see the
-// per-virus case-rate maps, which do have masked values today), so this
-// stays null-safe rather than assuming a number is always present.
-function StatValue({ value }) {
-  if (value == null) {
-    return (
-      <span
-        className="text-xs font-semibold font-body text-[var(--gray-500)] italic"
-        title="Rate suppressed — case count too small to report"
-      >
-        Suppressed
-      </span>
-    );
-  }
-  return <span className="text-lg font-semibold font-body text-[var(--gray-900)] tabular-nums">{value}%</span>;
-}
-
-function SnapshotRows({ data, groupNote }) {
-  const [hoveredRow, setHoveredRow] = React.useState(null);
-
-  const rowStyle = (key) => ({
-    display: "flex",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    gap: "8px",
-    padding: "4px 6px",
-    borderRadius: "4px",
-    cursor: "text",
-    userSelect: "text",
-    backgroundColor: hoveredRow === key ? "var(--gray-100)" : "transparent",
-    transition: "background-color 100ms",
-  });
-
-  return (
-    <>
-      <div className="px-2 py-2 flex flex-col gap-0.5">
-        <div style={rowStyle("pct")} onMouseEnter={() => setHoveredRow("pct")} onMouseLeave={() => setHoveredRow(null)}>
-          <StatValue value={data.pct} /> 
-          <span className="text-xs font-body text-[var(--gray-600)] leading-snug">of ED visits</span>
-
-        </div>
-
-
-      </div>
-      <div
-        className="px-3 pb-2 flex justify-between gap-2"
-        style={{ color: "var(--footnote-gray)" }}
-      >
-        <div className="flex-1" />
-      </div>
-    </>
-  );
-}
+// StatValue + SnapshotRows now live in the shared MapSnapshot.jsx (see that
+// file's doc comment) — this map passes its own field/label/sizing, and
+// `interactive` to keep the hover-highlight/copy-friendly row treatment
+// this map has always had (LabCasesNeighborhoodMap renders its row
+// statically, so it leaves `interactive` at the default false).
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -214,7 +142,16 @@ const NeighborhoodMap = () => {
   const citywidePct = averageAcrossNeighborhoods(dataByGeocode, "pct") ?? CITYWIDE_PCT_FALLBACK;
 
   const getFeatureStyle = React.useCallback(
-    (geocode, selectedGeocode, pinned) => featureStyle(geocode, selectedGeocode, pinned, dataByGeocode, getColor),
+    (geocode, selectedGeocode, pinned) =>
+      featureStyle({
+        geocode,
+        selectedGeocode,
+        pinnedGeocode: pinned,
+        dataByGeocode,
+        valueField: "pct",
+        getColor,
+        highlightStroke: HIGHLIGHT_STROKE,
+      }),
     [dataByGeocode, getColor]
   );
 
@@ -544,7 +481,17 @@ const NeighborhoodMap = () => {
                 {previewData?.name ?? ""}
               </p>
             </div>
-            {previewData && <SnapshotRows data={previewData} groupNote={groupedWithNote(previewData, dataByGeocode)} />}
+            {previewData && (
+              <SnapshotRows
+                data={previewData}
+                groupNote={groupedWithNote(previewData, dataByGeocode)}
+                valueField="pct"
+                suffix="%"
+                size="lg"
+                label="of ED visits"
+                interactive
+              />
+            )}
           </div>
 
           {/* Base layer */}
@@ -631,7 +578,15 @@ const NeighborhoodMap = () => {
                     {dynamicCaption}
                   </>
                 ) : (
-                  <SnapshotRows data={selectedData} groupNote={groupedWithNote(selectedData, dataByGeocode)} />
+                  <SnapshotRows
+                    data={selectedData}
+                    groupNote={groupedWithNote(selectedData, dataByGeocode)}
+                    valueField="pct"
+                    suffix="%"
+                    size="lg"
+                    label="of ED visits"
+                    interactive
+                  />
                 )}
               </>
             ) : (

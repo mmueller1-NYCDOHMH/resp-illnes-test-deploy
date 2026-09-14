@@ -53,7 +53,24 @@ const getXAxisFormat = (data, xKey) => {
   return "%b %Y";
 };
 
-const LineChart = ({
+/**
+ * buildLineChartSpec
+ *
+ * Computes the filtered chart data + Vega-Lite spec for LineChart. Pulled
+ * out of the component body (2026-09-14, code-audit follow-up) so the spec-
+ * construction logic reads as its own unit, matching the pattern used
+ * elsewhere in this codebase (e.g. WastewaterChart.jsx's buildLineSpec) —
+ * LineChart previously did all of this inline in its render body, making it
+ * the single largest file in src/components/charts. This is a pure
+ * extraction: every calculation below is unchanged from before the split,
+ * just moved out of the component and threaded through as parameters/return
+ * values instead of closure variables.
+ *
+ * Returns `null` when there's no valid date or no finite value to plot (the
+ * component renders its "No data to display" fallback in that case);
+ * otherwise `{ filteredData, specTemplate, xKey, yKey }`.
+ */
+function buildLineChartSpec({
   data,
   title,
   xField,
@@ -64,11 +81,10 @@ const LineChart = ({
   metricName = "Category",
   isPercent = true,
   seasonal,
-  dataSource = "NYC Health Department Syndromic Surveillance",
-  footnote,
   columnLabels = {},
-  onNewView,
-}) => {
+  isMobile,
+  chartBg,
+}) {
   const virusColorMap = {
     "COVID-19": colors.bluePrimary,
     Flu: colors.purplePrimary,
@@ -83,10 +99,7 @@ const LineChart = ({
     ARI: ari,
   };
 
-  
-  const isMobile = useMedia("(max-width: 590px)");
   const legendColumns = isMobile ? 2 : undefined;
-  const chartBg = getComputedStyle(document.documentElement).getPropertyValue("--chart-bg").trim();
 
   const defaultColor = colors.gray600;
   const selectedColor = tokens.colors[color] || color || virusColorMap[virus] || defaultColor;
@@ -130,17 +143,17 @@ const LineChart = ({
       // September 1st of the given year
       const sept1 = new Date(year, 8, 1); // month 8 = September
       const dayOfWeek = sept1.getDay(); // 0 = Sunday, 6 = Saturday
-      
+
       // If Sept 1 is Sunday (0), the first full week's Saturday is Sept 7
       // If Sept 1 is Monday (1), we need to get to the next Sunday (Sept 7), then Saturday is Sept 13
       // If Sept 1 is Tuesday (2), next Sunday is Sept 6, Saturday is Sept 12
       // etc.
-      
+
       // Days until next Sunday (or 0 if already Sunday)
       const daysToSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
       // First Sunday in September
       const firstSunday = new Date(year, 8, 1 + daysToSunday);
-      
+
       // If the first Sunday is Sept 1, the first full week's Saturday is Sept 7
       // Otherwise, we need the second Sunday's week (next full week)
       let targetSunday = firstSunday;
@@ -151,11 +164,11 @@ const LineChart = ({
         // First Sunday is Sept 1, but we need a full week, so use next Sunday
         targetSunday = new Date(year, 8, 1 + 7);
       }
-      
+
       // Saturday is 6 days after Sunday
       const saturday = new Date(targetSunday);
       saturday.setDate(targetSunday.getDate() + 6);
-      
+
       return saturday;
     };
 
@@ -165,11 +178,11 @@ const LineChart = ({
       const date = new Date(d.date);
       const month = date.getMonth();
       const year = date.getFullYear();
-      
+
       // Determine season year (Sept-Dec uses current year, Jan-Aug uses previous year)
       const seasonYear = month >= 8 ? year : year - 1;
       const season = `${seasonYear}-${seasonYear + 1}`;
-      
+
       if (!seasonStartDates[season]) {
         seasonStartDates[season] = getFirstFullWeekSaturday(seasonYear);
       }
@@ -182,7 +195,7 @@ const LineChart = ({
       const year = date.getFullYear();
       const seasonYear = month >= 8 ? year : year - 1;
       const season = `${seasonYear}-${seasonYear + 1}`;
-      
+
       const startDate = seasonStartDates[season];
       return startDate ? date >= startDate : true;
     });
@@ -203,12 +216,7 @@ const LineChart = ({
   });
 
   if (!hasValidDate || !hasFinite) {
-    return (
-      <div style={{ width: "100%" }}>
-        <div style={{ padding: "1rem", color: tokens.colors.gray600 }}>No data to display.</div>
-        <ChartFooter dataSource={dataSource} footnote={footnote} />
-      </div>
-    );
+    return null;
   }
 
   const maxValue = Math.max(...filteredData.map(d => d.value));
@@ -232,9 +240,9 @@ const LineChart = ({
     : {
         field: xKey,
         type: "temporal",
-        axis: { 
-          title: null, 
-          format: axisFormat, 
+        axis: {
+          title: null,
+          format: axisFormat,
           tickCount: 12,
           values: {
             signal: "utcSequence('day', utcOffset('day', domain('x')[0], (6 - utcday(domain('x')[0]) + 7) % 7), domain('x')[1], 7)"
@@ -251,52 +259,51 @@ const LineChart = ({
     ? "datum.suppressed ? '1-4 (suppressed for privacy)' : (datum.valueRaw != null ? (test(/%$/, '' + datum.valueRaw) ? '' + datum.valueRaw : ('' + datum.valueRaw) + '%') : (isValid(datum.value) ? format(datum.value, '.1f') + '%' : 'N/A'))"
     : "datum.suppressed ? '1-4 (suppressed for privacy)' : (datum.valueRaw != null ? '' + datum.valueRaw : (isValid(datum.value) ? format(datum.value, ',.0f') : 'N/A'))";
 
-// Combined "[series]: value of metric" tooltip line — series is the
-// colorField's per-point value when present, else the active virus. Only
-// use colorField when it actually varies across the data (e.g. age/borough
-// breakdowns); charts like the single-line ED overview set colorField to a
-// constant metric label, which would otherwise duplicate the metric text.
-const colorFieldVaries =
-  !!colorField &&
-  new Set(filteredData.map((d) => d[colorField]).filter((v) => v != null)).size > 1;
-const tooltipMetricLabel = columnLabels.value || metricName;
-const tooltipLineCalc = buildTooltipLineCalc({
-  seriesField: colorFieldVaries ? colorField : null,
-  seriesLabel: virus || metricName,
-  valueField: "valueDisplay",
-  metricLabel: tooltipMetricLabel,
-  isPercent,
-  includeSeriesInValue: false, // series now goes in the title, not the text
-});
-
-let sharedTooltip = [
-  {
-    field: "date",
-    type: "temporal",
-    format: "%b %d, %Y",
-    title: columnLabels.date || "Date",
-  },
-];
-
-if (seasonal === true) {
-  sharedTooltip.push({
-    field: "weekOfSeason",
-    type: "quantitative",
-    title: "Week"
+  // Combined "[series]: value of metric" tooltip line — series is the
+  // colorField's per-point value when present, else the active virus. Only
+  // use colorField when it actually varies across the data (e.g. age/borough
+  // breakdowns); charts like the single-line ED overview set colorField to a
+  // constant metric label, which would otherwise duplicate the metric text.
+  const colorFieldVaries =
+    !!colorField &&
+    new Set(filteredData.map((d) => d[colorField]).filter((v) => v != null)).size > 1;
+  const tooltipMetricLabel = columnLabels.value || metricName;
+  const tooltipLineCalc = buildTooltipLineCalc({
+    seriesField: colorFieldVaries ? colorField : null,
+    seriesLabel: virus || metricName,
+    valueField: "valueDisplay",
+    metricLabel: tooltipMetricLabel,
+    isPercent,
+    includeSeriesInValue: false, // series now goes in the title, not the text
   });
-}
 
-// (deleted: sharedTooltip.push(tooltipLineEntry("tooltipLine"));)
+  let sharedTooltip = [
+    {
+      field: "date",
+      type: "temporal",
+      format: "%b %d, %Y",
+      title: columnLabels.date || "Date",
+    },
+  ];
 
-if (colorFieldVaries) {
-  sharedTooltip.push({
-    field: colorField,
-    type: "nominal",
-    title: columnLabels[colorField] || metricName,
-  });
-}
-sharedTooltip.push(tooltipLineEntry("tooltipLine", virus || metricName));
+  if (seasonal === true) {
+    sharedTooltip.push({
+      field: "weekOfSeason",
+      type: "quantitative",
+      title: "Week"
+    });
+  }
 
+  // (deleted: sharedTooltip.push(tooltipLineEntry("tooltipLine"));)
+
+  if (colorFieldVaries) {
+    sharedTooltip.push({
+      field: colorField,
+      type: "nominal",
+      title: columnLabels[colorField] || metricName,
+    });
+  }
+  sharedTooltip.push(tooltipLineEntry("tooltipLine", virus || metricName));
 
   // Add season field to data if it's a seasonal chart
   if (seasonal) {
@@ -333,7 +340,7 @@ sharedTooltip.push(tooltipLineEntry("tooltipLine", virus || metricName));
       ? {
           field: "season",
           type: "nominal",
-          scale: { 
+          scale: {
             range: virusColorRangeMap[virus],
             domain: seasonDomain
           },
@@ -352,7 +359,7 @@ sharedTooltip.push(tooltipLineEntry("tooltipLine", virus || metricName));
       ? {
           field: colorField,
           type: "nominal",
-          sort: ["0-4", "5-17", "18-64", "65+"], 
+          sort: ["0-4", "5-17", "18-64", "65+"],
           scale: { range: virusColorRangeMap[virus] },
           legend: null,
             // legend === null
@@ -367,13 +374,13 @@ sharedTooltip.push(tooltipLineEntry("tooltipLine", virus || metricName));
         }
       : { value: selectedColor };
 
-const pointColorEncoding = colorField
-  ? {
-      field: colorField,
-      type: "nominal",
-      sort: ["0-4", "5-17", "18-64", "65+"], 
-    }
-  : { value: selectedColor };
+  const pointColorEncoding = colorField
+    ? {
+        field: colorField,
+        type: "nominal",
+        sort: ["0-4", "5-17", "18-64", "65+"],
+      }
+    : { value: selectedColor };
 
   // Opacity with hover effect - fade non-hovered lines only when hovering
   const lineOpacityEncoding = hasMultipleSeasons
@@ -441,7 +448,7 @@ const pointColorEncoding = colorField
         calculate: "datum.virus === 'Influenza' ? 'Flu' : datum.virus",
         as: "virus"
       },
-      
+
       { calculate: "year(datum.date)", as: "year" },
       { calculate: "month(datum.date)", as: "month" },
       { calculate: "dayofyear(datum.date)", as: "day" },
@@ -606,8 +613,8 @@ const pointColorEncoding = colorField
             }
           }
         ]
-      }, 
-      
+      },
+
       {
         params: [
           hasMultipleSeasons || colorField
@@ -655,6 +662,55 @@ const pointColorEncoding = colorField
       },
     ],
   };
+
+  return { filteredData, specTemplate, xKey, yKey };
+}
+
+const LineChart = ({
+  data,
+  title,
+  xField,
+  yField,
+  colorField,
+  virus,
+  color,
+  metricName = "Category",
+  isPercent = true,
+  seasonal,
+  dataSource = "NYC Health Department Syndromic Surveillance",
+  footnote,
+  columnLabels = {},
+  onNewView,
+}) => {
+  const isMobile = useMedia("(max-width: 590px)");
+  const chartBg = getComputedStyle(document.documentElement).getPropertyValue("--chart-bg").trim();
+
+  const built = buildLineChartSpec({
+    data,
+    title,
+    xField,
+    yField,
+    colorField,
+    virus,
+    color,
+    metricName,
+    isPercent,
+    seasonal,
+    columnLabels,
+    isMobile,
+    chartBg,
+  });
+
+  if (!built) {
+    return (
+      <div style={{ width: "100%" }}>
+        <div style={{ padding: "1rem", color: tokens.colors.gray600 }}>No data to display.</div>
+        <ChartFooter dataSource={dataSource} footnote={footnote} />
+      </div>
+    );
+  }
+
+  const { filteredData, specTemplate, xKey, yKey } = built;
 
   return (
     <div style={{ width: "100%" }}>

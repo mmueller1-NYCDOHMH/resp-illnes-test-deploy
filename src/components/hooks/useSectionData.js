@@ -287,8 +287,24 @@ const useSectionData = (section, sectionKey, pageContext) => {
     });
 
     if (pair) {
-      const [curr, prev] = pair;
-      if (prev === 0) {
+      const [curr, prev, suppressedInfo] = pair;
+      // Suppressed weeks (NYC's <5 privacy convention) come through
+      // filterMetricData.js's getMetricData with `value` coerced to 0 for
+      // charting, but they're never a confirmed zero — the real count is
+      // somewhere 1-4. `curr === 0` / `prev === 0` below can't tell a real
+      // zero from a suppressed one, so check the flags first.
+      const currentSuppressed = !!suppressedInfo?.currentSuppressed;
+      const previousSuppressed = !!suppressedInfo?.previousSuppressed;
+
+      if (currentSuppressed || previousSuppressed) {
+        // A suppressed week is a real, nonzero count somewhere in 1-4 —
+        // too small and imprecise to confidently call an increase or
+        // decrease against another week (Morgan's call). Read as
+        // "remained stable" whenever either side is suppressed;
+        // buildStyledTrendSentence still shows "1-4 (suppressed for
+        // privacy)" for that side instead of a literal 0.
+        trendObjRaw = { label: "not changed", value: "0%", direction: "same" };
+      } else if (prev === 0) {
         trendObjRaw =
           curr === 0
             ? { label: "not changed", value: "0%", direction: "same" }
@@ -321,6 +337,12 @@ const useSectionData = (section, sectionKey, pageContext) => {
       // correct, informative message instead of fixing the mismatch.
       trendObjRaw.current = curr;
       trendObjRaw.previous = prev;
+      // Passed straight through to buildStyledTrendSentence so it can show
+      // "1-4 (suppressed for privacy)" instead of the literal 0/curr number
+      // for whichever side was actually suppressed (see the COVID Deaths by
+      // Season tooltip-vs-trend-text mismatch this fixes).
+      trendObjRaw.currentSuppressed = currentSuppressed;
+      trendObjRaw.previousSuppressed = previousSuppressed;
     }
   }
 

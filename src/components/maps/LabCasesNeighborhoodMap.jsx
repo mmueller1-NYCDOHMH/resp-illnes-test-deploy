@@ -32,7 +32,6 @@
 import React, { useCallback, useEffect, useMemo } from "react";
 import NeighborhoodSearchInput from "./NeighborhoodSearchInput";
 import VegaLiteWrapper from "../charts/VegaLiteWrapper";
-import DataAsOf from "../charts/DataAsOf";
 import { tokens } from "../../styles/tokens";
 import useChoroplethMap, { WEEK_ENDING } from "./useChoroplethMap";
 import { buildChoroplethBarSpec } from "./choroplethBarSpec";
@@ -49,6 +48,7 @@ import {
 } from "../../utils/neighborhoodGeoData";
 import PinIcon from "./PinIcon";
 import CompareRows from "./CompareRows";
+import { featureStyle, SnapshotRows } from "./MapSnapshot";
 
 // Fallback citywide reference (used only until real data loads) — replaced
 // by an unweighted average of the loaded neighborhoods' rate once available
@@ -59,8 +59,13 @@ const CITYWIDE_RATE_FALLBACK = 9.8;
 // Each array is a set of continuous gradient stops (low → high) — values are
 // interpolated smoothly across them rather than snapped into fixed bins.
 
+// This map's highlight stroke — NeighborhoodMap (home page) uses a
+// different color (the site's blue accent) for its own selected-district
+// outline; both are passed into the shared featureStyle from
+// MapSnapshot.jsx rather than hardcoded there. Fill opacity and pin-stroke
+// color are identical between the two maps, so those just use
+// MapSnapshot's defaults (0.82 / amber).
 const HIGHLIGHT_STROKE = "#1a1a1a";
-const PIN_STROKE = "#f59e0b"; // amber — matches the compare-mode accent used in the At-a-Glance card border
 
 const VIRUS_COLORS = {
   "Flu": [
@@ -94,48 +99,8 @@ const FALLBACK_COLORS = [
   "#08306b",
 ];
 
-// Fixed fill opacity across all states (default/hover/selected). Previously
-// selection bumped this to 1.0 (from 0.72), which reads as a color/value
-// change rather than a "this one is selected" cue — a district could look
-// like it jumped up a category next to an unselected neighbor in the same
-// bin. Selection is now communicated only via stroke (color + weight) plus
-// the existing fly-to-selection zoom, so fill color stays a true read of
-// the underlying rate regardless of interaction state.
-const FILL_OPACITY = 0.82;
-
 function getColors(virus) {
   return VIRUS_COLORS[virus] || FALLBACK_COLORS;
-}
-
-function featureStyle(
-  geocode,
-  selectedGeocode,
-  pinnedGeocode,
-  dataByGeocode,
-  colors,
-  rateDomain
-) {
-  const d = dataByGeocode[geocode];
-  const sel = geocode === selectedGeocode;
-
-  // Pinned district gets its own outline so both halves of a comparison are
-  // visible on the map at once — skipped if it's also the current selection,
-  // since the selected stroke already takes visual priority there.
-  const pinned =
-    !sel &&
-    pinnedGeocode != null &&
-    geocode === pinnedGeocode;
-
-  return {
-    fillColor: makeColorScale(colors, rateDomain)(d?.rate),
-    fillOpacity: FILL_OPACITY,
-    color: sel
-      ? HIGHLIGHT_STROKE
-      : pinned
-      ? PIN_STROKE
-      : "#ffffff",
-    weight: sel || pinned ? 2.5 : 0.8,
-  };
 }
 
 // ── Vega-Lite histogram spec ──────────────────────────────────────────────────
@@ -157,65 +122,10 @@ const buildHistoSpec = (virus) =>
   ]);
 
 // ── At-a-Glance snapshot rows ─────────────────────────────────────────────────
-
-// Renders a rate, or "Suppressed" (with a title tooltip explaining why) when
-// RPU has masked it for a small numerator — real and common for Flu/RSV in
-// the current file, rare for COVID-19.
-function StatValue({ value, suffix = "" }) {
-  if (value == null) {
-    return (
-      <span
-        className="text-xs font-semibold font-body text-[var(--gray-500)] italic"
-        title="Rate suppressed — case count too small to report"
-      >
-        Suppressed
-      </span>
-    );
-  }
-
-  return (
-    <span className="text-xs font-semibold font-body text-[var(--gray-900)] tabular-nums">
-      {value}
-      {suffix}
-    </span>
-  );
-}
-
-function SnapshotRows({ data, groupNote }) {
-  return (
-    <>
-      <div className="px-3 py-2.5 flex flex-col gap-2">
-        <div className="flex items-baseline justify-between gap-2">
-          <StatValue value={data.rate} />
-          <span className="text-xs font-body text-[var(--gray-600)] leading-snug">
-            cases per 100,000 people
-          </span>
-        </div>
-
-        {/* RPU reports 15 of the 42 UHF42 neighborhoods as part of a
-            combined UHF34 group (see neighborhoodGeoData.js's
-            groupedWithNote) — this rate isn't independent of its
-            group-mates', so say so rather than let identical numbers
-            across 2-3 neighborhoods look like a coincidence. */}
-        {groupNote && (
-          <p className="text-2xs font-body text-[var(--gray-600)] italic leading-snug">
-            {groupNote}
-          </p>
-        )}
-      </div>
-
-      <div
-        className="px-3 pb-2.5 flex justify-between gap-2"
-        style={{ color: "var(--footnote-gray)" }}
-      >
-        <div className="flex-1" />
-        <p className="text-2xs font-body whitespace-nowrap">
-          <DataAsOf date={WEEK_ENDING} />
-        </p>
-      </div>
-    </>
-  );
-}
+// StatValue + SnapshotRows now live in the shared MapSnapshot.jsx (see that
+// file's doc comment) — this map passes its own field/label, plus
+// showDataAsOf/weekEnding since this map (unlike NeighborhoodMap) has
+// always shown the data-as-of date in the card footer.
 
 // ── Component ─────────────────────────────────────────────────────────────────
 // Comparison rows (side-by-side with delta) now live in the shared
@@ -275,17 +185,27 @@ const LabCasesNeighborhoodMap = ({
       : [0, 1];
   }, [dataByGeocode]);
 
+  // Memoized once per colors/rateDomain change rather than rebuilt on every
+  // featureStyle call (one per neighborhood, per render) — previously this
+  // map rebuilt the d3 scale from scratch for every polygon; NeighborhoodMap
+  // already memoized its equivalent getColor, so this now matches.
+  const getColor = useMemo(
+    () => makeColorScale(colors, rateDomain),
+    [colors, rateDomain]
+  );
+
   const getFeatureStyle = useCallback(
     (geocode, selectedGeocode, pinned) =>
-      featureStyle(
+      featureStyle({
         geocode,
         selectedGeocode,
-        pinned,
+        pinnedGeocode: pinned,
         dataByGeocode,
-        colors,
-        rateDomain
-      ),
-    [dataByGeocode, colors, rateDomain]
+        valueField: "rate",
+        getColor,
+        highlightStroke: HIGHLIGHT_STROKE,
+      }),
+    [dataByGeocode, getColor]
   );
 
   const {
@@ -443,13 +363,10 @@ const LabCasesNeighborhoodMap = ({
           geocode,
           name: d.name,
           rate: d.rate,
-          fillColor: makeColorScale(
-            colors,
-            rateDomain
-          )(d.rate),
+          fillColor: getColor(d.rate),
           barOpacity: 0.82,
         })),
-    [dataByGeocode, colors, rateDomain]
+    [dataByGeocode, getColor]
   );
 
   const suppressedCount =
@@ -647,6 +564,10 @@ const LabCasesNeighborhoodMap = ({
                       previewData,
                       dataByGeocode
                     )}
+                    valueField="rate"
+                    label="cases per 100,000 people"
+                    showDataAsOf
+                    weekEnding={WEEK_ENDING}
                   />
                 )}
               </div>
@@ -799,6 +720,10 @@ const LabCasesNeighborhoodMap = ({
                           selectedData,
                           dataByGeocode
                         )}
+                        valueField="rate"
+                        label="cases per 100,000 people"
+                        showDataAsOf
+                        weekEnding={WEEK_ENDING}
                       />
                     )}
                   </>
