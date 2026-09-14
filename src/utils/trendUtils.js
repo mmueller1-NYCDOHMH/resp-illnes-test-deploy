@@ -123,6 +123,12 @@ export function getLastTwoValuesSameSeries(
     forceTotal = false,        // true for cases/deaths
     metricOnly = false,        // true for ED visits/admissions (overall)
     totalValues = ["Total", "All", "Overall"], // what counts as "total"
+    // Rows produced by filterMetricData.js's getMetricData carry this flag
+    // for cells that were blank in the source CSV (NYC's <5 privacy
+    // convention) — distinct from a genuine 0, even though `value` itself
+    // is coerced to 0 for charting either way. Passed back to the caller
+    // so trend text doesn't present a suppressed count as a literal 0.
+    suppressedKey = "suppressed",
   } = {}
 ) {
   if (!Array.isArray(data) || data.length < 2) return null;
@@ -147,6 +153,7 @@ export function getLastTwoValuesSameSeries(
   let lastV = null;
   let lastMetric = null;
   let lastSub = null;
+  let lastSuppressed = false;
 
   // Scan from the end once; choose by priority:
   // 1) forceTotal: last numeric row whose submetric is in totalValues
@@ -164,6 +171,7 @@ export function getLastTwoValuesSameSeries(
     lastV = v;
     lastMetric = norm(row?.[metricKey]);
     lastSub = norm(row?.[submetricKey]);
+    lastSuppressed = !!row?.[suppressedKey];
     break;
   }
   if (lastIdx < 0) return null;
@@ -176,17 +184,21 @@ export function getLastTwoValuesSameSeries(
 
     const m = norm(row?.[metricKey]);
     const s = norm(row?.[submetricKey]);
+    const suppressedInfo = {
+      currentSuppressed: lastSuppressed,
+      previousSuppressed: !!row?.[suppressedKey],
+    };
 
     // Matching strategy
     if (metricOnly) {
       // ED overall: match ONLY on metric
-      if (m === lastMetric) return [lastV, vPrev];
+      if (m === lastMetric) return [lastV, vPrev, suppressedInfo];
     } else if (forceTotal) {
       // Cases/Deaths: must be same metric AND "total" submetric
-      if (m === lastMetric && isTotal(s)) return [lastV, vPrev];
+      if (m === lastMetric && isTotal(s)) return [lastV, vPrev, suppressedInfo];
     } else {
       // Default: same metric + same submetric
-      if (m === lastMetric && s === lastSub) return [lastV, vPrev];
+      if (m === lastMetric && s === lastSub) return [lastV, vPrev, suppressedInfo];
     }
   }
 
@@ -561,13 +573,18 @@ export function buildStyledTrendSentence({
 }) {
   if (!trend || !latestWeek) return "";
 
-  const { current, previous, direction } = trend;
+  const { current, previous, direction, currentSuppressed, previousSuppressed } = trend;
 
   // Determine: ED uses %, cases/deaths use raw counts
   const shouldUsePercent = /visit|hospital/i.test(metricLabel.toLowerCase());
 
-  // Format function preserves N/A and does not add % except for ED
-  const formatValue = (v) => {
+  // Format function preserves N/A and does not add % except for ED.
+  // A suppressed week (NYC's <5 privacy convention) is charted as 0 but is
+  // never actually a confirmed zero — show the same "1-4 (suppressed for
+  // privacy)" text the chart tooltip and accessible table already use,
+  // instead of the literal 0 it's stored as internally.
+  const formatValue = (v, suppressed) => {
+    if (suppressed) return "1-4 (suppressed for privacy)";
     if (v === null || v === undefined || Number.isNaN(v)) return "N/A";
     return shouldUsePercent ? `${v}%` : v.toLocaleString("en-US");
   };
@@ -582,8 +599,8 @@ export function buildStyledTrendSentence({
   // Direction word: colored text only, no chip background
   const styledDir = `<span class="trend-text trend-${direction}">${DIR_WORD}</span>`;
 
-  const currVal = formatValue(current);
-  const prevVal = formatValue(previous);
+  const currVal = formatValue(current, currentSuppressed);
+  const prevVal = formatValue(previous, previousSuppressed);
 
   const currChip = `<span class="trend-value bg-highlight">${currVal}</span>`;
   const prevChip = `<span class="trend-value bg-highlight">${prevVal}</span>`;
