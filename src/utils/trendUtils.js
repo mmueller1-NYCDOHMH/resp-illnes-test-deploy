@@ -423,6 +423,57 @@ export function formatTrendPhrase(
   return parts.join(" ");
 }
 
+/**
+ * HTML twin of formatTrendPhrase — same phrase, but the direction word
+ * ("increased"/"decreased") is wrapped in a colored `trend-text trend-{dir}`
+ * span and the numeric value ("33%") in a bolded/highlighted `trend-value
+ * bg-highlight` span (same classes buildStyledTrendSentence and
+ * contentUtils' resolvePageHTML already use for this). Used for the
+ * `{trend}` token in section subtitles, which are rendered via
+ * dangerouslySetInnerHTML (see ContentContainer) — formatTrendPhrase itself
+ * stays plain-text for callers that need it unstyled (CSV/PNG export
+ * subtitles, aria-labels, etc).
+ */
+export function formatTrendPhraseHTML(
+  change,
+  { withBy = true, withPercent = true } = {}
+) {
+  if (!change || !change.label) return "";
+  const direction = change.direction || "same";
+  const labelSpan = `<span class="trend-text trend-${direction}">${change.label}</span>`;
+
+  const label = change.label.toLowerCase();
+  const vRaw = change.value;
+  const vStr = typeof vRaw === "string" ? vRaw.trim() : vRaw;
+
+  if (label === "not changed") return labelSpan;
+  if ((typeof vStr === "string" && vStr === "0%") || (typeof vStr === "number" && vStr === 0)) {
+    return labelSpan;
+  }
+
+  const isEmpty = vStr == null || (typeof vStr === "string" && vStr === "");
+  if (isEmpty) return labelSpan; // direction-only (no number)
+
+  // Accept numeric with or without "%": "12" | "12%"
+  const numericLike = typeof vStr === "string" && /^[-+]?\d+(?:\.\d+)?%?$/.test(vStr);
+  let valueText = null;
+  if (numericLike) {
+    const n = Math.abs(parseFloat(String(vStr).replace("%", "")));
+    if (Number.isFinite(n) && n !== 0) {
+      valueText = withPercent ? `${n}%` : String(n);
+    }
+  } else if (typeof vStr === "string") {
+    valueText = vStr;
+  } else if (typeof vStr === "number" && Number.isFinite(vStr) && vStr !== 0) {
+    valueText = withPercent ? `${Math.abs(vStr)}%` : String(Math.abs(vStr));
+  }
+
+  if (valueText == null) return labelSpan;
+
+  const valueSpan = `<span class="trend-value bg-highlight">${valueText}</span>`;
+  return withBy ? `${labelSpan} by ${valueSpan}` : `${labelSpan} ${valueSpan}`;
+}
+
 /** Build a full, human-readable subtitle. */
 export function generateTrendSubtitle({ view, trendObj, latestWeek }) {
   if (!trendObj || typeof trendObj !== "object") return null;
