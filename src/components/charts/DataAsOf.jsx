@@ -10,7 +10,7 @@ const DataAsOf = ({ date }) => {
   if (!date) return null;
   return (
     <>
-      Data through: <span className="font-semibold">{date}</span>
+      Data updated: <span className="font-semibold">{date}</span>
     </>
   );
 };

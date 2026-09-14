@@ -236,14 +236,15 @@ export default function DynamicParagraph({
     <div className={`data-summary-markdown mt-4 ${className}`}>
       {intro && <p>{intro}</p>}
       <p className="dp-as-of" dangerouslySetInnerHTML={{ __html: listIntroHtml }} />
-      <ul className="dp-value-list">
-        {latest.items.map((item) => (
-          <li key={item.key} className="dp-value-item">
+      <p className="dp-value-paragraph">
+        {latest.items.map((item, index) => (
+          <React.Fragment key={item.key}>
+            {index > 0 && <span className="dp-separator">, </span>}
             <span className="dp-value">{item.value}</span>
-            <span className="dp-label">{item.label}</span>
-          </li>
+            <span className="dp-label"> {item.label}</span>
+          </React.Fragment>
         ))}
-      </ul>
+      .</p>
     </div>
   );
 }

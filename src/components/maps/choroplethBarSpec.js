@@ -40,7 +40,7 @@ export function buildChoroplethBarSpec(tooltipFields, valueField = "rate") {
         as: "pctTooltip",
       },
       {
-        calculate: "datum.rate + ' per 100,000 people'",
+        calculate: "datum.rate + ' cases per 100,000 people'",
         as: "rateTooltip",
       },
     ],

@@ -24,6 +24,33 @@ const GEOJSON_URL =
 // can't drift out of sync with each other in the meantime.
 export const WEEK_ENDING = formatShortDate(new Date(2026, 7, 15));
 
+// Basemap tiles for the choropleth maps' background layer.
+//
+// WHY (2026-09-14): this used to point at CARTO's basemaps.cartocdn.com
+// "light_nolabels" tiles directly, unauthenticated. CARTO now requires an
+// API key for that endpoint — this is the same "map API issue" already hit
+// and fixed in the CHP project (see mapTiles.js there, 2026-09-01): even a
+// configured CARTO key was being rejected in both dev and prod, so every
+// map showed a repeated "API key required" watermark instead of clean
+// tiles. Rather than take on a CARTO account/key dependency here too, this
+// now points at Esri's "Light Gray Canvas" basemap
+// (server.arcgisonline.com/.../Canvas/World_Light_Gray_Base), which needs
+// no API key or signup and is visually very close to the CARTO Positron
+// look this map was designed around — the same muted, minimal light-gray
+// base with no place/street labels (this map never stacked a CARTO
+// "light_all" labels layer, so there's no Esri World_Light_Gray_Reference
+// counterpart needed here).
+//
+// Two differences from the old CARTO URL: Esri's classic REST tile
+// service has no {r} retina suffix and serves from a single host, so there
+// is no {s} subdomain placeholder either — `subdomains` is dropped from
+// the tileLayer options below to match (CHP's mapTiles.js hit a real crash
+// passing `subdomains: undefined` explicitly instead of just omitting it).
+const TILE_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+const TILE_ATTRIBUTION =
+  'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors, and the GIS community';
+
 function loadLeaflet() {
   return new Promise((resolve, reject) => {
     if (window.L) { resolve(window.L); return; }
@@ -229,22 +256,13 @@ export default function useChoroplethMap({
     });
     mapInstanceRef.current = map;
 
-    // Esri Light Gray Canvas ("World_Light_Gray_Base") — no city-name
-    // labels (RPU request), same look as the old CartoDB Positron
-    // "light_nolabels" tile this replaced 2026-09-01. Switched because
-    // CARTO's basemaps.cartocdn.com now requires an API key and this app
-    // never had one wired up, so every map showed a repeated "API key
-    // required" watermark. Esri's Canvas basemaps need no key/signup.
-    // Native tile zoom tops out at 16 (this map never zooms past 13 via
-    // fitBounds, so that's not a practical limit).
-    L.tileLayer(
-      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-      {
-        attribution:
-          'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors, and the GIS community',
-        maxZoom: 16,
-      }
-    ).addTo(map);
+    // Esri Light Gray Canvas (base layer, no labels) — no city-name labels
+    // (RPU request), no API key required. See TILE_URL comment above for
+    // why this replaced CARTO's basemaps.cartocdn.com.
+    L.tileLayer(TILE_URL, {
+      attribution: TILE_ATTRIBUTION,
+      maxZoom: 19,
+    }).addTo(map);
 
     L.control.zoom({ position: "topright" }).addTo(map);
 
@@ -254,6 +272,15 @@ export default function useChoroplethMap({
 
       onEachFeature: (feature, layer) => {
         const geocode = feature.properties.GEOCODE;
+
+        // UHF42's GeoJSON includes a synthetic GEOCODE 0 for non-residential
+        // area such as parks and airports. Those are not real data rows, so
+        // they should remain purely decorative map background and never
+        // participate in selection/hover behavior.
+        if (geocode === 0) {
+          layer.options.interactive = false;
+          return;
+        }
 
         layer.on("click", () => {
           const d = dataByGeocodeRef.current[geocode];

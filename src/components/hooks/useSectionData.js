@@ -305,9 +305,22 @@ const useSectionData = (section, sectionKey, pageContext) => {
             direction: rounded > 0 ? "up" : "down",
           };
         }
-        trendObjRaw.current = curr;
-        trendObjRaw.previous = prev;
       }
+      // `current`/`previous` used to only be attached in the `else` (non-zero
+      // `prev`) branch above. That's the actual root cause of the "N/A logic"
+      // RPU flagged: whenever `prev === 0` — a real, present value of zero,
+      // not missing data — trendObjRaw.current/previous were left undefined.
+      // buildStyledTrendSentence's formatValue() treats undefined the same
+      // as a genuinely missing value and renders it "N/A", so both sides
+      // looked unavailable even though `pair` had two real numbers (e.g. RSV
+      // current week with a real count, previous week truly 0 → rendered
+      // "data is not available" instead of "increased from 0 to <curr>").
+      // Attaching them unconditionally here — for every branch where `pair`
+      // exists, not just the non-zero one — is what actually fixes it;
+      // suppressing the sentence on any "N/A" would have hidden this
+      // correct, informative message instead of fixing the mismatch.
+      trendObjRaw.current = curr;
+      trendObjRaw.previous = prev;
     }
   }
 

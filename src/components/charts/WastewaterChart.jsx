@@ -27,10 +27,11 @@
  * which case it was ("< LOD" vs "No data reported").
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { loadCSVData } from "../../utils/loadCSVData";
 import VegaLiteWrapper from "./VegaLiteWrapper";
 import ChartFooter from "./ChartFooter";
+import ToggleGroup from "../controls/ToggleGroup";
 import { tokens } from "../../styles/tokens";
 import { resolveAsset } from "../../utils/pathUtils";
 import { buildTooltipLineCalc, tooltipLineEntry, hideZeroLabelExpr } from "../../utils/tooltipUtils";
@@ -72,7 +73,12 @@ const escapeForVega = (str = "") =>
 // values here are harmless but not actually load-bearing (VegaLiteWrapper's
 // theme merge always wins), while the per-encoding axis spreads below are.
 
-function buildLineSpec(color, label, titleText = "") {
+function buildLineSpec(color, label, titleText = "", yDomain = null) {
+  // Same shared-scale convention as StatCardSparkline's yDomain prop (the
+  // by-virus small multiples on the home page): when a domain is supplied,
+  // every sibling panel is forced onto it so their heights are directly
+  // comparable; otherwise each panel auto-scales to its own data.
+  const vegaScale = yDomain ? { zero: false, domain: yDomain } : { zero: false };
   const title = titleText
     ? {
         text: titleText,
@@ -172,6 +178,7 @@ const tooltipLineCalc = `
             field: "plotValue",
             type: "quantitative",
             title: null,
+            scale: vegaScale,
             axis: {
               format: "~s",
               labelExpr: hideZeroLabelExpr("format(datum.value, '~s')"),
@@ -200,7 +207,7 @@ const tooltipLineCalc = `
         mark: { type: "point", filled: true, strokeWidth: 1.5 },
         encoding: {
           x: { field: "date", type: "temporal" },
-          y: { field: "plotValue", type: "quantitative" },
+          y: { field: "plotValue", type: "quantitative", scale: vegaScale },
           color: { value: color },
           tooltip,
           size: {
@@ -230,7 +237,7 @@ const tooltipLineCalc = `
         },
         encoding: {
           x: { field: "date", type: "temporal" },
-          y: { field: "plotValue", type: "quantitative" },
+          y: { field: "plotValue", type: "quantitative", scale: vegaScale },
           text: { field: "pathogenLabel", type: "nominal" },
           color: { value: color },
         },
@@ -248,14 +255,14 @@ const tooltipLineCalc = `
 // exportChartImage.js's renderSpecToCanvas.
 const EXPORT_PANEL_WIDTH = 340;
 
-function buildExportGridSpec(pathogens, allData) {
+function buildExportGridSpec(pathogens, allData, yDomain = null) {
   if (!pathogens.length) return null;
 
   const childSpecs = pathogens.map(({ metric, label, color }) => {
     const filtered = allData.filter(
       (d) => d.metric === metric && d.submetric === CITYWIDE_SUBMETRIC
     );
-    const { config, autosize, width, ...rest } = buildLineSpec(color, label, label);
+    const { config, autosize, width, ...rest } = buildLineSpec(color, label, label, yDomain);
     return {
       ...rest,
       width: EXPORT_PANEL_WIDTH,
@@ -284,6 +291,12 @@ const WastewaterChart = ({ virus = "COVID-19", onNewView, onExportSpec }) => {
   const [allData, setAllData]   = useState([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(false);
+  // Flu A/Flu B only (see render below) — "same" (default) forces both
+  // panels onto one shared y-domain (sharedFluYDomain below); "group" lets
+  // each panel scale to its own data instead, same idea/UI as the ED
+  // visits/hospitalizations sidebar toggle elsewhere (ToggleGroup, pill
+  // variant).
+  const [scaleMode, setScaleMode] = useState("same");
 
   const dataUrl = resolveAsset('data/wastewaterData.csv');
 
@@ -305,13 +318,39 @@ const WastewaterChart = ({ virus = "COVID-19", onNewView, onExportSpec }) => {
   const pathogens = VIRUS_METRICS[virus] ?? VIRUS_METRICS["COVID-19"];
   const isFlu = virus === "Flu";
 
+  // Shared y-domain across the Flu A / Flu B panels — same convention as
+  // StatGrid.jsx's sharedVirusYDomain for the home-page small multiples:
+  // pool every plotted value from both series, pad the min/max by 10%
+  // (falling back to 10% of |hi| or a flat 1 when that pad would be zero,
+  // e.g. two flat-zero series), so the two panels are directly comparable
+  // instead of each auto-scaling to its own peak. Uses `valueNum ?? 0` to
+  // match what's actually plotted (buildLineSpec's own transform treats
+  // "< LOD"/no-data weeks as 0 too — see file header note).
+  const sharedFluYDomain = useMemo(() => {
+    if (!isFlu) return null;
+    const metrics = new Set(pathogens.map((p) => p.metric));
+    const values = allData
+      .filter((d) => metrics.has(d.metric) && d.submetric === CITYWIDE_SUBMETRIC)
+      .map((d) => d.valueNum ?? 0);
+    if (!values.length) return null;
+    const lo = Math.min(...values);
+    const hi = Math.max(...values);
+    const pad = (hi - lo) * 0.1 || Math.abs(hi) * 0.1 || 1;
+    return [lo - pad, hi + pad];
+  }, [isFlu, pathogens, allData]);
+
+  // What actually gets passed to buildLineSpec: the shared domain when the
+  // toggle is on "same", or null (independent auto-scale per panel) when
+  // it's on "group".
+  const effectiveYDomain = scaleMode === "same" ? sharedFluYDomain : null;
+
   // Only Flu needs the multi-panel spec-getter (two views, see above) — the
   // single-chart COVID/RSV case already gets an exact capture via onNewView
   // below, so it deliberately never calls onExportSpec.
   useEffect(() => {
     if (!isFlu) return;
-    onExportSpec?.(() => buildExportGridSpec(pathogens, allData));
-  }, [isFlu, onExportSpec, pathogens, allData]);
+    onExportSpec?.(() => buildExportGridSpec(pathogens, allData, effectiveYDomain));
+  }, [isFlu, onExportSpec, pathogens, allData, effectiveYDomain]);
 
   if (loading) {
     return (
@@ -331,27 +370,48 @@ const WastewaterChart = ({ virus = "COVID-19", onNewView, onExportSpec }) => {
 
   // Flu → two side-by-side panels; others → single chart (isFlu computed above)
   const footnote =
-    "Weeks shown as zero were below the wastewater lab's limit of detection (\"&lt; LOD\") or had no reported result that week.";
+    "Weeks shown as zero were below the wastewater lab's limit of detection or had no reported result that week.";
+
+  const latestUploadDate = allData.reduce((latest, row) => {
+    if (!row.date) return latest;
+    const rowDate = new Date(row.date);
+    if (Number.isNaN(rowDate.getTime())) return latest;
+    return !latest || rowDate > latest ? rowDate : latest;
+  }, null);
 
   return (
     <div className="w-full">
       {isFlu ? (
-        <div className="grid grid-cols-2 gap-lg md:grid-cols-1">
-          {pathogens.map(({ metric, label, color }) => {
-            const filtered = allData.filter(
-              (d) => d.metric === metric && d.submetric === CITYWIDE_SUBMETRIC
-            );
-            return (
-              <div key={metric}>
-                <VegaLiteWrapper
-                  data={filtered}
-                  specTemplate={buildLineSpec(color, label, label)}
-                  rendererMode="svg"
-                />
-              </div>
-            );
-          })}
-        </div>
+        <>
+          <div className="flex justify-end mb-sm">
+            <ToggleGroup
+              options={[
+                { label: "Scale to Group", value: "group" },
+                { label: "Same Scale", value: "same" },
+              ]}
+              value={scaleMode}
+              onChange={setScaleMode}
+              ariaLabel="Toggle Influenza A/B y-axis between independent and shared scale"
+              variant="pill"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-lg md:grid-cols-1">
+            {pathogens.map(({ metric, label, color }) => {
+              const filtered = allData.filter(
+                (d) => d.metric === metric && d.submetric === CITYWIDE_SUBMETRIC
+              );
+              return (
+                <div key={metric}>
+                  <VegaLiteWrapper
+                    data={filtered}
+                    specTemplate={buildLineSpec(color, label, label, effectiveYDomain)}
+                    rendererMode="svg"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </>
       ) : (
         <VegaLiteWrapper
           data={allData.filter(
@@ -362,7 +422,7 @@ const WastewaterChart = ({ virus = "COVID-19", onNewView, onExportSpec }) => {
           rendererMode="svg"
         />
       )}
-      <ChartFooter footnote={footnote} />
+      <ChartFooter footnote={footnote} uploadDate={latestUploadDate} />
     </div>
   );
 };

@@ -11,10 +11,13 @@ import PropTypes from "prop-types";
  * preserved; sighted + AT users both get this message instead of the chart
  * or its accessible table.
  */
-const MissingDataOverlay = ({ virus, unknownPct, metricLabel = "cases" }) => (
+const MissingDataOverlay = ({ virus, unknownPct, metricLabel = "cases" }) => {
+  const normalizedVirus = (virus || "").toLowerCase();
+
+  return (
   <div
     role="note"
-    aria-label={`${virus} ${metricLabel} by race and ethnicity — data not shown`}
+    aria-label={`${normalizedVirus} ${metricLabel} by race and ethnicity — data not shown`}
     className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-white/93 backdrop-blur-[2px] p-md"
   >
     <div className="max-w-[420px] text-center bg-white border border-gray-200 rounded-lg shadow-sm px-lg py-lg">
@@ -32,11 +35,12 @@ const MissingDataOverlay = ({ virus, unknownPct, metricLabel = "cases" }) => (
         Data not shown
       </p>
       <p className="text-sm text-gray-700 leading-relaxed m-0">
-        <span className="bg-highlight">{unknownPct}%</span> of {virus} {metricLabel} during this period were missing race and ethnicity information — too high to show by group. This chart will return once more complete data is available.
+        <span className="bg-highlight">{unknownPct}%</span> of {normalizedVirus} {metricLabel} during this period were missing race and ethnicity information — too high to show by group. This chart will return once more complete data are available.
       </p>
     </div>
   </div>
-);
+  );
+};
 
 MissingDataOverlay.propTypes = {
   virus: PropTypes.string.isRequired,

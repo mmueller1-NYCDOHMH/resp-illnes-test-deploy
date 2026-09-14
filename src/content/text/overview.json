@@ -17,7 +17,7 @@
       "flu":   { "title": "Flu" },
       "rsv":   { "title": "RSV" },
       "ofEdVisits":        "of ED visits",
-      "ofHospitalizations": "of hospitalizations"
+      "ofHospitalizations": "of hospitalizations from the emergency department"
     },
 
     "summaryBox": {
@@ -35,7 +35,7 @@
     "otherResp": {
       "title": "<span class='dynamic-label'>What else is happening in the city</span>",
       "intro": "The NYC Health Department receives data from selected NYC laboratories that test for an expanded panel of circulating respiratory viruses, including those that are not required to be reported to the NYC Health Department.",
-      "listIntro": "Percent of positive test results for the week of {date}:"
+      "listIntro": "Percent of positive test results for the week ending {date}:"
     },
 
     "indicators": {

@@ -22,9 +22,7 @@
  * case-rate metrics), but null-safe handling is still in place in case that
  * changes.
  * Map:  GeoJSON from NYC Health EHDP repository (UHF42 neighborhoods).
- * Tiles: Esri Light Gray Canvas, no-labels layer (per RPU request: no city
- *        names). Was CartoDB Positron no-labels until 2026-09-01, switched
- *        because CARTO now requires an API key. See useChoroplethMap.js.
+ * Tiles: CartoDB Positron no-labels (per RPU request: no city names).
  * Leaflet loaded dynamically from unpkg CDN to avoid bundling it.
  *
  * Map lifecycle, GeoJSON fetch, feature click/hover, search suggestions,
@@ -36,11 +34,13 @@
  * to the home page: fixed (non-virus) color scale and arrow-key navigation.
  */
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import NeighborhoodSearchInput from "./NeighborhoodSearchInput";
 import VegaLiteWrapper from "../charts/VegaLiteWrapper";
 import DataAsOf from "../charts/DataAsOf";
 import AccessibleTable from "../accessibility/AccessibleTable";
+import InfoModal from "../popups/InfoModal";
+import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
 import useChoroplethMap, { WEEK_ENDING } from "./useChoroplethMap";
 import { buildChoroplethBarSpec } from "./choroplethBarSpec";
 import { makeColorScale, domainFromValues, stopsToCssGradient } from "../../utils/colorScale";
@@ -136,7 +136,7 @@ function StatValue({ value }) {
       </span>
     );
   }
-  return <span className="text-xs font-semibold font-body text-[var(--gray-900)] tabular-nums">{value}%</span>;
+  return <span className="text-lg font-semibold font-body text-[var(--gray-900)] tabular-nums">{value}%</span>;
 }
 
 function SnapshotRows({ data, groupNote }) {
@@ -163,27 +163,14 @@ function SnapshotRows({ data, groupNote }) {
           <span className="text-xs font-body text-[var(--gray-600)] leading-snug">of ED visits</span>
 
         </div>
-        <div style={rowStyle("hospPct")} onMouseEnter={() => setHoveredRow("hospPct")} onMouseLeave={() => setHoveredRow(null)}>
-          <StatValue value={data.hospPct} /> 
-          <span className="text-xs font-body text-[var(--gray-600)] leading-snug">of hospitalizations from the ED</span>
-        </div>
-        {/* RPU reports 15 of the 42 UHF42 neighborhoods as part of a
-            combined UHF34 group (see neighborhoodGeoData.js's
-            groupedWithNote) — this value isn't independent of its
-            group-mates', so say so rather than let identical numbers
-            across 2-3 neighborhoods look like a coincidence. */}
-        {groupNote && (
-          <p className="px-1.5 pt-0.5 text-2xs font-body text-[var(--gray-600)] italic leading-snug">
-            {groupNote}
-          </p>
-        )}
+
+
       </div>
       <div
         className="px-3 pb-2 flex justify-between gap-2"
         style={{ color: "var(--footnote-gray)" }}
       >
         <div className="flex-1" />
-        <p className="text-2xs font-body whitespace-nowrap"><DataAsOf date={WEEK_ENDING} /></p>
       </div>
     </>
   );
@@ -194,6 +181,7 @@ function SnapshotRows({ data, groupNote }) {
 const NeighborhoodMap = () => {
   const [pinnedGeocode, setPinnedGeocode] = React.useState(null);
   const [pinHovered, setPinHovered]       = React.useState(false);
+  const [infoOpen, setInfoOpen]           = useState(false);
 
   // ── Real UHF neighborhood data ────────────────────────────────────────────
   // Loads RPU's staged emergencyDeptData.csv (see useNeighborhoodGeoCsv for
@@ -330,6 +318,53 @@ const NeighborhoodMap = () => {
     ? (() => { const d = previewData ?? selectedData; const n = groupedWithNote(d, dataByGeocode); return n ? `${d.name}: ${n}` : null; })()
     : null;
 
+  // Dynamic caption — narrates selectedData regardless of compare mode, so
+  // it's computed once and rendered in one of two spots (never both): as
+  // its own section below the At-a-Glance card normally, or — while
+  // comparing — moved up inside the card itself, right under CompareRows,
+  // so it fills the space the Hospitalizations row used to occupy instead
+  // of leaving the (now shorter) compare table stranded inside the card's
+  // min-h-[170px] floor. See the two render sites below.
+  const dynamicCaption = selectedData && (
+    <div className="border-t border-[var(--gray-200)] bg-[var(--gray-100)] px-md py-md text-sm font-body text-[var(--gray-700)] leading-relaxed">
+      {selectedData.pct == null ? (
+        <p>
+          RPU has suppressed this week's ED-visit rate for{" "}
+          <strong>{selectedData.name}</strong> — the underlying case
+          count is too small to report reliably.
+        </p>
+      ) : (
+        <>
+          <p>
+            In <strong>{selectedData.name}</strong>, respiratory illnesses
+            were <strong>{selectedData.pct}%</strong> of ED
+            visits for the week ending <strong>{WEEK_ENDING}</strong>.
+
+            This is{" "}
+            <strong
+              style={{
+                color:
+                  selectedData.pct > citywidePct ? "#b91c1c"
+                    : selectedData.pct < citywidePct ? "#065f46"
+                    : "inherit",
+              }}
+            >
+              {selectedData.pct > citywidePct ? "more than"
+                : selectedData.pct < citywidePct ? "less than"
+                : "equal to"}
+            </strong>{" "}
+            the Citywide value of <strong>{citywidePct}%</strong>.
+          </p>
+        </>
+      )}
+      {groupedWithNote(selectedData, dataByGeocode) && (
+        <p className="mt-sm text-xs italic">
+          {groupedWithNote(selectedData, dataByGeocode)}
+        </p>
+      )}
+    </div>
+  );
+
   // ── Render ──────────────────────────────────────────────────────────────────
   // v2 layout: header (title + inline search) → [map | At-a-Glance + caption]
   // row, both narrow and natural-height on the right → full-width bar chart
@@ -348,6 +383,21 @@ const NeighborhoodMap = () => {
         </div>
 
         <div className="w-full sm:w-96 flex-shrink-0">
+          <div className="flex justify-end mb-1">
+            <button
+              type="button"
+              className="appearance-none bg-transparent border-0 p-0 cursor-pointer flex-shrink-0 text-gray-900 hover:text-gray-600 transition-colors duration-150"
+              aria-label="More info about neighborhood data"
+              onClick={() => setInfoOpen(true)}
+            >
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="9" cy="6" r="1" fill="currentColor"/>
+                <line x1="9" y1="9" x2="9" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+
           <NeighborhoodSearchInput
             id="home-neighborhood-search"
             value={search}
@@ -565,7 +615,6 @@ const NeighborhoodMap = () => {
                       current={previewData ?? selectedData}
                       fields={[
                         { key: "pct", label: "ED visits", suffix: " pts", format: (v) => `${v}%` },
-                        { key: "hospPct", label: "Hospitalizations", suffix: " pts", format: (v) => `${v}%` },
                       ]}
                     />
                     {/* Either side of a comparison can be one of the 15
@@ -577,6 +626,9 @@ const NeighborhoodMap = () => {
                         {[compareGroupNote, currentGroupNote].filter(Boolean).join(" ")}
                       </p>
                     )}
+                    {/* Moved up into the card itself while comparing — see
+                        dynamicCaption's comment above. */}
+                    {dynamicCaption}
                   </>
                 ) : (
                   <SnapshotRows data={selectedData} groupNote={groupedWithNote(selectedData, dataByGeocode)} />
@@ -598,47 +650,11 @@ const NeighborhoodMap = () => {
           {/* Dynamic caption — same card, second section. Only rendered once
               something is selected; the empty-state placeholder above
               already covers the "click a neighborhood" prompt, so repeating
-              it here would just duplicate that message within one card. */}
-          {selectedData && (
-            <div className="border-t border-[var(--gray-200)] bg-[var(--gray-100)] px-md py-md text-sm font-body text-[var(--gray-700)] leading-relaxed">
-              {selectedData.pct == null ? (
-                <p>
-                  RPU has suppressed this week's ED-visit rate for{" "}
-                  <strong>{selectedData.name}</strong> — the underlying case
-                  count is too small to report reliably.
-                </p>
-              ) : (
-                <>
-                  <p>
-                    In <strong>{selectedData.name}</strong>, respiratory illnesses
-                    were <strong>{selectedData.pct}%</strong> of ED
-                    visits for the week ending <strong>{WEEK_ENDING}</strong>.
-                  </p>
-                  <p className="mt-sm">
-                    This is{" "}
-                    <strong
-                      style={{
-                        color:
-                          selectedData.pct > citywidePct ? "#b91c1c"
-                            : selectedData.pct < citywidePct ? "#065f46"
-                            : "inherit",
-                      }}
-                    >
-                      {selectedData.pct > citywidePct ? "more than"
-                        : selectedData.pct < citywidePct ? "less than"
-                        : "equal to"}
-                    </strong>{" "}
-                    the Citywide value of <strong>{citywidePct}%</strong>.
-                  </p>
-                </>
-              )}
-              {groupedWithNote(selectedData, dataByGeocode) && (
-                <p className="mt-sm text-xs italic">
-                  {groupedWithNote(selectedData, dataByGeocode)}
-                </p>
-              )}
-            </div>
-          )}
+              it here would just duplicate that message within one card.
+              While comparing, this renders inside the card instead (right
+              under CompareRows — see dynamicCaption above) so it isn't
+              skipped here. */}
+          {!inCompareMode && dynamicCaption}
         </div>
 
         {/* ── Bar chart — moved into the right column, beneath the dynamic
@@ -714,6 +730,19 @@ const NeighborhoodMap = () => {
         </div>
         </div>
       </div>
+
+      <InfoModal
+        id="neighborhood-map-info-modal"
+        isOpen={infoOpen}
+        onClose={() => setInfoOpen(false)}
+        title="About Neighborhood Data"
+        content={
+          <MarkdownRenderer
+            filePath="content/modals/neighborhood-explainer.md"
+            showTitle={false}
+          />
+        }
+      />
     </div>
   );
 };

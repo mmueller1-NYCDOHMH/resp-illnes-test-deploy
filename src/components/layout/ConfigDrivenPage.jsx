@@ -4,7 +4,8 @@
  * Thin orchestrator.  Reads a page config object and wires together:
  *   - usePageState  (virus / view / dataType UI controls)
  *   - usePageData   (config hydration + CSV fetch)
- *   - DataPageLayout + TopControls + TrendSummaryContainer
+ *   - DataPageLayout + TrendSummaryContainer
+ *     (NOT TopControls — that component is dead code, see code-audit notes)
  *   - SectionRenderer per visible section
  *
  * All per-section data logic lives in useSectionData.
