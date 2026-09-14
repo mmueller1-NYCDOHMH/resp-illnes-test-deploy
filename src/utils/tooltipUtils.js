@@ -9,7 +9,14 @@
  * whole string as a single computed field and give it an empty title.
  */
 
-const escapeForVegaString = (str = "") =>
+// Also used directly by chart files that need to safely inline a raw label
+// into a Vega-Lite string literal (e.g. a `calculate` expression) outside of
+// buildTooltipLineCalc's own tooltip-line use below — WastewaterChart.jsx,
+// YearComparisonChart.jsx. Previously each of those (plus a third,
+// WastewaterVariantChart.jsx, where it went unused) redefined this exact
+// one-liner locally; consolidated here 2026-09-14 since all three already
+// import from this file.
+export const escapeForVegaString = (str = "") =>
   String(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 
 const lowerFirst = (str = "") =>

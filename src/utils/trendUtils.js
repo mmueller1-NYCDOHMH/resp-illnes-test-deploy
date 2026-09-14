@@ -339,6 +339,22 @@ export function formatDate(input) {
   });
 }
 
+/**
+ * ISO-8601 week number (1-53) for a given Date, used by the small-multiple
+ * chart family to bucket rows by year+week for gap-filling/x-domain math.
+ * Consolidated here 2026-09-14 — this exact function was defined verbatim
+ * in three separate files (YearComparisonChart.jsx, SmallMultipleLineChart.jsx,
+ * SmallMultipleBarChart.jsx); all three now import it from here instead.
+ */
+export function getISOWeek(date) {
+  const target = new Date(date.valueOf());
+  const dayNumber = (date.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNumber + 3);
+  const firstThursday = new Date(target.getFullYear(), 0, 4);
+  const diff = target - firstThursday;
+  return 1 + Math.round(diff / (7 * 24 * 60 * 60 * 1000));
+}
+
 // Compact date format used by chart/stat footers and map footnotes
 // ("Aug 3, 2026") — distinct from formatDate's long form ("August 3, 2026")
 // used in the sidebar and other prose contexts. Kept as one function so the

@@ -1,6 +1,6 @@
 [
   {
-    "label": "COVID ED Visits",
+    "label": "COVID ED visits",
     "href": "/data/covid-19#ed-trends",
     "virus": "COVID-19",
     "description": "Weekly % of ED visits with a COVID-19 diagnosis",
@@ -9,7 +9,7 @@
     "submetric": "Overall"
   },
   {
-    "label": "COVID Lab Cases",
+    "label": "COVID lab-reported cases",
     "href": "/data/covid-19?dataType=lab#case-reports-season",
     "virus": "COVID-19",
     "description": "Lab-confirmed COVID-19 cases reported by season",
@@ -18,7 +18,7 @@
     "submetric": "Total"
   },
   {
-    "label": "COVID Deaths",
+    "label": "COVID deaths",
     "href": "/data/covid-19?dataType=death#deaths-season",
     "virus": "COVID-19",
     "description": "Confirmed COVID-19 deaths by season",
@@ -27,7 +27,7 @@
     "submetric": "Total"
   },
   {
-    "label": "COVID Wastewater",
+    "label": "COVID wastewater",
     "href": "/data/covid-19?dataType=wastewater#wastewater-covid",
     "virus": "COVID-19",
     "description": "Normalized SARS-CoV-2 viral load in wastewater",
@@ -36,7 +36,7 @@
     "submetric": "Citywide average"
   },
   {
-    "label": "Flu ED Visits",
+    "label": "Flu ED visits",
     "href": "/data/flu#ed-trends",
     "virus": "Flu",
     "description": "Weekly % of ED visits with an influenza diagnosis",
@@ -45,7 +45,7 @@
     "submetric": "Overall"
   },
   {
-    "label": "Flu Lab Cases",
+    "label": "Flu lab-reported cases",
     "href": "/data/flu?dataType=lab#case-reports-season",
     "virus": "Flu",
     "description": "Lab-confirmed influenza cases reported by season",
@@ -54,7 +54,7 @@
     "submetric": "Total"
   },
   {
-    "label": "Flu Wastewater",
+    "label": "Flu wastewater",
     "href": "/data/flu?dataType=wastewater#wastewater-flu",
     "virus": "Flu",
     "description": "Normalized influenza A viral load in wastewater",
@@ -63,7 +63,7 @@
     "submetric": "Citywide average"
   },
   {
-    "label": "RSV ED Visits",
+    "label": "RSV ED visits",
     "href": "/data/rsv#ed-trends",
     "virus": "RSV",
     "description": "Weekly % of ED visits with an RSV diagnosis",
@@ -72,7 +72,7 @@
     "submetric": "Overall"
   },
   {
-    "label": "RSV Lab Cases",
+    "label": "RSV lab-reported cases",
     "href": "/data/rsv?dataType=lab#case-reports-season",
     "virus": "RSV",
     "description": "Lab-confirmed RSV cases reported by season",
@@ -81,7 +81,7 @@
     "submetric": "Total"
   },
   {
-    "label": "RSV Wastewater",
+    "label": "RSV wastewater",
     "href": "/data/rsv?dataType=wastewater#wastewater-rsv",
     "virus": "RSV",
     "description": "Normalized RSV viral load in wastewater",
@@ -90,7 +90,7 @@
     "submetric": "Citywide average"
   },
   {
-    "label": "Lab Cases by Neighborhood",
+    "label": "Lab-reported cases by neighborhood",
     "href": "/data/covid-19?dataType=lab#case-reports-neighborhood",
     "virus": "COVID-19",
     "description": "COVID-19 cases mapped by NYC neighborhood",
