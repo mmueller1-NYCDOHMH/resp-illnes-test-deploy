@@ -74,8 +74,16 @@ const resolvedFooter =
 
         <div className="chart-body flex-[1_1_auto] min-w-0">
           {chartWithProps && (
-            <div className="chart-vega relative w-full min-w-0 flex-1 touch-manipulation" aria-hidden="true">
-              {chartWithProps}
+            <div className="chart-vega relative w-full min-w-0 flex-1 touch-manipulation">
+              {/* aria-hidden scoped to the chart itself, not this whole wrapper —
+                  MissingDataOverlay must stay reachable by assistive tech (it's
+                  the only content sighted + AT users get once the overlay covers
+                  the chart). Previously aria-hidden sat on this outer div, so the
+                  overlay's role="note"/aria-label were removed from the a11y tree
+                  along with the chart, leaving screen-reader users with nothing —
+                  no chart, no alt table (disabled while the overlay is up), and no
+                  explanation either. Fixed in a11y audit 2026-09-14; unverified live. */}
+              <div aria-hidden="true">{chartWithProps}</div>
               {missingDataOverlay && (
                 <MissingDataOverlay
                   virus={missingDataOverlay.virus}

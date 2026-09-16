@@ -16,7 +16,7 @@
       "covid": { "title": "COVID-19" },
       "flu":   { "title": "Flu" },
       "rsv":   { "title": "RSV" },
-      "ofEdVisits":        "of ED visits",
+      "ofEdVisits":        "of emergency department visits",
       "ofHospitalizations": "of hospitalizations from the emergency department"
     },
 

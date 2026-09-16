@@ -49,7 +49,11 @@
   --gray-200: #F3F4F6;
   --gray-300: #E5E7EB;
   --gray-400: #D1D5DB;
-  --gray-500: #9CA3AF;
+  --gray-500: #6E7683; /* was #9CA3AF (2.54:1 on white) — failed WCAG AA (needs 4.5:1)
+                           wherever used as real text (About page sub-headings/labels,
+                           map snapshot captions, "no data" chart placeholders). New
+                           value is 4.58:1 on white; still reads as a lighter step than
+                           --gray-600 (#6B7280, 4.83:1). See a11y audit 2026-09-14. */
   --gray-600: #6B7280;
   --gray-700: #4B5563;
   --gray-800: #374151;

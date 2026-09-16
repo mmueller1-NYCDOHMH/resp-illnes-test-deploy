@@ -315,6 +315,7 @@ const CustomSection = ({
             view={view}
             onViewChange={setView}
             {...mergedProps}
+            uploadDate={hydratedConfig?.uploadDate}
           />
         )}
       </ContentContainer>

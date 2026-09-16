@@ -40,7 +40,7 @@ const seriesKeysForLabel = (label) => {
   return [`${label} visits`, `${label} hospitalizations`];
 };
 
-const StatGrid = ({ data }) => {
+const StatGrid = ({ data, uploadDate }) => {
   const [view, setView] = useState("visits");
   const [infoOpen, setInfoOpen] = useState(false);
   const [downloadOpen, setDownloadOpen] = useState(false);
@@ -72,6 +72,18 @@ const StatGrid = ({ data }) => {
   const baseDate = latestAri ? new Date(latestAri.date) : null;
   const formattedDate = baseDate ? fmt(baseDate) : "–";
   const previousWeek = baseDate ? fmt(new Date(baseDate.getTime() - 7 * DAY_MS)) : "–";
+
+  // "Data updated" (DataAsOf below) is the real last-refresh date — when the
+  // data source was last uploaded/committed — which is different from
+  // `formattedDate` above ("data through", i.e. the last date the data
+  // covers, used for the "week ending" copy elsewhere on this page). Falls
+  // back to formattedDate if uploadDate wasn't passed in, rather than
+  // showing nothing.
+  const uploadDateObj = uploadDate ? new Date(uploadDate) : null;
+  const formattedUploadDate =
+    uploadDateObj && !Number.isNaN(uploadDateObj.getTime())
+      ? fmt(uploadDateObj)
+      : formattedDate;
 
   const vars = { date: formattedDate, previousWeek };
   const descriptionHTML = resolveHTMLLabels(getText("overview.summaryBox.description") || "", vars);
@@ -301,7 +313,7 @@ const StatGrid = ({ data }) => {
           }}
         />
         <div style={{ whiteSpace: "nowrap", textAlign: "right" }}>
-          <DataAsOf date={formattedDate} />
+          <DataAsOf date={formattedUploadDate} />
         </div>
       </div>
 

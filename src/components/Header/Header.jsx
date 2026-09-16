@@ -26,7 +26,7 @@ const Header = () => (
     <div className="w-full max-w-content mx-auto box-border flex items-center justify-between gap-md min-h-[56px] py-4 px-md">
 
       {/* ── Left: NYC Health logo + site title ── */}
-      <div className="flex items-center gap-md min-w-0">
+      <div className="items-center gap-md min-w-0">
         <a
           href="https://www.nyc.gov/site/doh/"
           target="_blank"
@@ -47,20 +47,14 @@ const Header = () => (
         </a>
 
         {/* Thin vertical divider */}
-        <div aria-hidden="true" className="w-px h-8 bg-white/30 flex-shrink-0" />
+        <div aria-hidden="true" className="" />
 
-        <div className="min-w-0">
-          <p
-            className="font-heading font-bold leading-tight m-0 text-header-title-color"
-            style={{ fontSize: "clamp(19px, 2.6vw, 26px)" }}
-          >
-            Respiratory Illness Data
-          </p>
+        <div className="min-w-0 mt-2">
           <p
             className="font-body m-0 leading-tight hidden sm:block text-header-subtitle-color mt-[2px] opacity-85"
-            style={{ fontSize: "14px" }}
+            style={{ fontSize: "18px" }}
           >
-            NYC Department of Health and Mental Hygiene
+            Respiratory Illness Data
           </p>
         </div>
       </div>

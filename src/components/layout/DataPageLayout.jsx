@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
 import { usePathname } from "next/navigation";
@@ -18,6 +18,14 @@ const SlidersIcon = () => (
   </svg>
 );
 
+const CloseIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const SHEET_FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
 // ── DataPageLayout ────────────────────────────────────────────────────────────
 const DataPageLayout = ({
   title, subtitle, topControls, sidebar, info, children,
@@ -29,6 +37,7 @@ const DataPageLayout = ({
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const pathname = usePathname();
+  const sheetRef = useRef(null);
 
   // Close sheet on navigation
   useEffect(() => { setSheetOpen(false); }, [pathname]);
@@ -37,6 +46,42 @@ const DataPageLayout = ({
   // handles dismissal; overscrollBehavior:contain on the sheet prevents chaining.
 
   const close = useCallback(() => setSheetOpen(false), []);
+
+  // Focus trap + Escape-to-close + focus restore — this dialog was missing all
+  // three (unlike InfoModal/ChartModal elsewhere in the app, which both do this),
+  // so keyboard/AT users could tab straight through it into the page behind, and
+  // had no keyboard way to close it at all (the backdrop and drag-handle are the
+  // only other dismiss affordances, and neither is focusable). Mirrors ChartModal's
+  // implementation. Fixed in a11y audit 2026-09-14; unverified live.
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const prevFocus = document.activeElement;
+
+    const handleKey = (e) => {
+      if (e.key === "Escape") { close(); return; }
+      if (e.key !== "Tab") return;
+      const focusables = Array.from(sheetRef.current?.querySelectorAll(SHEET_FOCUSABLE) ?? []);
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        last.focus(); e.preventDefault();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        first.focus(); e.preventDefault();
+      }
+    };
+
+    document.addEventListener("keydown", handleKey);
+    const raf = requestAnimationFrame(() => {
+      sheetRef.current?.querySelector(".mobile-sheet-close-btn")?.focus();
+    });
+
+    return () => {
+      cancelAnimationFrame(raf);
+      document.removeEventListener("keydown", handleKey);
+      prevFocus?.focus?.();
+    };
+  }, [sheetOpen, close]);
 
   const renderedTitle =
     typeof title === "string"
@@ -75,13 +120,15 @@ const DataPageLayout = ({
               />
               {/* Sheet */}
               <div
+                ref={sheetRef}
                 role="dialog"
                 aria-modal="true"
                 aria-label="Filters and navigation"
                 className="fixed bottom-0 left-0 right-0 bg-[var(--gray-100)] rounded-t-2xl border-t border-[var(--gray-300)] shadow-[0_-6px_32px_rgba(0,0,0,0.18)] max-h-[72vh] overflow-y-auto overscroll-contain animate-[sheetUp_280ms_cubic-bezier(0.4,0,0.2,1)_both]"
                 style={{ zIndex: 9999, WebkitOverflowScrolling: "touch" }}
               >
-                {/* Drag handle — tap to close */}
+                {/* Drag handle — tap to close (decorative/mouse-only; the button
+                    below is the real focusable close control) */}
                 <div
                   onClick={close}
                   className="flex justify-center pt-3 pb-1 cursor-pointer"
@@ -89,6 +136,14 @@ const DataPageLayout = ({
                 >
                   <div className="w-9 h-1 rounded-sm bg-[var(--gray-400)]" />
                 </div>
+                <button
+                  type="button"
+                  onClick={close}
+                  aria-label="Close filters and navigation"
+                  className="mobile-sheet-close-btn absolute top-2 right-2 bg-transparent border-0 p-[6px] leading-none inline-flex items-center justify-center text-[var(--gray-600)] cursor-pointer transition-colors duration-200 hover:text-[var(--gray-900)] focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                >
+                  <CloseIcon />
+                </button>
                 <div className="px-4 pt-1 pb-12">
                   {sidebar}
                 </div>

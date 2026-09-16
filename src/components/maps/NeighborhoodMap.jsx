@@ -388,7 +388,7 @@ const NeighborhoodMap = () => {
         {/* Map — sized to comfortably fit the right column's content
              (At-a-Glance card + caption + bar chart) at 384px wide without
              the column needing to scroll in the normal selected state. */}
-        <div className="flex-1 min-w-0 rounded-md overflow-hidden border border-[var(--gray-200)] relative"
+        <div className="hidden sm:block flex-1 min-w-0 rounded-md overflow-hidden border border-[var(--gray-200)] relative"
              style={{ height: "520px" }}>
           {/* The map itself isn't keyboard-operable (Leaflet polygon click/hover
               only) — this note gives keyboard and screen-reader users the actual

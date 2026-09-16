@@ -29,6 +29,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { loadCSVData } from "../../utils/loadCSVData";
+import { getGitHubFileUploadDate } from "../../utils/loadConfigWithData";
 import VegaLiteWrapper from "./VegaLiteWrapper";
 import ChartFooter from "./ChartFooter";
 import ToggleGroup from "../controls/ToggleGroup";
@@ -63,6 +64,19 @@ const VIRUS_METRICS = {
 };
 
 const CITYWIDE_SUBMETRIC = "Citywide average";
+
+// wastewaterData.csv is served locally from this app's own repo
+// (public/data/wastewaterData.csv), not the external nychealth/
+// respiratory-illness-data repo the other CSVs come from — so it isn't
+// covered by loadConfigWithData's DATA_PATHS_BLOB uploadDate fetch (that
+// dataType has no entry there, and dataType: "wastewater" also has no
+// dataPath in the virus page configs, so hydratedConfig.uploadDate is
+// always null on this tab). This is a best-effort standalone fetch of the
+// same "last commit" date for this repo/file; if the repo or branch below
+// is ever renamed, getGitHubFileUploadDate just resolves to null and the
+// component falls back to the local max-date-in-data value.
+const WASTEWATER_CSV_BLOB_URL =
+  "https://github.com/nychealth/respiratory-virus-data-pages/blob/main/public/data/wastewaterData.csv";
 
 // ── Vega-Lite spec builder ────────────────────────────────────────────────────
 // Shared axis/view boilerplate lives in vegaTheme.js (BASE_AXIS_LABEL_CONFIG
@@ -284,10 +298,15 @@ function buildExportGridSpec(pathogens, allData, yDomain = null) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-const WastewaterChart = ({ virus = "COVID-19", onNewView, onExportSpec }) => {
+const WastewaterChart = ({ virus = "COVID-19", uploadDate, onNewView, onExportSpec }) => {
   const [allData, setAllData]   = useState([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(false);
+  // Real "data updated" date fetched from GitHub when no `uploadDate` prop
+  // is supplied (see WASTEWATER_CSV_BLOB_URL note above). Stays null until/
+  // unless the fetch resolves, in which case the footer falls back to the
+  // local max-date-in-data value (see latestUploadDate below).
+  const [fetchedUploadDate, setFetchedUploadDate] = useState(null);
   // Flu A/Flu B only (see render below) — "same" (default) forces both
   // panels onto one shared y-domain (sharedFluYDomain below); "group" lets
   // each panel scale to its own data instead, same idea/UI as the ED
@@ -311,6 +330,19 @@ const WastewaterChart = ({ virus = "COVID-19", onNewView, onExportSpec }) => {
         setLoading(false);
       });
   }, [dataUrl]);
+
+  // Only fetch the GitHub commit date ourselves when the caller didn't
+  // already hand us a real uploadDate (e.g. via hydratedConfig upstream).
+  useEffect(() => {
+    if (uploadDate) return;
+    let cancelled = false;
+    getGitHubFileUploadDate(WASTEWATER_CSV_BLOB_URL).then((date) => {
+      if (!cancelled && date) setFetchedUploadDate(date);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [uploadDate]);
 
   const pathogens = VIRUS_METRICS[virus] ?? VIRUS_METRICS["COVID-19"];
   const isFlu = virus === "Flu";
@@ -369,12 +401,22 @@ const WastewaterChart = ({ virus = "COVID-19", onNewView, onExportSpec }) => {
   const footnote =
     "Weeks shown as zero were below the wastewater lab's limit of detection or had no reported result that week.";
 
+  // "Data through" — the last date the loaded data covers. Kept as-is for
+  // any other local use; NOT what's shown as "Data updated" below anymore.
   const latestUploadDate = allData.reduce((latest, row) => {
     if (!row.date) return latest;
     const rowDate = new Date(row.date);
     if (Number.isNaN(rowDate.getTime())) return latest;
     return !latest || rowDate > latest ? rowDate : latest;
   }, null);
+
+  // "Data updated" — the real last-refresh date: the `uploadDate` prop
+  // (when the caller has a real one), else our own GitHub-commit-date
+  // fetch above, else fall back to the "data through" value rather than
+  // showing nothing.
+  const displayUploadDate = uploadDate
+    ? new Date(uploadDate)
+    : fetchedUploadDate || latestUploadDate;
 
   return (
     <div className="w-full">
@@ -419,7 +461,7 @@ const WastewaterChart = ({ virus = "COVID-19", onNewView, onExportSpec }) => {
           rendererMode="svg"
         />
       )}
-      <ChartFooter footnote={footnote} uploadDate={latestUploadDate} />
+      <ChartFooter footnote={footnote} uploadDate={displayUploadDate} />
     </div>
   );
 };
