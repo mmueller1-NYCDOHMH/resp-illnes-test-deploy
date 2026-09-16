@@ -13,11 +13,11 @@ The toggle updates all cards simultaneously.
 
 #### Hovering charts
 
-Hovering over a chart line reveals a **tooltip** with the exact date and value. On a  map, hovering shows that district's name and value.
+Hovering over a chart line reveals a **tooltip** with the exact date and value. On a  map, hovering shows that neighborhood's name and value.
 
 #### Viewing data by demographic group
 
-Where available, lab-reported case data includes dedicated chart sections for **age group** and **race and ethnicity**. Each shows every group side by side, with a toggle to switch between scaling each group's chart to its own range or sharing one scale across all of them.
+Where available, lab-reported case data include dedicated chart sections for **age group**, **borough**, and **race and ethnicity**. Each shows every group side by side, with a toggle to switch between scaling each group's chart to its own range or sharing one scale across all of them.
 
 #### Sharing a deep link
 

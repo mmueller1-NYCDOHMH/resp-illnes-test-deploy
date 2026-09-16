@@ -10,7 +10,7 @@ The percentages shown (e.g. *1.23% → 0.98%*) are the prior week and current we
 
 #### The neighborhood map
 
-The map on the home page shows the proportions of overall respiratory illness ED visits  by NYC neighborhood. Darker shading indicates higher proportions. Click or search for a neighborhood to see its proportion of visits alongside the citywide proportion, pin one district and select another to compare them side by side, and use the arrow keys to move between nearby neighborhoods once one is selected. A separate neighborhood map for lab-confirmed cases appears further down each virus's Data page. 
+The map on the home page shows the proportions of overall respiratory illness ED visits  by NYC neighborhood. Darker shading indicates higher proportions. Click or search for a neighborhood to see its proportion of visits alongside the citywide proportion, pin one neighborhood and select another to compare them side by side, and use the arrow keys to move between nearby neighborhoods once one is selected. A separate neighborhood map for lab-confirmed cases appears further down each virus's Data page. 
 
 #### Axis scales
 
