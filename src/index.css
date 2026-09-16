@@ -108,7 +108,9 @@ svg {
 .trend-same { color: var(--trend-neutral-color); }
 
 /* Virus/ARI label emphasis (injected by colorizeVirusInTitle / virusText.js) */
-.ari-label   { color: #FF6600; font-weight: 600; }
+.ari-label   { color: #A6480A; font-weight: 600; } /* was #FF6600 (2.94:1 on white) —
+                 failed WCAG AA even for large text; this darker orange is 5.91:1.
+                 See a11y audit 2026-09-14. */
 .virus-label { font-weight: 600; }
 
 /* ── ProgressRail dot pulse (moved from ProgressRail.css) ──────────────── */

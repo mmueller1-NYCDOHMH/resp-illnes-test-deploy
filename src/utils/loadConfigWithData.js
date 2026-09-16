@@ -9,7 +9,7 @@ import { groupByMetric } from "./groupByMetric";
 /**
  * Fetch the latest commit date from the GitHub API for a blob URL.
  */
-async function getGitHubFileUploadDate(url) {
+export async function getGitHubFileUploadDate(url) {
   try {
     const match = url.match(
       /github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)/
