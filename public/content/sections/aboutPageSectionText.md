@@ -4,7 +4,7 @@
 ## About the Data
 Data are updated every Thursday with data through the previous Saturday. All data are preliminary and may change as more information is received. Counts less than 5 are suppressed to maintain confidentiality. 
 
-Access to care and other factors can influence the number of emergency department visits as well as laboratory-reported cases received by the NYC Health Department, so these data may not accurately reflect the amount of illness among NYC residents.  
+Many people who have a respiratory infection do not seek medical care. This may be because their symptoms are mild, they do not have access to care, they prefer to use at-home test kits, or other reasons. As a result, these data do not reflect all NYC residents with respiratory infections.  
 
 For more detailed information on the data, files, and collection methods, visit our <a href="https://github.com/nychealth/respiratory-illness-data" target="_blank" rel="noopener noreferrer">GitHub repository</a> . 
 
@@ -69,11 +69,11 @@ externalIcon: ./assets/external-link-icon.png
 link: https://github.com/nychealth/respiratory-illness-data
 Download and explore respiratory illness data 
 
-### NYS Wastewater Surveillance Data
+### NYS Wastewater Variant Data
 icon: ./assets/nys-logo.svg 
 externalIcon: ./assets/external-link-icon.png
-link: https://coronavirus.health.ny.gov/covid-19-wastewater-surveillance 
-Explore NYS wastewater surveillance data
+link: https://coronavirus.health.ny.gov/covid-19-wastewater-variant-data 
+Explore NYS wastewater SARS-CoV-2 variant data
 
 ### NYS Respiratory Surveillance Reports
 icon: ./assets/nys-logo.svg
@@ -82,7 +82,7 @@ link: https://www.health.ny.gov/statistics/
 Explore additional NYS respiratory illnesses data  
 
 ## Respiratory Virus Seasonality
-Respiratory virus season usually begins in the fall and ends in the spring, but not all respiratory infections follow a seasonal pattern. Flu and RSV are seasonal and most prevalent during the fall and winter months. To date, COVID-19 has generally increased during the fall and winter months as well as other times during the year, including the summer.
+Respiratory virus season usually begins in the fall and ends in the spring. Flu and RSV are most common during fall and winter. COVID-19 usually increases in the fall and winter but can also increase during other times, including the summer.
 
 ## Data Transparency
 All data in these data pages are pulled from NYC surveillance systems and regularly updated. We aim to provide accurate, clear, and actionable insights to the public and health professionals alike.

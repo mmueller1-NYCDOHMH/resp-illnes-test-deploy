@@ -49,6 +49,16 @@ export default function RootLayout({ children }) {
     <html lang="en" className={GeistSans.variable}>
       <head>
         <meta charSet="UTF-8" />
+        {/* PERF: open connections early to the hosts every page fetches from
+            (CSV data + GeoJSON on raw.githubusercontent.com, Leaflet on
+            unpkg), so the TLS handshake overlaps with JS download instead
+            of starting only once React has mounted. crossOrigin matches the
+            CORS mode fetch() uses, otherwise the warmed connection is
+            discarded. */}
+        <link rel="preconnect" href="https://raw.githubusercontent.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://unpkg.com" />
+        <link rel="dns-prefetch" href="https://api.github.com" />
+        <link rel="dns-prefetch" href="https://server.arcgisonline.com" />
         <link
           rel="icon"
           type="image/x-icon"
@@ -70,6 +80,7 @@ export default function RootLayout({ children }) {
         {/* Google Translate mount point — hidden off-screen */}
         <div
           id="google_translate_element"
+          aria-hidden="true"
           style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}
         />
 
@@ -87,7 +98,7 @@ export default function RootLayout({ children }) {
               return;
             }
 
-            const supported = ["en", "es", "zh-CN", "ru", "ar", "bn"];
+            const supported = ["en", "es", "zh-CN", "ru", "it", "ht", "bn", "yi", "ko", "ar", "fr", "pl", "ur", "pt"];
             const raw = (navigator.languages && navigator.languages[0]) || navigator.language || "en";
             let lang = raw.toLowerCase();
 
@@ -145,7 +156,7 @@ export default function RootLayout({ children }) {
             new google.translate.TranslateElement(
               {
                 pageLanguage: "en",
-                includedLanguages: "en,es,zh-CN,ru,ar,bn",
+                includedLanguages: "en,es,zh-CN,ru,it,ht,bn,yi,ko,ar,fr,pl,ur,pt",
                 autoDisplay: false,
               },
               "google_translate_element"

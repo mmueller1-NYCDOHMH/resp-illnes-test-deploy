@@ -1,7 +1,7 @@
 ## Page Overview
 
-Wastewater can provide some information on how much a virus is circulating in our community when people infected with **SARS-CoV-2** (the virus which causes COVID-19) shed the virus into our sewer system. However, these data may not represent all NYC residents infected or those who feel sick or seek medical care. This page shows data on **normalized viral load**, which accounts for the average daily wastewater flow into each sewershed and the NYC population. 
+Sewage that enters the wastewater treatment system in NYC is tested for certain viruses and bacteria before it is cleaned and disinfected. Public health professionals use these data to see if certain infectious diseases, including COVID-19, are circulating in communities.
 
-## Seasonal Context
+Wastewater data do not depend on people seeking care or getting tested, so it may capture infections that otherwise would be unreported to the NYC Health Department. However, these data may not represent all NYC residents infected with the virus or those who feel sick and seek medical care.
 
-Respiratory virus season usually begins in the fall and ends in the spring, but not all respiratory infections follow a seasonal pattern. Flu and RSV are seasonal and most prevalent during the fall and winter months. To date, COVID-19 has generally increased during the fall and winter months as well as other times during the year, including the summer.
+**Normalized viral load** shows how much SARS-CoV-2, the virus that causes COVID-19, is detected in wastewater, taking into account differences in wastewater volume and the NYC population. These data can help us understand broader trends, including whether there is increasing or decreasing transmission in the community.
