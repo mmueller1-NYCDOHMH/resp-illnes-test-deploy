@@ -1,6 +1,7 @@
 // src/utils/exportChartImage.js
-import { compile } from "vega-lite";
-import { parse, View } from "vega";
+// PERF: vega / vega-lite are imported on demand inside renderSpecToCanvas()
+// (only used when someone exports a multi-panel grid) instead of statically
+// at the top, which forced the full Vega stack into the initial page bundle.
 
 /** Strip HTML tags and collapse whitespace to produce plain text. */
 function stripHtml(html = "") {
@@ -24,6 +25,10 @@ function stripHtml(html = "") {
  * whichever single panel happened to have a registered view.
  */
 async function renderSpecToCanvas(spec, scaleFactor = 2) {
+  const [{ compile }, { parse, View }] = await Promise.all([
+    import("vega-lite"),
+    import("vega"),
+  ]);
   const vegaSpec = compile(spec).spec;
   const view = new View(parse(vegaSpec), { renderer: "none" });
   await view.runAsync();

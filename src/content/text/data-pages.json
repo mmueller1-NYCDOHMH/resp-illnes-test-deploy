@@ -14,15 +14,15 @@
     "charts": {
       "seasonalEdVisits": {
         "title": "Percent of <span class='virus-label'>{viewLabel}</span> {viewLabelPreposition} the <span class='virus-label'>Emergency Department</span> that have {virusLabelArticle} {virus} Diagnosis",
-        "subtitle": "{viewLabel} for the week ending {date} have {trend} since the previous week"
+        "subtitle": "{viewLabel} for the week ending {date}, have {trend} since the previous week"
       },
       "percentEdVisitsByAge": {
         "title": "Percent of <span class='virus-label'>{viewLabel}</span> {viewLabelPreposition} the <span class='virus-label'>Emergency Department</span> that have {virusLabelArticle} {virus} Diagnosis by Age Group",
-        "subtitle": "{viewLabel} for the week ending {date} have {trend} since the previous week for {group}"
+        "subtitle": "{viewLabel} for the week ending {date}, have {trend} since the previous week for {group}"
       },
       "percentEdVisitsByGeo": {
         "title": "Percent of <span class='virus-label'>{viewLabel}</span> {viewLabelPreposition} the <span class='virus-label'>Emergency Department</span> that have {virusLabelArticle} {virus} Diagnosis by Borough",
-        "subtitle": "{viewLabel} for the week ending {date} have {trend} since the previous week for {group}"
+        "subtitle": "{viewLabel} for the week ending {date}, have {trend} since the previous week for {group}"
       }
     }
   },
@@ -42,26 +42,26 @@
     "charts": {
       "seasonalComparison": {
         "title": "{virus} <span class='dynamic-label'>Laboratory-Reported Cases</span> by Season",
-        "subtitle": "Cases for the week ending {date} have {trend} since the previous week"
+        "subtitle": "Cases for the week ending {date}, have {trend} since the previous week"
       },
       "reportsByTestType": {
         "title": "{virus} <span class='dynamic-label'>Laboratory-Reported Cases</span> by Test Type",
-        "subtitle": "Cases for the week ending {date} have {trend} since the previous week"
+        "subtitle": "Cases for the week ending {date}, have {trend} since the previous week"
       },
       "reportsByNeighborhood": {
-        "title": "{virus} <span class='dynamic-label'>Laboratory-Reported Cases</span> by Neighborhood"
+        "title": "{virus} <span class='dynamic-label'>laboratory-reported cases</span> by neighborhood"
       },
       "reportsBySubtype": {
         "title": "{virus} <span class='dynamic-label'>Laboratory-Reported Cases</span> by type",
-        "subtitle": "Cases for the week ending {date} have {trend} since the previous week"
+        "subtitle": "Cases for the week ending {date}, have {trend} since the previous week"
       },
       "reportsByAge": {
         "title": "{virus} <span class='dynamic-label'>Laboratory-Reported Cases</span> by Age Group",
-        "subtitle": "Cases for the week ending {date} have {trend} since the previous week"
+        "subtitle": "Cases for the week ending {date}, have {trend} since the previous week"
       },
       "reportsByBorough": {
         "title": "{virus} <span class='dynamic-label'>Laboratory-Reported Cases</span> by Borough",
-        "subtitle": "Cases for the week ending {date} have {trend} since the previous week"
+        "subtitle": "Cases for the week ending {date}, have {trend} since the previous week"
       },
       "reportsByRE": {
         "title": "{virus} <span class='dynamic-label'>Laboratory-Reported Cases</span> by Race and Ethnicity",
@@ -83,7 +83,7 @@
     "charts": {
       "seasonalComparison": {
         "title": "{virus} <span class='dynamic-label'>Deaths</span> by Season",
-        "subtitle": "Deaths for the week ending {date} have {trend} since the previous week"
+        "subtitle": "Deaths for the week ending {date}, have {trend} since the previous week"
       },
       "deathsByAge": {
         "title": "{virus} <span class='dynamic-label'>Deaths</span> by Age Group",

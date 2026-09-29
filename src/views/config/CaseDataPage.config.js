@@ -30,7 +30,8 @@ const caseDataPageConfig = {
           dataPath: DATA_PATHS.death,
           season: { start: { month: 10, day: 4 }, end: { month: 5, day: 31 } },
           weeklyField: "value",
-          seasonalSubmetric: "Seasonal 2025-2026",
+          // No hardcoded season: SeasonalBullet uses the most recent "Seasonal YYYY-YYYY" row,
+          // so the sentence survives the data team rolling over to a new season label.
           dateField: "date",
           as: "p",
           className: "seasonal-bullet",

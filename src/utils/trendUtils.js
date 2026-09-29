@@ -332,11 +332,38 @@ export function formatDate(input) {
     ?? (input?.date instanceof Date ? input.date : null) // allow {date}
     ?? (input?.dateObj instanceof Date ? input.dateObj : null); // allow {dateObj}
   if (!d) return "N/A";
-  return d.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatAPDate(d);
+}
+
+// NYC Health Department / AP style for month names used with a specific date:
+// abbreviate Jan., Feb., Aug., Sept., Oct., Nov., Dec.; spell out March–July.
+const AP_MONTHS = [
+  "Jan.", "Feb.", "March", "April", "May", "June",
+  "July", "Aug.", "Sept.", "Oct.", "Nov.", "Dec.",
+];
+const FULL_MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+/**
+ * Single source of truth for every displayed date ("Data updated:", the
+ * sidebar "Last updated", "week ending …" copy, "As of …" bullets).
+ * - Month + day + year → "Sept. 24, 2026" (AP abbreviation; year set off by a
+ *   comma — callers placing it mid-sentence should follow it with a comma too).
+ * - Month + year only  → "September 2026" (spelled out, no comma) via
+ *   formatAPMonthYear below.
+ * Built from getMonth()/getDate() rather than toLocaleDateString so output
+ * doesn't vary by browser locale.
+ */
+export function formatAPDate(d) {
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null;
+  return `${AP_MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+export function formatAPMonthYear(d) {
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null;
+  return `${FULL_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 /**
@@ -355,17 +382,11 @@ export function getISOWeek(date) {
   return 1 + Math.round(diff / (7 * 24 * 60 * 60 * 1000));
 }
 
-// Compact date format used by chart/stat footers and map footnotes
-// ("Aug 3, 2026") — distinct from formatDate's long form ("August 3, 2026")
-// used in the sidebar and other prose contexts. Kept as one function so the
-// four+ call sites that used to define this inline stay in sync.
+// Date format for chart/stat footers and map footnotes. Now identical to
+// formatDate (AP style, "Aug. 3, 2026") so "Data updated:" labels match the
+// sidebar and in-text dates. Kept as a named export for existing call sites.
 export function formatShortDate(d) {
-  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatAPDate(d);
 }
 
 export function capitalize(word) {
@@ -482,10 +503,10 @@ export function generateTrendSubtitle({ view, trendObj, latestWeek }) {
   const phrase = formatTrendPhrase(trendObj, { withBy: true, withPercent: true });
 
   if (!phrase || phrase === "not changed") {
-    return `${capitalize(metric)} for the week ending ${formatDate(latestWeek)} have not changed since the previous week.`;
+    return `${capitalize(metric)} for the week ending ${formatDate(latestWeek)}, have not changed since the previous week.`;
   }
 
-  return `${capitalize(metric)} for the week ending ${formatDate(latestWeek)} have ${phrase} since the previous week.`;
+  return `${capitalize(metric)} for the week ending ${formatDate(latestWeek)}, have ${phrase} since the previous week.`;
 }
 
 /** =====================================================================

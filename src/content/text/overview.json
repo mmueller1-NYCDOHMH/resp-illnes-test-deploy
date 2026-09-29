@@ -22,7 +22,7 @@
 
     "summaryBox": {
       "title": "<span class='dynamic-label'>Emergency Department</span> Trends for the Week Ending <span class='dynamic-label'>{date}</span>",
-      "description": "<p>Emergency department data can provide a timely view of changes in respiratory virus spread but do not represent everyone with respiratory illness. For example, people who are sick and don't seek care or get care somewhere other than an emergency department are not included.</p><p>We examine data for visits to the emergency department and hospitalizations from the emergency department with a respiratory illness diagnosis. These can include COVID-19, flu, and RSV, general respiratory complaints like cough, or illnesses such as pneumonia.</p>"
+      "description": "<p>Emergency department data can provide a timely view of changes in respiratory virus spread. These data are helpful to show trends but do not represent everyone with a respiratory illness.</p><p>We examine data for visits to the emergency department and hospitalizations from the emergency department with a respiratory illness diagnosis. These can include COVID-19, flu, and RSV, general respiratory complaints like cough, or illnesses such as pneumonia.</p>"
     },
 
     "charts": {
@@ -34,7 +34,7 @@
 
     "otherResp": {
       "title": "<span class='dynamic-label'>What else is happening in the city</span>",
-      "intro": "The NYC Health Department receives data from selected NYC laboratories that test for an expanded panel of circulating respiratory viruses, including those that are not required to be reported to the NYC Health Department.",
+      "intro": "The NYC Health Department receives data from selected NYC laboratories that test for many respiratory viruses, including some that are not required to be reported to the Health Department.",
       "listIntro": "Percent of positive test results for the week ending {date}:"
     },
 

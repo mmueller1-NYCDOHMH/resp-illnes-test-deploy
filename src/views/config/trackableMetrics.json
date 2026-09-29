@@ -9,7 +9,7 @@
     "submetric": "Overall"
   },
   {
-    "label": "COVID lab-reported cases",
+    "label": "COVID-19 lab-reported cases",
     "href": "/data/covid-19?dataType=lab#case-reports-season",
     "virus": "COVID-19",
     "description": "Lab-confirmed COVID-19 cases reported by season",

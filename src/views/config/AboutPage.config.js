@@ -30,6 +30,9 @@ const aboutPageConfig = {
     {
       id: "provider-info",
       titleKey: "",
+      // No visible title of its own — label used by the ProgressRail dot and
+      // scroll breadcrumb (otherwise they fall back to the raw id).
+      navLabel: "Health Information",
       renderAs: "cards",
       subtitle: "Find health information and guidance for each illness:",
       markdownSection: "Learn about Respiratory Illnesses",

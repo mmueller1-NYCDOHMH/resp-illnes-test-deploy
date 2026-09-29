@@ -57,13 +57,27 @@ async function fetchWithRetry(url, { timeout = 10000, retries = 2 } = {}) {
   }
 }
 
-/** Load and parse CSV with caching and safe normalization */
-export async function loadCSVData(url) {
-  if (!url) throw new Error("No CSV URL provided");
+/**
+ * Load and parse CSV with caching and safe normalization.
+ *
+ * PERF: the cache stores the in-flight *promise*, not just the finished
+ * result. The home page asks for the same CSV from several places at once
+ * (page data, DynamicParagraph, SeasonalBullet, Quick Links ranking,
+ * neighborhood maps); caching only the result meant each caller that
+ * started before the first fetch finished downloaded and parsed the file
+ * again. Failed loads are evicted so a later call can retry.
+ */
+export function loadCSVData(url) {
+  if (!url) return Promise.reject(new Error("No CSV URL provided"));
 
-  // Serve from cache if already loaded
   if (csvCache.has(url)) return csvCache.get(url);
 
+  const pending = fetchAndParseCSV(url);
+  csvCache.set(url, pending);
+  return pending;
+}
+
+async function fetchAndParseCSV(url) {
   try {
     const text = await fetchWithRetry(url);
 
@@ -96,10 +110,10 @@ export async function loadCSVData(url) {
       };
     });
 
-    csvCache.set(url, parsed);
     return parsed;
   } catch (err) {
     console.error(`❌ CSV load failed for ${url}:`, err);
+    csvCache.delete(url);
     return [];
   }
 }

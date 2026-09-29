@@ -9,7 +9,19 @@ import { groupByMetric } from "./groupByMetric";
 /**
  * Fetch the latest commit date from the GitHub API for a blob URL.
  */
-export async function getGitHubFileUploadDate(url) {
+// PERF: one GitHub API call per file per page session. Several components
+// ask for the same file's date, and unauthenticated api.github.com calls are
+// rate-limited to 60/hour per visitor IP.
+const uploadDateCache = new Map();
+
+export function getGitHubFileUploadDate(url) {
+  if (!uploadDateCache.has(url)) {
+    uploadDateCache.set(url, fetchGitHubFileUploadDate(url));
+  }
+  return uploadDateCache.get(url);
+}
+
+async function fetchGitHubFileUploadDate(url) {
   try {
     const match = url.match(
       /github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)/
@@ -70,14 +82,16 @@ export async function loadConfigWithData(config, variables = {}) {
   const blobUrl =
     typeof DATA_PATHS_BLOB === "object" ? DATA_PATHS_BLOB[dataType] : null;
 
-  const uploadDate = blobUrl
-    ? await getGitHubFileUploadDate(blobUrl)
-    : null;
+  // PERF: fetch the upload date and the CSV in parallel — previously the
+  // CSV download didn't start until the GitHub API round-trip finished.
+  const [uploadDate, rawData] = await Promise.all([
+    blobUrl ? getGitHubFileUploadDate(blobUrl) : Promise.resolve(null),
+    loadCSVData(resolvedDataPath),
+  ]);
 
   /* ------------------------------------------------------------------
    * Load raw data
    * ------------------------------------------------------------------ */
-  const rawData = await loadCSVData(resolvedDataPath);
   const statCardData = groupByMetric(rawData);
 
   /* ------------------------------------------------------------------

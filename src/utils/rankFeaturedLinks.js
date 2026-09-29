@@ -127,8 +127,21 @@ function scoreEntry(entry, rowsByUrl) {
  * source yet (see WASTEWATER_LOCAL_PATH above), so they shouldn't surface
  * in the home page's data-driven Quick Links list.
  */
-export async function getRankedJumpLinks({ limit = 3 } = {}) {
-  if (cachedRanked) return cachedRanked.slice(0, limit);
+// PERF: share one in-flight ranking so an early warm-up call (see
+// ConfigDrivenPage) and the sidebar's own call don't each score the data.
+let rankingPromise = null;
+
+export function getRankedJumpLinks({ limit = 3 } = {}) {
+  if (cachedRanked) return Promise.resolve(cachedRanked.slice(0, limit));
+  if (!rankingPromise) {
+    rankingPromise = computeRankedJumpLinks().finally(() => {
+      rankingPromise = null;
+    });
+  }
+  return rankingPromise.then((ranked) => ranked.slice(0, limit));
+}
+
+async function computeRankedJumpLinks() {
 
   const rankable = trackableMetrics.filter(
     (entry) => entry.dataType !== "wastewater" && resolveDataUrl(entry)
@@ -148,5 +161,5 @@ export async function getRankedJumpLinks({ limit = 3 } = {}) {
     .sort((a, b) => Math.abs(b.pctChange) - Math.abs(a.pctChange));
 
   cachedRanked = ranked;
-  return ranked.slice(0, limit);
+  return ranked;
 }

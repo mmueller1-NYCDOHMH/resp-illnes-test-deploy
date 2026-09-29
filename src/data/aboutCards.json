@@ -36,9 +36,9 @@
     },
     {
       "id": "nys-wastewater",
-      "title": "NYS Wastewater Surveillance Data",
-      "description": "Explore NYS wastewater surveillance data",
-      "link": "https://coronavirus.health.ny.gov/covid-19-wastewater-surveillance",
+      "title": "NYS Wastewater Variant Data",
+      "description": "Explore NYS wastewater SARS-CoV-2 variant data",
+      "link": "https://coronavirus.health.ny.gov/covid-19-wastewater-variant-data",
       "icon": "./assets/nys-logo.svg",
       "externalIcon": "./assets/external-link-icon.png"
     },
