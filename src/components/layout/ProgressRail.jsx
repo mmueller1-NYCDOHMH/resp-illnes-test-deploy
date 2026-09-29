@@ -25,6 +25,16 @@ const RAIL_SPAN = RAIL_BOT - RAIL_TOP; // 70 vh
 // visibly drift sideways as they grew.
 const DOT_BASE_PX = 10;
 
+// Scroll to a section AND move keyboard focus there, so the next Tab
+// continues from that section instead of from the rail.
+const jumpToSection = (id) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
+  el.focus({ preventScroll: true });
+};
+
 const ProgressRail = ({ sectionLinks }) => {
   const [positions,  setPositions]  = useState([]); // { id, label, pct }
   const [scrollPct,  setScrollPct]  = useState(0);
@@ -144,8 +154,12 @@ const ProgressRail = ({ sectionLinks }) => {
      * Outer: absolute, full sidebar column height.
      * -right-2 = -8px centres the rail on the sidebar's right border.
      */
-    <div
-      aria-hidden="true"
+    // Was aria-hidden="true" while its dots were still keyboard-focusable
+    // (axe aria-hidden-focus): screen readers landed on unnamed, hidden
+    // stops. Exposed as a labeled nav instead; the decorative track/fill
+    // stay hidden.
+    <nav
+      aria-label="Page sections"
       className="absolute -right-2 top-0 bottom-0 w-4 pointer-events-none z-10"
     >
       {/* Inner: sticky, always fills the viewport */}
@@ -153,12 +167,14 @@ const ProgressRail = ({ sectionLinks }) => {
 
         {/* ── Track ── */}
         <div
+          aria-hidden="true"
           className="absolute left-1/2 -translate-x-1/2 w-[2px] bg-[var(--gray-200)] rounded-[1px]"
           style={{ top: `${RAIL_TOP}vh`, height: `${RAIL_SPAN}vh` }}
         />
 
         {/* ── Fill — height is dynamic, transition stays in style ── */}
         <div
+          aria-hidden="true"
           className="absolute left-1/2 -translate-x-1/2 w-[2px] bg-[var(--page-accent,var(--gray-500))] rounded-[1px]"
           style={{
             top:        `${RAIL_TOP}vh`,
@@ -181,18 +197,19 @@ const ProgressRail = ({ sectionLinks }) => {
               role="button"
               tabIndex={0}
               aria-label={`Jump to ${label}`}
-              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer z-[2] p-[6px] box-border rounded-full focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+              aria-current={isActive ? "location" : undefined}
+              className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 cursor-pointer z-[2] p-[6px] box-border rounded-full focus:outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-blue-500"
               style={{ top: topPos, width: DOT_BASE_PX + 12, height: DOT_BASE_PX + 12 }}
               onMouseEnter={() => setHoveredId(id)}
               onMouseLeave={() => setHoveredId(null)}
               onFocus={() => setHoveredId(id)}
               onBlur={() => setHoveredId(null)}
-              onClick={() =>
-                document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })
-              }
+              onClick={() => jumpToSection(id)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ")
-                  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault(); // Space would otherwise also scroll the page
+                  jumpToSection(id);
+                }
               }}
             >
               {/* Dot — fixed box size; hover/active only ever scale it via
@@ -212,7 +229,7 @@ const ProgressRail = ({ sectionLinks }) => {
 
               {/* Tooltip */}
               {isHovered && (
-                <div className="absolute right-[18px] top-1/2 -translate-y-1/2 bg-[var(--gray-900)] text-white py-1 px-[10px] rounded-md text-xs font-medium whitespace-nowrap pointer-events-none shadow-[0_2px_8px_rgba(0,0,0,0.2)] z-20">
+                <div aria-hidden="true" className="absolute right-[18px] top-1/2 -translate-y-1/2 bg-[var(--gray-900)] text-white py-1 px-[10px] rounded-md text-xs font-medium whitespace-nowrap pointer-events-none shadow-[0_2px_8px_rgba(0,0,0,0.2)] z-20">
                   {label}
                   {/* Arrow caret — CSS border trick, keep as style */}
                   <div
@@ -229,7 +246,7 @@ const ProgressRail = ({ sectionLinks }) => {
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 };
 

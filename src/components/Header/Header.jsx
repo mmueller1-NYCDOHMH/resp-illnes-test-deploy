@@ -27,13 +27,7 @@ const Header = () => (
 
       {/* ── Left: NYC Health logo + site title ── */}
       <div className="items-center gap-md min-w-0">
-        <a
-          href="https://www.nyc.gov/site/doh/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-shrink-0"
-          aria-label="NYC Health — opens in a new tab"
-        >
+
           <img
             src={logoPath}
             alt="NYC Health"
@@ -44,7 +38,7 @@ const Header = () => (
               filter: "brightness(0) invert(1)",
             }}
           />
-        </a>
+
 
         {/* Thin vertical divider */}
         <div aria-hidden="true" className="" />

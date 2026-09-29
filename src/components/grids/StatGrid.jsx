@@ -181,33 +181,10 @@ const StatGrid = ({ data, uploadDate }) => {
     <div className="stat-grid flex flex-col gap-xs w-full overflow-hidden">
 
       {/* ── Section heading ── */}
-      <h3 className="text-[var(--content-title-size)] font-semibold tracking-tight text-gray-900 mb-xs">
-        {sectionTitle}
-      </h3>
-
-      {/* ── ED trends date subtitle ── */}
-      <p className="text-body text-gray-700 leading-relaxed mb-sm">
-        {sectionSubtitle} <strong className="text-gray-800">{formattedDate}</strong>
-      </p>
-
-      {/* ── Body copy ── */}
-      <div
-        className="stat-info-description text-body text-gray-700 leading-relaxed mb-xl [&_p]:mb-3 [&_p:last-child]:mb-0"
-        dangerouslySetInnerHTML={{ __html: descriptionHTML }}
-      />
-
-      {/* ── Toggle row + info icon ── */}
-      <div className="flex items-center justify-between mb-lg">
-        <ToggleGroup
-          options={[
-            { label: "Visits", value: "visits" },
-            { label: "Hospitalizations", value: "hospitalizations" },
-          ]}
-          value={view}
-          onChange={setView}
-          ariaLabel="Toggle between visits and hospitalizations"
-          variant="pill"
-        />
+      <div className="flex items-center justify-between gap-sm mb-xs">
+        <h2 className="text-[var(--content-title-size)] font-semibold tracking-tight text-gray-900">
+          {sectionTitle}
+        </h2>
         <div className="flex items-center gap-sm flex-shrink-0">
           {/* Info icon hidden for the time being — re-enable by removing this flag */}
           {SHOW_STAT_GRID_INFO_ICON && (
@@ -241,6 +218,31 @@ const StatGrid = ({ data, uploadDate }) => {
         </div>
       </div>
 
+      {/* ── ED trends date subtitle ── */}
+      <p className="text-body text-gray-700 leading-relaxed mb-sm">
+        {sectionSubtitle} <strong className="text-gray-800">{formattedDate}</strong>
+      </p>
+
+      {/* ── Body copy ── */}
+      <div
+        className="stat-info-description text-body text-gray-700 leading-relaxed mb-xl [&_p]:mb-3 [&_p:last-child]:mb-0"
+        dangerouslySetInnerHTML={{ __html: descriptionHTML }}
+      />
+
+      {/* ── Toggle row ── */}
+      <div className="flex items-center mb-lg">
+        <ToggleGroup
+          options={[
+            { label: "Visits", value: "visits" },
+            { label: "Hospitalizations", value: "hospitalizations" },
+          ]}
+          value={view}
+          onChange={setView}
+          ariaLabel="Toggle between visits and hospitalizations"
+          variant="pill"
+        />
+      </div>
+
       {/* ── Unified stat card: one shared header, ORI heavy row, 3 compact rows ── */}
       <div className="bg-white rounded-xl box-border w-full border border-[var(--gray-200)] shadow-[0_2px_8px_rgba(0,0,0,0.08),0_0_0_1px_rgba(0,0,0,0.04)] px-sm md:px-md">
 
@@ -270,7 +272,7 @@ const StatGrid = ({ data, uploadDate }) => {
           />
         )}
 
-        <div className="pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-600">
+        <div className="pt-4 pb-1 text-xs font-semibold tracking-wide text-gray-600">
           By virus
         </div>
 
@@ -337,7 +339,8 @@ const StatGrid = ({ data, uploadDate }) => {
         isOpen={downloadOpen}
         onClose={() => setDownloadOpen(false)}
         title="Export &amp; Share"
-        maxContentHeight="42vh"
+        maxContentHeight="60vh"
+        compact
         content={
           <DownloadPanel
             onConfirm={() => {

@@ -60,7 +60,7 @@ const Footer = () => {
           className={[
             "flex flex-1 justify-between gap-xl max-w-[640px] min-w-[320px]",
             "lg:flex-wrap lg:justify-start lg:gap-lg lg:max-w-full",
-            "max-md:flex-col max-md:items-center max-md:w-full max-md:min-w-0",
+            "max-md:flex-col max-md:items-center max-md:w-full max-md:min-w-0 max-md:gap-sm",
           ].join(" ")}
         >
           {footerLinks.map((column, colIdx) => (
@@ -90,14 +90,16 @@ const Footer = () => {
           className={[
             "flex flex-1 flex-col items-start min-w-[260px] max-w-[320px]",
             "lg:max-w-[280px]",
+            // Mobile: center to match the stacked link columns above
+            "max-md:w-full max-md:min-w-0 max-md:max-w-[320px] max-md:items-center",
           ].join(" ")}
         >
           <a
-            href="https://www.nyc.gov/"
+            href="https://www.nyc.gov/site/doh/index.page"
             title="NYC.gov"
             rel="noopener noreferrer"
             className="footer-logo-link inline-block"
-            {...hoverHandlers("https://www.nyc.gov/", "NYC.gov")}
+            {...hoverHandlers("https://www.nyc.gov/site/doh/index.page", "NYC Health")}
           >
             <img
               src={resolveAsset('assets/NYC_Health_color_main.png')}
@@ -106,11 +108,11 @@ const Footer = () => {
             />
           </a>
 
-          <p className="text-sm text-footer-text leading-relaxed text-left">
+          <p className="text-sm text-footer-text leading-relaxed text-left max-md:text-center">
             © City of New York - {new Date().getFullYear()} All Rights Reserved. Notify NYC is a trademark and service mark of the City of New York.
           </p>
 
-          <div className="flex items-center justify-between w-full mt-xs">
+          <div className="flex items-center justify-between w-full mt-xs max-md:justify-center max-md:gap-md">
             <a
               href="https://www.nyc.gov/home/privacy-policy.page"
               title="Privacy Policy"

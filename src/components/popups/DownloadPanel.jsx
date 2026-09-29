@@ -42,20 +42,20 @@ const CheckIcon = () => (
 // ── Shared button style ───────────────────────────────────────────────────────
 const btnCls = [
   "inline-flex items-center gap-1.5 bg-blue-primary text-gray-200 text-sm",
-  "px-3 py-[6px] rounded-md border-0 cursor-pointer font-medium m-[3px]",
+  "px-3 py-[5px] rounded-md border-0 cursor-pointer font-medium",
   "hover:bg-blue-secondary transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed",
 ].join(" ");
 
 const ghostCls = [
   "inline-flex items-center gap-1.5 text-sm border border-[var(--gray-300)]",
-  "px-3 py-[6px] rounded-md cursor-pointer font-medium m-[3px] bg-white text-gray-700",
+  "px-3 py-[5px] rounded-md cursor-pointer font-medium bg-white text-gray-700",
   "hover:bg-[var(--gray-100)] transition-colors duration-200",
 ].join(" ");
 
 // ── Section divider ───────────────────────────────────────────────────────────
-const Divider = ({ label }) => (
-  <div className="flex items-center gap-2 my-3">
-    <span className="text-xs font-semibold uppercase tracking-widest text-gray-600">{label}</span>
+const Divider = ({ label, first = false }) => (
+  <div className={`flex items-center gap-2 mb-2 ${first ? "mt-0 pr-8" : "mt-4"}`}>
+    <span className="text-xs font-semibold tracking-widest text-gray-600">{label}</span>
     <div className="flex-1 border-t border-[var(--gray-200)]" />
   </div>
 );
@@ -106,8 +106,8 @@ const DownloadPanel = ({
   return (
     <div>
       {/* ── Download ── */}
-      <Divider label="Download" />
-      <div className="flex flex-wrap items-center">
+      <Divider label="Download" first />
+      <div className="flex flex-wrap items-center gap-2">
         <button type="button" className={btnCls} onClick={onConfirm} disabled={!onConfirm} aria-label="Download CSV">
           <DownloadIcon /> Download CSV
         </button>
@@ -119,14 +119,14 @@ const DownloadPanel = ({
       </div>
 
       {description && (
-        <p className="m-0 mt-2 text-sm text-gray-700">{description}</p>
+        <p className="m-0 mt-1.5 text-xs text-gray-600">{description}</p>
       )}
 
       {/* ── Share ── */}
       {showShare && (
         <>
           <Divider label="Share" />
-          <div className="flex flex-wrap items-center">
+          <div className="flex flex-wrap items-center gap-2">
             {onCopyImage && (
               <button
                 type="button"
@@ -159,8 +159,8 @@ const DownloadPanel = ({
 
           {/* Inline embed snippet */}
           {embedOpen && (
-            <div className="mt-3">
-              <pre className="text-xs bg-[var(--gray-100)] border border-[var(--gray-300)] rounded-md p-3 overflow-x-auto whitespace-pre-wrap break-all text-gray-800 m-0 mb-2">
+            <div className="mt-2">
+              <pre className="text-xs bg-[var(--gray-100)] border border-[var(--gray-300)] rounded-md p-2 overflow-x-auto whitespace-pre-wrap break-all text-gray-800 m-0 mb-2">
                 {embedSnippet}
               </pre>
               <button
@@ -178,10 +178,10 @@ const DownloadPanel = ({
 
       {/* ── Data preview ── */}
       {hasPreview && (
-        <div className="mt-3">
+        <>
           <Divider label="Preview" />
           <DownloadPreviewTable data={previewData} columnLabels={columnLabels} maxRows={100} />
-        </div>
+        </>
       )}
     </div>
   );

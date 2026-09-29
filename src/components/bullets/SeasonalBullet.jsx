@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { loadCSVData } from "../../utils/loadCSVData";
 import { toSourceVirus } from "../../utils/virusMap";
+import { formatAPDate } from "../../utils/trendUtils";
 import "./SeasonalBullet.css";
 
 const PEDS_DEATH_RULES = {
@@ -68,7 +69,7 @@ export default function SeasonalBullet({
     diseaseLabel: configuredDiseaseLabel,
     filters = {},
     weeklyField = "value",
-    seasonalSubmetric = "Seasonal total",
+    seasonalSubmetric = null, // null → use the most recent "Seasonal …" row
     dateField = "date",
     showWhen,
     templates,
@@ -321,11 +322,7 @@ function isInSeason(dateish, seasonCfg) {
 function formatDisplayDateLong(dateish) {
   const d = dateish instanceof Date ? dateish : new Date(dateish);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  return formatAPDate(d);
 }
 
 function buildSeasonalMessage({

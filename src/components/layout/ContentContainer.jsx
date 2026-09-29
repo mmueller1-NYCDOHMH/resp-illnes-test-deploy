@@ -35,6 +35,19 @@ const resolveText = (input, vars = {}) => {
   });
 };
 
+const toSentenceCase = (text) => {
+  const acronyms = {
+    "covid-19": "COVID-19",
+    "sars-cov-2": "SARS-CoV-2",
+    rsv: "RSV",
+    ed: "ED",
+    nyc: "NYC",
+    ari: "ARI",
+  };
+  const sentenceCase = text.toLowerCase().replace(/(^\s*[a-z])/, (letter) => letter.toUpperCase());
+  return sentenceCase.replace(/\b(?:sars-cov-2|covid-19|rsv|ed|nyc|ari)\b/gi, (term) => acronyms[term.toLowerCase()]);
+};
+
 const MONTHS =
   "(January|February|March|April|May|June|July|August|September|October|November|December)";
 const DATE_RE = new RegExp(`\\b${MONTHS}\\s+\\d{1,2},\\s+\\d{4}\\b`);
@@ -128,7 +141,7 @@ const ContentContainer = ({
   /* ------------------------------- Title logic ------------------------------- */
   const isTitleString = typeof title === "string";
   const renderedTitleHTML = isTitleString
-    ? colorizeVirusInTitle(resolveText(title, titleVariables))
+    ? colorizeVirusInTitle(toSentenceCase(resolveText(title, titleVariables)))
     : null;
   /* ------------------------------ Subtitle logic ----------------------------- */
 
@@ -180,14 +193,14 @@ const ContentContainer = ({
           <div className="flex justify-between items-center w-full gap-md mb-md">
             {/* Title */}
             {isTitleString ? (
-              <h3
+              <h2
                 className="text-[var(--content-title-size,var(--font-size-lg))] text-[var(--content-title-color,var(--gray-900))] font-semibold tracking-tight m-0 flex-1 min-w-0"
                 dangerouslySetInnerHTML={{ __html: renderedTitleHTML }}
               />
             ) : (
-              <h3 className="text-[var(--content-title-size,var(--font-size-lg))] text-[var(--content-title-color,var(--gray-900))] font-semibold tracking-tight m-0 flex-1 min-w-0">
+              <h2 className="text-[var(--content-title-size,var(--font-size-lg))] text-[var(--content-title-color,var(--gray-900))] font-semibold tracking-tight m-0 flex-1 min-w-0">
                 {title}
-              </h3>
+              </h2>
             )}
 
             {/* Icon buttons */}
@@ -196,7 +209,7 @@ const ContentContainer = ({
                 <div className="relative group flex items-center">
                   <button
                     type="button"
-                    className="appearance-none bg-transparent border-0 p-0 leading-none cursor-pointer inline-flex items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:rounded-[6px] text-gray-900 hover:text-gray-600 transition-colors duration-150"
+                    className="appearance-none bg-transparent border-0 p-0 leading-none cursor-pointer inline-flex items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:rounded-[6px] text-gray-900 hover:text-gray-600 transition-colors duration-150"
                     aria-label="More info about this section"
                     aria-haspopup="dialog"
                     aria-expanded={isModalOpen}
@@ -284,7 +297,8 @@ const ContentContainer = ({
           isOpen={isDownloadModalOpen}
           onClose={() => setIsDownloadModalOpen(false)}
           title="Export &amp; Share"
-          maxContentHeight="42vh"
+          maxContentHeight="60vh"
+          compact
           content={
             <DownloadPanel
               onConfirm={() => {

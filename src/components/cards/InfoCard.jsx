@@ -20,7 +20,7 @@ const InfoCard = ({ title, icon, description, link, externalIcon, accentColor })
           : undefined
       }
     >
-      <div className="flex flex-row justify-between gap-3 mb-sm w-full">
+      <div className="info-card-header flex flex-row justify-between gap-3 mb-sm w-full">
         <div className="flex items-center gap-2 min-w-0">
           {icon && (
             <img

@@ -101,6 +101,53 @@ html[data-theme="dark"] .language-select {
   color: var(--gray-700);
 }
 
+/* Keyboard focus ring — matches the sidebar's other controls
+   (focus-visible:ring-2 ring-blue-500). The base rule above sets
+   outline:none, so without this the select had no visible focus at all. */
+.sidebar-lang-select:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+  background-color: var(--gray-200);
+}
+
+/* ── Mobile NavBar language select (next to Share) ───────────────────────── */
+.nav-lang-toggle {
+  gap: 4px;
+  padding: 0 4px;
+  color: var(--gray-600);
+  flex-shrink: 1;
+  min-width: 0;
+}
+.nav-lang-toggle .language-toggle-icon {
+  display: inline-flex;
+}
+.nav-lang-select {
+  max-width: 118px;
+  min-width: 0;
+  padding: 10px 16px 10px 2px;
+  border: none;
+  border-radius: 6px;
+  outline: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  color: var(--gray-600);
+  background-color: transparent;
+  appearance: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9' viewBox='0 0 9 9'%3E%3Cpath fill='%234B5563' d='M1 2.5l3.5 3.5 3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+  background-size: 9px;
+}
+.nav-lang-select:hover { color: var(--blue-primary); }
+.nav-lang-select:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 1px;
+}
+
 /* ── Toggle switch ─────────────────────────────────────────────────────── */
 .switch {
   position: relative;

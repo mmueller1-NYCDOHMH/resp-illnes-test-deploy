@@ -12,8 +12,16 @@ const LANG_OPTIONS = [
   { value: "es", label: "Español" },
   { value: "zh-CN", label: "中文" },
   { value: "ru", label: "Русский" },
-  { value: "ar", label: "العربية" },
+  { value: "it", label: "Italiano" },
+  { value: "ht", label: "Kreyòl ayisyen" },
   { value: "bn", label: "বাংলা" },
+  { value: "yi", label: "ײִדיש" },
+  { value: "ko", label: "한국어" },
+  { value: "ar", label: "العربية" },
+  { value: "fr", label: "Français" },
+  { value: "pl", label: "Polski" },
+  { value: "ur", label: "اردو" },
+  { value: "pt", label: "Português" },
 ];
 
 /**
@@ -56,7 +64,9 @@ export default function LanguageToggle({ className = "", wrapperClassName = "", 
   return (
     <label
       className={wrapperClassName}
-      style={{ display: "inline-flex", alignItems: "center", width: "100%" }}
+      // With a wrapperClassName the caller owns layout/visibility (inline
+      // display would override responsive classes like sm:hidden).
+      style={wrapperClassName ? undefined : { display: "inline-flex", alignItems: "center", width: "100%" }}
     >
       <span className="sr-only">Select language</span>
       {showIcon && (
@@ -72,7 +82,11 @@ export default function LanguageToggle({ className = "", wrapperClassName = "", 
         aria-label="Select language"
         value={value}
         onChange={handleChange}
-        disabled={!ready && value !== "en"}
+        // Never disabled: if the Google widget is slow or blocked (ad
+        // blockers, network), a disabled <select> drops out of the tab order
+        // and strands users on a non-English preference. handleChange caches
+        // the choice and it's reapplied once the widget is ready.
+        aria-busy={!ready && value !== "en" ? true : undefined}
       >
         {LANG_OPTIONS.map((opt) => (
           <option key={opt.value} value={opt.value}>

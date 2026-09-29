@@ -21,7 +21,7 @@ const VirusFilterButton = ({ label, accentColor, active, onClick, className = ""
         "bg-gray-300 text-gray-800 border-0 cursor-pointer",
         "font-body text-sm font-semibold transition-[background-color] duration-200 whitespace-nowrap",
         "hover:bg-gray-400 hover:shadow-sm",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500",
+        "focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-blue-500",
         "active:translate-y-[0.5px]",
         // max-sm: = mobile only (<640px); sm: would wrongly apply to desktop
         "max-sm:w-[80%] max-sm:max-w-[80%] max-sm:h-[40px] max-sm:rounded-md",

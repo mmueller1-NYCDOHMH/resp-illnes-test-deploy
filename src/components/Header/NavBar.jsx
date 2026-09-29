@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getText } from "../../utils/contentUtils";
+import LanguageToggle from "../contentUtils/LanguageToggle";
 
 const HomeIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -65,6 +66,10 @@ const NavLink = ({ label, to, isActive, Icon }) => {
     <Link
       href={to}
       aria-current={isActive ? "page" : undefined}
+      // The text label below is display:none on mobile (icon-only), which
+      // also removes it from the accessibility tree — this keeps the link
+      // named at every breakpoint.
+      aria-label={label}
       className={[
         "group flex items-center gap-[5px] whitespace-nowrap no-underline",
         "py-[10px] px-[14px] sm:py-[12px] sm:px-[20px]",
@@ -140,6 +145,15 @@ const NavBar = () => {
       <span className="flex-1" />
 
       <NavDivider />
+
+      {/* Mobile only (< sm): language picker lives in the top bar so it's
+          visible without opening the "Filters and navigation" sheet. On
+          sm+ it stays in the sidebar (PageSidebar hides its copy below sm),
+          so only one picker is ever displayed/tabbable at a time. */}
+      <LanguageToggle
+        wrapperClassName="nav-lang-toggle inline-flex items-center sm:hidden"
+        className="nav-lang-select"
+      />
 
       <button
         onClick={handleCopy}

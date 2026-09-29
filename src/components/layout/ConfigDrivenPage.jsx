@@ -25,6 +25,7 @@ import DataPageLayout from "./DataPageLayout";
 import TrendSummaryContainer from "./TrendSummaryContainer";
 import SectionRenderer from "./SectionRenderer";
 import PageSidebar from "./PageSidebar";
+import { getRankedJumpLinks } from "../../utils/rankFeaturedLinks";
 import PageSkeleton from "./PageSkeleton";
 import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
 
@@ -76,6 +77,15 @@ const ConfigDrivenPage = ({ config }) => {
     document.documentElement.style.setProperty("--page-accent", color);
     return () => document.documentElement.style.removeProperty("--page-accent");
   }, [activeVirus]);
+
+  // ── Warm the sidebar's Quick Links data ───────────────────────────────────
+  // PERF: PageSidebar only mounts after the page's own data has loaded, so
+  // its CSV fetches used to start in a second round-trip. Kicking the
+  // (cached, de-duplicated) ranking off on mount runs them in parallel with
+  // the page data instead.
+  useEffect(() => {
+    getRankedJumpLinks().catch(() => {});
+  }, []);
 
   // ── Data hydration ────────────────────────────────────────────────────────
   const hydratedConfig = usePageData(config, { activeVirus, view, dataType });
@@ -227,7 +237,6 @@ const ConfigDrivenPage = ({ config }) => {
   const summaryOverview = resolvedSummaryMarkdownPath ? (
     <TrendSummaryContainer
       sectionTitle={resolveText(resolvedSummary.titleKey || resolvedSummary.title)}
-      extraSectionTitle="Seasonal Context"
       markdownPath={resolvedSummaryMarkdownPath}
       virus={activeVirus}
       view={view}

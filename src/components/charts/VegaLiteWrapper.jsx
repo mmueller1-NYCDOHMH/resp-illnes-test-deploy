@@ -6,12 +6,35 @@ import React, {
   createContext
 } from "react";
 import PropTypes from "prop-types";
-import { VegaLite } from "react-vega";
-import { Handler as TooltipHandler } from "vega-tooltip";
+import VegaLite from "./LazyVegaLite";
 import { getVegaThemeConfig, mergeDeep } from "../../utils/vegaTheme";
 
 import "./VegaLiteWrapper.css";
 export const VegaThemeContext = createContext(false);
+
+// PERF: stable default so `dynamicFields` doesn't change identity on every
+// render (a fresh `{}` default re-ran the whole spec clone/merge each render).
+const EMPTY_FIELDS = Object.freeze({});
+
+// PERF: charts are only embedded once they come within this distance of the
+// viewport. Pages carry 10+ Vega views; compiling them all up front blocked
+// the main thread for seconds on load. Once mounted a chart stays mounted.
+const LAZY_ROOT_MARGIN = "600px 0px";
+
+// PERF: width changes after the first measurement are debounced so a burst
+// of layout shifts (fonts loading, sidebar appearing, window drag-resize)
+// triggers one re-embed instead of one per animation frame.
+const RESIZE_DEBOUNCE_MS = 150;
+
+// PERF: vega-tooltip is loaded alongside the lazy Vega chunk rather than in
+// the initial page bundle. One shared promise for every chart on the page.
+let tooltipModulePromise = null;
+const loadTooltipHandler = () => {
+  if (!tooltipModulePromise) {
+    tooltipModulePromise = import("vega-tooltip").then((m) => m.Handler);
+  }
+  return tooltipModulePromise;
+};
 
 const getInitialDark = () => {
   if (typeof document !== "undefined") {
@@ -28,7 +51,7 @@ const getInitialDark = () => {
 const VegaLiteWrapper = ({
   data,
   specTemplate,
-  dynamicFields = {},
+  dynamicFields = EMPTY_FIELDS,
   rendererMode = "canvas",
   onNewView,
   actions = true
@@ -37,24 +60,62 @@ const VegaLiteWrapper = ({
   const [containerWidth, setContainerWidth] = useState(0);
   const [isDark, setIsDark] = useState(getInitialDark);
   const [isRendered, setIsRendered] = useState(false);
+  const [inView, setInView] = useState(
+    () => typeof IntersectionObserver === "undefined"
+  );
+
+  const [TooltipHandler, setTooltipHandler] = useState(null);
+  useEffect(() => {
+    if (!inView || TooltipHandler) return;
+    let cancelled = false;
+    loadTooltipHandler().then((H) => {
+      if (!cancelled) setTooltipHandler(() => H);
+    });
+    return () => { cancelled = true; };
+  }, [inView, TooltipHandler]);
+
+  /** Mount the Vega view only once the container nears the viewport */
+  useEffect(() => {
+    if (inView) return;
+    const node = containerRef.current;
+    if (!node) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: LAZY_ROOT_MARGIN }
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, [inView]);
 
   /** Track container width with ResizeObserver (for responsive width) */
   useEffect(() => {
     const node = containerRef.current;
     if (!node) return;
     let rafId;
+    let timerId;
+    let hasWidth = false;
     const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const w = entries[0]?.contentRect?.width || entry.contentRect?.width || 0;
-        cancelAnimationFrame(rafId);
-        rafId = requestAnimationFrame(() => {
-          if (w > 0) setContainerWidth(w);
-        });
+      const w = Math.round(entries[entries.length - 1]?.contentRect?.width || 0);
+      if (w <= 0) return;
+      cancelAnimationFrame(rafId);
+      clearTimeout(timerId);
+      if (!hasWidth) {
+        // First measurement: apply right away so the chart can start rendering.
+        hasWidth = true;
+        rafId = requestAnimationFrame(() => setContainerWidth(w));
+      } else {
+        timerId = setTimeout(() => setContainerWidth(w), RESIZE_DEBOUNCE_MS);
       }
     });
     observer.observe(node);
     return () => {
       cancelAnimationFrame(rafId);
+      clearTimeout(timerId);
       observer.disconnect();
     };
   }, []);
@@ -150,7 +211,9 @@ const VegaLiteWrapper = ({
   /** Hide tooltip helper */
   const hideTooltip = React.useCallback(() => {
     const el = document.getElementById("vg-tooltip-element");
-    if (el) el.style.display = "none";
+    // Skip the style write when already hidden — every chart on the page
+    // runs this on every scroll event.
+    if (el && el.style.display !== "none") el.style.display = "none";
   }, []);
 
   /** Global listeners to dismiss tooltip on outside tap/scroll/escape */
@@ -182,6 +245,7 @@ const VegaLiteWrapper = ({
 
   /** vega-tooltip with mobile-friendly positioning (center + clamp) */
   const tooltip = useMemo(() => {
+    if (!TooltipHandler) return undefined;
     const base = new TooltipHandler({
       theme: isDark ? "dark" : "light",
       offsetX: 0,
@@ -223,7 +287,7 @@ const VegaLiteWrapper = ({
         el.style.top  = `${top}px`;
       });
     };
-  }, [isDark]);
+  }, [isDark, TooltipHandler]);
 
   const onError = (err) => {
     console.error("Vega error:", err);
@@ -234,7 +298,14 @@ const VegaLiteWrapper = ({
       <div
         ref={containerRef}
         className="vega-lite-wrapper"
-        style={{ width: "100%", minWidth: 0, position: "relative" }}
+        style={{
+          width: "100%",
+          minWidth: 0,
+          position: "relative",
+          // Reserve the chart's height until Vega has drawn, so lazy
+          // loading doesn't shift the content below it.
+          minHeight: isRendered ? undefined : finalSpec?.height || 200,
+        }}
         onPointerDownCapture={hideTooltip}
       >
         {/* Shimmer skeleton while Vega initialises */}
@@ -253,7 +324,7 @@ const VegaLiteWrapper = ({
             }}
           />
         )}
-        {containerWidth > 0 ? (
+        {containerWidth > 0 && inView && tooltip ? (
           <VegaLite
             key={embedKey}
             spec={finalSpec}

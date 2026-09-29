@@ -28,10 +28,10 @@ import PropTypes from "prop-types";
 const VARIANTS = {
   pill: {
     container:
-      "toggle-controls inline-flex border border-[var(--gray-300)] rounded-full overflow-hidden bg-white",
+      "toggle-controls inline-flex border border-[var(--gray-500)] rounded-full overflow-hidden bg-white",
     containerStyle: { "--chart-toggle-active-color": "var(--gray-900, #1f2937)" },
     button:
-      "toggle-button appearance-none border-0 py-[0.45rem] px-[0.8rem] cursor-pointer text-sm font-semibold leading-tight outline-none transition-[background-color,color] duration-150 focus:outline-none focus-visible:relative focus-visible:z-[1] focus-visible:outline-2 focus-visible:[outline-offset:-2px] focus-visible:outline-[var(--chart-toggle-active-color,#1f2937)]",
+      "toggle-button appearance-none border-0 py-[0.45rem] px-[0.8rem] cursor-pointer text-sm font-semibold leading-tight outline-none transition-[background-color,color] duration-150 focus:outline-none focus-visible:relative focus-visible:z-[1] focus-visible:outline-2 focus-visible:outline-solid focus-visible:[outline-offset:-2px] focus-visible:outline-[var(--chart-toggle-active-color,#1f2937)]",
     active: "bg-[var(--chart-toggle-active-color,#1f2937)] text-white",
     idle: "bg-transparent text-[var(--gray-700)] hover:bg-[var(--gray-100)]",
   },
@@ -39,7 +39,7 @@ const VARIANTS = {
     container:
       "data-type-toggle-group flex gap-sm justify-start items-center flex-nowrap w-full overflow-x-auto md:flex-col md:items-stretch md:overflow-x-visible md:gap-2",
     button:
-      "view-toggle whitespace-nowrap py-sm px-md text-center border-0 rounded-md text-md font-medium font-body cursor-pointer transition-[background,transform] duration-200 hover:bg-gray-800 hover:text-white hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 md:w-full",
+      "view-toggle whitespace-nowrap py-sm px-md text-center border-0 rounded-md text-md font-medium font-body cursor-pointer transition-[background,transform] duration-200 hover:bg-gray-800 hover:text-white hover:shadow-sm focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-blue-500 md:w-full",
     active: "!bg-gray-900 !text-white",
     idle: "bg-gray-400 text-gray-900",
   },
@@ -47,7 +47,7 @@ const VARIANTS = {
     container:
       "flex gap-md justify-end w-full max-w-[340px] md:justify-stretch md:max-w-none md:gap-2",
     button:
-      "view-toggle flex-1 text-center border-0 rounded-md cursor-pointer py-sm px-lg text-md font-medium font-body transition-[background,transform] duration-200 hover:bg-gray-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500",
+      "view-toggle flex-1 text-center border-0 rounded-md cursor-pointer py-sm px-lg text-md font-medium font-body transition-[background,transform] duration-200 hover:bg-gray-800 hover:text-white focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-blue-500",
     active: "!bg-gray-900 !text-white",
     idle: "bg-gray-300 text-gray-900",
   },

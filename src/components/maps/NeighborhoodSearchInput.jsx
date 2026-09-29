@@ -250,7 +250,7 @@ const NeighborhoodSearchInput = ({
               "bg-transparent border-0 cursor-pointer text-gray-600",
               "transition-colors duration-[120ms]",
               "hover:text-gray-700 hover:bg-gray-200",
-              "focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500",
+              "focus:outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-blue-500",
             ].join(" ")}
           >
             <svg width="14" height="14" fill="none" viewBox="0 0 24 24"
@@ -285,7 +285,7 @@ const NeighborhoodSearchInput = ({
             return grouped.map(([borough, ns]) => (
               <li key={borough} role="none">
                 {/* Borough group header */}
-                <p className="text-2xs font-semibold text-gray-600 uppercase tracking-[0.1em] pt-2.5 px-3 pb-1 m-0 select-none">
+                <p className="text-2xs font-semibold text-gray-600  tracking-[0.1em] pt-2.5 px-3 pb-1 m-0 select-none">
                   {borough}
                 </p>
                 <ul role="group" aria-label={borough} className="list-none m-0 p-0">
@@ -319,7 +319,7 @@ const NeighborhoodSearchInput = ({
                             </span>
                           )}
                           {isCurrent && (
-                            <span className="text-2xs text-blue-primary font-semibold uppercase tracking-[0.08em] opacity-75">
+                            <span className="text-2xs text-blue-primary font-semibold  tracking-[0.08em] opacity-75">
                               current
                             </span>
                           )}

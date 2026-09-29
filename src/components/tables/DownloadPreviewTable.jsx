@@ -27,7 +27,7 @@ const compareValues = (a, b) => {
 };
 
 const paginBtnCls = [
-  "px-3 py-[6px] border-0 rounded",
+  "px-2.5 py-1 text-xs border-0 rounded",
   "text-gray-200 bg-blue-primary cursor-pointer",
   "transition-[background-color,transform] duration-200",
   "hover:bg-blue-secondary",
@@ -75,8 +75,8 @@ const DownloadPreviewTable = ({ data = [], columnLabels = {}, maxRows = 100, pag
   if (!columns.length) return null;
 
   return (
-    <div className="overflow-x-auto my-3 font-body">
-      <table className="preview-table border-collapse w-full text-sm">
+    <div className="overflow-x-auto font-body">
+      <table className="preview-table border-collapse w-full text-xs">
         <thead>
           <tr>
             {columns.map((col) => (
@@ -99,7 +99,7 @@ const DownloadPreviewTable = ({ data = [], columnLabels = {}, maxRows = 100, pag
       </table>
 
       {totalPages > 1 && (
-        <div className="mt-2 flex justify-between text-sm">
+        <div className="mt-2 flex justify-between items-center text-xs text-gray-600">
           <button className={paginBtnCls} disabled={currentPage === 0} onClick={() => setPage((p) => p - 1)}>
             ← Prev
           </button>

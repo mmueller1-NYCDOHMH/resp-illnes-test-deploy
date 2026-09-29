@@ -20,7 +20,7 @@ import { WEEK_ENDING } from "./useChoroplethMap";
  * @param {object} current - Data row for the currently selected/hovered neighborhood.
  * @param {{ key: string, label: string, suffix?: string, decimals?: number, format?: (v: number) => string|number }[]} fields
  */
-export default function CompareRows({ pinned, current, fields }) {
+export default function CompareRows({ pinned, current, fields, weekEnding = WEEK_ENDING }) {
   const [hoveredRow, setHoveredRow] = React.useState(null);
 
   const metrics = fields.map(
@@ -44,7 +44,7 @@ export default function CompareRows({ pinned, current, fields }) {
   return (
     <div className="px-3 py-1.5">
       {/* Column headers */}
-      <div className="flex text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide pb-1">
+      <div className="flex text-2xs font-semibold font-body text-[var(--gray-600)] tracking-wide pb-1">
         <span className="flex-[2] min-w-0" />
         <span className="w-16 text-right text-amber-700">Pinned</span>
         <span className="w-9 text-center">Δ</span>
@@ -82,7 +82,7 @@ export default function CompareRows({ pinned, current, fields }) {
         style={{ color: "var(--footnote-gray)" }}
       >
         <p className="text-2xs font-body">Δ = selected − pinned</p>
-        <p className="text-2xs font-body whitespace-nowrap"><DataAsOf date={WEEK_ENDING} /></p>
+        <p className="text-2xs font-body whitespace-nowrap"><DataAsOf date={weekEnding} /></p>
       </div>
     </div>
   );

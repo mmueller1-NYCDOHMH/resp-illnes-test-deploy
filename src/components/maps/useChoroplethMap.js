@@ -51,7 +51,39 @@ const TILE_URL =
 const TILE_ATTRIBUTION =
   'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors, and the GIS community';
 
+// PERF: module-level promises so Leaflet's script/CSS are injected once and
+// the UHF42 GeoJSON is downloaded + parsed once per visit, instead of on
+// every map mount (e.g. navigating Home → COVID → Flu re-fetched it each
+// time). Failures are evicted so the next mount can retry.
+let leafletPromise = null;
+let geojsonPromise = null;
+
+function loadGeoJSON() {
+  if (!geojsonPromise) {
+    geojsonPromise = fetch(GEOJSON_URL)
+      .then((r) => {
+        if (!r.ok) throw new Error(`GeoJSON HTTP ${r.status}`);
+        return r.json();
+      })
+      .catch((err) => {
+        geojsonPromise = null;
+        throw err;
+      });
+  }
+  return geojsonPromise;
+}
+
 function loadLeaflet() {
+  if (!leafletPromise) {
+    leafletPromise = injectLeaflet().catch((err) => {
+      leafletPromise = null;
+      throw err;
+    });
+  }
+  return leafletPromise;
+}
+
+function injectLeaflet() {
   return new Promise((resolve, reject) => {
     if (window.L) { resolve(window.L); return; }
 
@@ -108,6 +140,7 @@ export default function useChoroplethMap({
   initialChartHeight = 200,
   pinnedGeocode = null,
   logPrefix = "[ChoroplethMap]",
+  animateBars = true,
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -149,6 +182,18 @@ export default function useChoroplethMap({
   const [mapError, setMapError] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState("Loading map library…");
   const [chartAreaHeight, setChartAreaHeight] = useState(initialChartHeight);
+  // Flips true once the Leaflet map + GeoJSON layer exist. The fly-to-
+  // selection effect below depends on it, so a selection restored before
+  // the map finished loading (from a ?uhf= link or the saved "my area" —
+  // see useMapSelectionMemory) still zooms in once the map is ready,
+  // instead of being overridden by the initial citywide fitBounds.
+  const [mapReady, setMapReady] = useState(false);
+
+  // Read by handleChartNewView — the time-lapse re-embeds the bar chart
+  // every week, and replaying the staggered bar entrance on every frame
+  // reads as flicker, so callers turn it off while playing.
+  const animateBarsRef = useRef(animateBars);
+  animateBarsRef.current = animateBars;
 
   // Keep ref in sync for use inside Leaflet event closures
   useEffect(() => {
@@ -222,11 +267,7 @@ export default function useChoroplethMap({
 
   // Fetch GeoJSON
   useEffect(() => {
-    fetch(GEOJSON_URL)
-      .then((r) => {
-        if (!r.ok) throw new Error(`GeoJSON HTTP ${r.status}`);
-        return r.json();
-      })
+    loadGeoJSON()
       .then((data) => {
         setGeojson(data);
         setLoadingStatus("Rendering map…");
@@ -313,13 +354,21 @@ export default function useChoroplethMap({
     // "see all five boroughs" is useful here, and it keeps the basemap
     // from zooming out to state/regional scale.
     map.setMinZoom(map.getZoom());
+    setMapReady(true);
 
     return () => {
       map.remove();
       mapInstanceRef.current = null;
       geoLayerRef.current = null;
+      setMapReady(false);
     };
-  }, [leafletReady, geojson, dataByGeocode, hoverStrokeColor]);
+    // dataByGeocode intentionally NOT a dependency (2026-09-29): it's read
+    // through dataByGeocodeRef in the click handler and styles come from
+    // getFeatureStyleRef + the re-style effect below, so a data change
+    // never needed a full teardown. Keeping it here rebuilt the whole
+    // Leaflet map (and reset the zoom) whenever data changed — e.g. once
+    // the CSV finished loading, and on every frame of the time-lapse.
+  }, [leafletReady, geojson, hoverStrokeColor]);
 
   // Re-style all features when selection or pin changes, or when the style
   // function itself changes identity (e.g. a virus color-scale switch).
@@ -330,7 +379,7 @@ export default function useChoroplethMap({
       layer.setStyle(getFeatureStyleRef.current(geocode, selectedGeocode, pinnedGeocode));
       if (geocode === selectedGeocode || geocode === pinnedGeocode) layer.bringToFront();
     });
-  }, [selectedGeocode, pinnedGeocode, getFeatureStyle]);
+  }, [selectedGeocode, pinnedGeocode, getFeatureStyle, mapReady]);
 
   // Fly map to selected feature — and back out to the full citywide view
   // when the selection is cleared (e.g. search box emptied out). While a
@@ -363,7 +412,7 @@ export default function useChoroplethMap({
         maxZoom: 13,
       });
     }
-  }, [selectedGeocode, pinnedGeocode]);
+  }, [selectedGeocode, pinnedGeocode, mapReady]);
 
   // Given a currently-selected geocode and an arrow-key direction, finds the
   // nearest district whose centroid actually lies in that compass direction
@@ -483,6 +532,7 @@ export default function useChoroplethMap({
     // Staggered bar entrance — scaleY from 0→1 per bar, growing up from the
     // baseline. Only replays when the view is actually (re)created — hover
     // never touches `data`, so it never forces a re-embed.
+    if (!animateBarsRef.current) return;
     requestAnimationFrame(() => {
       const bars = view.container()?.querySelectorAll("rect.mark-rect");
       bars?.forEach((bar, i) => {

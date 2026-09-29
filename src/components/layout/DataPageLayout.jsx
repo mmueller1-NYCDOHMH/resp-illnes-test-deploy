@@ -91,7 +91,7 @@ const DataPageLayout = ({
     typeof subtitle === "string" ? resolvePageHTML(subtitle, subtitleVariables) : subtitle;
 
   return (
-    <main className={`w-full ${pageBackground === "white" ? "bg-white" : "bg-[var(--gray-100)]"}`}>
+    <div className={`w-full ${pageBackground === "white" ? "bg-white" : "bg-[var(--gray-100)]"}`}>
 
       {/* ── Layout: sidebar + content ── */}
       <div className={`w-full ${pageBackground === "white" ? "bg-white" : "bg-[var(--gray-100)]"}`}>
@@ -140,7 +140,7 @@ const DataPageLayout = ({
                   type="button"
                   onClick={close}
                   aria-label="Close filters and navigation"
-                  className="mobile-sheet-close-btn absolute top-2 right-2 bg-transparent border-0 p-[6px] leading-none inline-flex items-center justify-center text-[var(--gray-600)] cursor-pointer transition-colors duration-200 hover:text-[var(--gray-900)] focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                  className="mobile-sheet-close-btn absolute top-2 right-2 bg-transparent border-0 p-[6px] leading-none inline-flex items-center justify-center text-[var(--gray-600)] cursor-pointer transition-colors duration-200 hover:text-[var(--gray-900)] focus:outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                 >
                   <CloseIcon />
                 </button>
@@ -262,7 +262,7 @@ const DataPageLayout = ({
           to   { opacity: 1; }
         }
       `}</style>
-    </main>
+    </div>
   );
 };
 

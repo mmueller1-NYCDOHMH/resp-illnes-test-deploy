@@ -119,6 +119,7 @@ const AboutPageLayout = ({ config }) => {
     .map((s) => ({
       id: s.id,
       label:
+        s.navLabel ||
         (s.groupTitleKey && resolveText(s.groupTitleKey)) ||
         resolveText(s.titleKey) ||
         s.id,

@@ -51,6 +51,11 @@ import {
 } from "../../utils/neighborhoodGeoData";
 import PinIcon from "./PinIcon";
 import CompareRows from "./CompareRows";
+import useMapSelectionMemory from "./useMapSelectionMemory";
+import MyAreaChip from "./MyAreaChip";
+import useGeoWeeks from "./useGeoWeeks";
+import TimelapseControl from "./TimelapseControl";
+import { formatShortDate } from "../../utils/trendUtils";
 
 // Fallback citywide reference (used only until real data loads) — replaced
 // by an unweighted average of the loaded neighborhoods' rate once available
@@ -183,7 +188,7 @@ function StatValue({ value, suffix = "" }) {
   );
 }
 
-function SnapshotRows({ data, groupNote }) {
+function SnapshotRows({ data, groupNote, weekEnding = WEEK_ENDING }) {
   return (
     <>
       <div className="px-3 py-2.5 flex flex-col gap-2">
@@ -212,7 +217,7 @@ function SnapshotRows({ data, groupNote }) {
       >
         <div className="flex-1" />
         <p className="text-2xs font-body whitespace-nowrap">
-          <DataAsOf date={WEEK_ENDING} />
+          <DataAsOf date={weekEnding} />
         </p>
       </div>
     </>
@@ -246,16 +251,22 @@ const LabCasesNeighborhoodMap = ({
   // metric — the `virus` prop ("COVID-19" / "Flu" / "RSV") matches RPU's
   // metric-name prefix exactly, so no separate mapping table is needed.
   const { caseRows } = useNeighborhoodGeoCsv();
+  const rateMetric = `${virus} case rate per 100,000 by neighborhood`;
+
+  // Season time-lapse (2026-09-29) — see useGeoWeeks. Pass-through while
+  // the staged file has a single week; the play control stays hidden.
+  const timeline = useGeoWeeks(caseRows, [rateMetric]);
+  const weekEnding = timeline.currentDate ? formatShortDate(timeline.currentDate) : WEEK_ENDING;
 
   const dataByGeocode = useMemo(
     () =>
-      buildUhfDataByGeocode(caseRows, [
+      buildUhfDataByGeocode(timeline.rowsForWeek, [
         {
           key: "rate",
-          metric: `${virus} case rate per 100,000 by neighborhood`,
+          metric: rateMetric,
         },
       ]),
-    [caseRows, virus]
+    [timeline.rowsForWeek, rateMetric]
   );
 
   const colors = useMemo(
@@ -268,15 +279,18 @@ const LabCasesNeighborhoodMap = ({
   // constants. Falls back to a [0, 1] domain before any data has loaded
   // (or if every neighborhood happens to be suppressed) so
   // makeColorScale never divides by an Infinity/-Infinity range.
+  //
+  // Built from every week's values (not just the displayed week) so the
+  // color scale holds still during the time-lapse — identical to the old
+  // behavior while the file only has one week.
   const rateDomain = useMemo(() => {
-    const values = Object.values(dataByGeocode)
-      .map((d) => d.rate)
-      .filter((v) => v != null);
+    const values = timeline.allValuesFor(rateMetric);
 
     return values.length
       ? domainFromValues(values)
       : [0, 1];
-  }, [dataByGeocode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [caseRows, rateMetric]);
 
   const getFeatureStyle = useCallback(
     (geocode, selectedGeocode, pinned) =>
@@ -315,6 +329,17 @@ const LabCasesNeighborhoodMap = ({
     initialChartHeight: 150,
     pinnedGeocode,
     logPrefix: "[LabCasesNeighborhoodMap]",
+    animateBars: !timeline.playing,
+  });
+
+  // Shareable ?uhf= link state + "Your area" memory (2026-09-29).
+  const { myArea, rememberArea, forgetArea, goToMyArea } = useMapSelectionMemory({
+    dataByGeocode,
+    selectedGeocode,
+    setSelectedGeocode,
+    setSearch,
+    pinnedGeocode,
+    setPinnedGeocode,
   });
 
   // ── Arrow-key neighborhood navigation ──────────────────────────────────────
@@ -498,7 +523,7 @@ const LabCasesNeighborhoodMap = ({
           // ContentContainer's own title rendering — must use
           // dangerouslySetInnerHTML, not plain text children, or the markup
           // shows up as literal escaped text instead of being rendered.
-          <h3
+          <h2
             className="flex-1 min-w-[160px] text-[var(--content-title-size,var(--font-size-lg))] text-[var(--content-title-color,var(--gray-900))] font-semibold tracking-tight m-0"
             dangerouslySetInnerHTML={{
               __html: sectionTitle,
@@ -507,7 +532,7 @@ const LabCasesNeighborhoodMap = ({
         )}
 
         <div className="w-96 max-w-full flex-shrink-0">
-          <div className="flex justify-end mb-1">
+          <div className="flex justify-end mb-3">
             <button
               type="button"
               className="appearance-none bg-transparent border-0 p-0 cursor-pointer flex-shrink-0 text-gray-900 hover:text-gray-600 transition-colors duration-150"
@@ -535,10 +560,10 @@ const LabCasesNeighborhoodMap = ({
               }
             }}
             onSelect={([geocode, data]) => {
-              setSelectedGeocode(
-                parseInt(geocode, 10)
-              );
+              const g = parseInt(geocode, 10);
+              setSelectedGeocode(g);
               setSearch(data.name);
+              rememberArea(g);
             }}
             selectedGeocode={selectedGeocode}
             suggestions={suggestions}
@@ -546,10 +571,20 @@ const LabCasesNeighborhoodMap = ({
 
           {/* Keyboard nav hint — shown only after a CD is selected, same as
               the home page map */}
-          {selectedGeocode != null && (
-            <p className="mt-xs text-2xs font-body text-[var(--gray-600)] leading-tight text-right">
-              ↑ ↓ to navigate neighborhoods
-            </p>
+          {(myArea || selectedGeocode != null) && (
+            <div className="mt-xs flex items-center justify-between gap-2 min-h-[20px]">
+              <MyAreaChip
+                myArea={myArea}
+                selectedGeocode={selectedGeocode}
+                onGo={goToMyArea}
+                onForget={forgetArea}
+              />
+              {selectedGeocode != null && (
+                <p className="ml-auto text-2xs font-body text-[var(--gray-600)] leading-tight text-right whitespace-nowrap">
+                  ↑ ↓ to navigate neighborhoods
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -622,10 +657,12 @@ const LabCasesNeighborhoodMap = ({
                 {rateDomain[1].toFixed(1)}
               </span>
             </div>
-            <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide mb-1">
+            <p className="text-2xs font-semibold font-body text-[var(--gray-600)]  tracking-wide mb-1">
               per 100,000 people
             </p>
           </div>
+
+          <TimelapseControl timeline={timeline} accent={colors[3]} idPrefix="lab-map" />
         </div>
 
         {/* At a Glance + dynamic caption + bar chart */}
@@ -664,7 +701,7 @@ const LabCasesNeighborhoodMap = ({
                 aria-hidden={!showHoverLayer}
               >
                 <div className="px-3 py-2.5 border-b border-blue-100 bg-blue-50">
-                  <p className="text-2xs font-semibold font-body text-blue-600 uppercase tracking-widest mb-0.5">
+                  <p className="text-2xs font-semibold font-body text-blue-600  tracking-widest mb-0.5">
                     Preview
                   </p>
 
@@ -675,6 +712,7 @@ const LabCasesNeighborhoodMap = ({
 
                 {previewData && (
                   <SnapshotRows
+                    weekEnding={weekEnding}
                     data={previewData}
                     groupNote={groupedWithNote(
                       previewData,
@@ -695,7 +733,7 @@ const LabCasesNeighborhoodMap = ({
                   <>
                     <div className="px-3 py-2.5 border-b border-[var(--gray-200)] bg-[var(--gray-100)] flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-widest mb-0.5">
+                        <p className="text-2xs font-semibold font-body text-[var(--gray-600)]  tracking-widest mb-0.5">
                           {inCompareMode
                             ? "Comparing"
                             : "At a Glance"}
@@ -798,6 +836,7 @@ const LabCasesNeighborhoodMap = ({
                         </div>
 
                         <CompareRows
+                          weekEnding={weekEnding}
                           pinned={compareData}
                           current={
                             previewData ??
@@ -827,6 +866,7 @@ const LabCasesNeighborhoodMap = ({
                       </>
                     ) : (
                       <SnapshotRows
+                        weekEnding={weekEnding}
                         data={selectedData}
                         groupNote={groupedWithNote(
                           selectedData,
@@ -837,12 +877,12 @@ const LabCasesNeighborhoodMap = ({
                   </>
                 ) : (
                   <div className="px-3 py-4 bg-[var(--gray-100)]">
-                    <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-widest mb-1.5">
+                    <p className="text-2xs font-semibold font-body text-[var(--gray-600)]  tracking-widest mb-1.5">
                       At a Glance
                     </p>
 
                     <p className="text-xs font-body text-[var(--gray-600)] leading-relaxed">
-                      Click a neighborhood on the map or search above.
+                      <span className="sm:hidden">Search for a neighborhood or ZIP code above.</span><span className="hidden sm:inline">Click a neighborhood on the map or search above.</span>
                     </p>
                   </div>
                 )}
@@ -873,7 +913,7 @@ const LabCasesNeighborhoodMap = ({
                         {selectedData.name}
                       </strong>{" "}
                       for the week ending{" "}
-                      <strong>{WEEK_ENDING}</strong>.
+                      <strong>{weekEnding}</strong>.
 
                       This is{" "}
                       <strong
@@ -920,7 +960,7 @@ const LabCasesNeighborhoodMap = ({
             {/* Header */}
             <div className="bg-white border-b border-[var(--gray-200)] px-sm pt-sm pb-xs rounded-t-md flex-shrink-0 flex items-center justify-between gap-2">
               <div>
-                <p className="text-xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide leading-tight">
+                <p className="text-xs font-semibold font-body text-[var(--gray-600)]  tracking-wide leading-tight">
                   Cases per 100,000 people
                 </p>
               </div>

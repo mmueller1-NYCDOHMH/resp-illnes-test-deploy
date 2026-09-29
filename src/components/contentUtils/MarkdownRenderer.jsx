@@ -44,6 +44,25 @@ const extractSection = (markdown, sectionTitle, stripRenderDirectives = false) =
 };
 
 
+// PERF: markdown files are static — fetch each URL once per visit and share
+// the promise, so several renderers (or re-renders) don't refetch it.
+const markdownCache = new Map();
+const EMPTY_VARS = Object.freeze({});
+
+function fetchMarkdown(url) {
+  if (!markdownCache.has(url)) {
+    const p = fetch(url).then((response) => {
+      if (!response.ok) {
+        throw new Error(`Markdown file not found or inaccessible: ${url}`);
+      }
+      return response.text();
+    });
+    p.catch(() => markdownCache.delete(url));
+    markdownCache.set(url, p);
+  }
+  return markdownCache.get(url);
+}
+
 const MarkdownRenderer = ({
   filePath,
   rawContent,
@@ -51,12 +70,18 @@ const MarkdownRenderer = ({
   showTitle = false,
   className = "markdown-body",
   bodyClassName = "",
-  variables = {},
+  variables = EMPTY_VARS,
   stripRenderDirectives = false,
 }) => {
   const [html, setHtml] = useState("");
 
+  // PERF: callers usually pass `variables` as an inline object literal, which
+  // is a new object every parent render and re-ran the load/parse effect
+  // each time. Key the effect on the serialized values instead.
+  const varsKey = JSON.stringify(variables);
+
   useEffect(() => {
+    let cancelled = false;
     const load = async () => {
       try {
         let markdown = rawContent;
@@ -64,12 +89,7 @@ const MarkdownRenderer = ({
         if (!markdown && filePath) {
           try {
             const url = resolveContentPath(filePath);
-            const response = await fetch(url);
-            if (!response.ok) {
-              throw new Error(`Markdown file not found or inaccessible: ${url}`);
-            }
-            
-            markdown = await response.text();
+            markdown = await fetchMarkdown(url);
           } catch (err) {
             throw new Error(`Failed to load markdown: ${err.message}`);
           }
@@ -90,14 +110,16 @@ const MarkdownRenderer = ({
           content = interpolated;
         }
 
-        setHtml(marked.parse(content));
+        if (!cancelled) setHtml(marked.parse(content));
       } catch (err) {
-        setHtml(`<p style="color:red;"><strong>Error:</strong> ${err.message}</p>`);
+        if (!cancelled) setHtml(`<p style="color:red;"><strong>Error:</strong> ${err.message}</p>`);
       }
     };
 
     load();
-  }, [filePath, rawContent, sectionTitle, variables, stripRenderDirectives]);
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `variables` is tracked via varsKey
+  }, [filePath, rawContent, sectionTitle, varsKey, stripRenderDirectives]);
 
   const cleanDisplayTitle = sectionTitle ? collapseWs(stripHtml(sectionTitle)) : "";
 

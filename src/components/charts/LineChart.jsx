@@ -16,7 +16,7 @@ const { covid, flu, rsv, ari } = tokens.colorScales;
 const { colors } = tokens;
 
 const getXAxisFormat = (data, xKey) => {
-  if (!data || data.length < 2) return "%b %d";
+  if (!data || data.length < 2) return "%m/%d";
   const first = new Date(data[0][xKey]);
   const second = new Date(data[1][xKey]);
   const delta = Math.abs(second - first);
@@ -24,8 +24,8 @@ const getXAxisFormat = (data, xKey) => {
   const oneWeek = oneDay * 7;
   const oneMonth = oneDay * 28;
 
-  if (delta <= oneDay) return "%b %d";
-  if (delta <= oneWeek + oneDay) return "%b %d";
+  if (delta <= oneDay) return "%m/%d";
+  if (delta <= oneWeek + oneDay) return "%m/%d";
   if (delta <= oneMonth) return "%b";
   return "%b %Y";
 };

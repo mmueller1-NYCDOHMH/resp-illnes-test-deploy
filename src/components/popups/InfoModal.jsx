@@ -7,7 +7,7 @@ const DURATION = 220; // ms — match keyframe durations below
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
-const InfoModal = ({ title, content, markdownPath, isOpen, onClose, maxContentHeight = "60vh" }) => {
+const InfoModal = ({ title, content, markdownPath, isOpen, onClose, maxContentHeight = "60vh", compact = false }) => {
   const [mounted, setMounted] = useState(isOpen);
   const [closing, setClosing] = useState(false);
   const dialogRef = useRef(null);
@@ -77,7 +77,11 @@ const InfoModal = ({ title, content, markdownPath, isOpen, onClose, maxContentHe
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="info-modal bg-[var(--modal-bg,var(--white))] rounded-lg max-w-[640px] w-2/3 p-xl pt-[calc(var(--spacing-xl)+8px)] shadow-md relative box-border md:w-[92%] md:p-xl md:pt-[calc(var(--spacing-xl)+8px)]"
+        className={
+          compact
+            ? "info-modal info-modal--compact bg-[var(--modal-bg,var(--white))] rounded-lg max-w-[520px] w-[92%] px-5 pt-4 pb-4 shadow-md relative box-border"
+            : "info-modal bg-[var(--modal-bg,var(--white))] rounded-lg max-w-[640px] w-2/3 p-xl pt-[calc(var(--spacing-xl)+8px)] shadow-md relative box-border md:w-[92%] md:p-xl md:pt-[calc(var(--spacing-xl)+8px)]"
+        }
         style={{ animation: `${closing ? "scaleOut" : "scaleIn"} ${dur} ease both` }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -92,7 +96,11 @@ const InfoModal = ({ title, content, markdownPath, isOpen, onClose, maxContentHe
         </button>
         {/* Title intentionally omitted per RPU/Comms decision */}
         <div
-          className="text-body text-[var(--modal-text,var(--gray-800))] leading-[var(--line-height-lg)] overflow-y-auto md:text-sm"
+          className={
+            compact
+              ? "text-sm text-[var(--modal-text,var(--gray-800))] leading-normal overflow-y-auto"
+              : "text-body text-[var(--modal-text,var(--gray-800))] leading-[var(--line-height-lg)] overflow-y-auto md:text-sm"
+          }
           style={{ maxHeight: maxContentHeight }}
         >
           {markdownPath ? (
@@ -113,6 +121,7 @@ InfoModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   maxContentHeight: PropTypes.string,
+  compact: PropTypes.bool,
 };
 
 export default InfoModal;

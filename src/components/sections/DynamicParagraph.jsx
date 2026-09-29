@@ -4,17 +4,13 @@ import PropTypes from "prop-types";
 import { getText } from "../../utils/contentUtils";
 import { loadCSVData } from "../../utils/loadCSVData";
 import { getMetricData } from "../../utils/filterMetricData";
-import { parseLocalISO } from "../../utils/trendUtils";
+import { parseLocalISO, formatAPDate } from "../../utils/trendUtils";
 import "./DynamicParagraph.css"; 
 
 function fmtWeekDate(dateLike) {
   const d = parseLocalISO(dateLike);   
   if (!d || Number.isNaN(d.getTime())) return String(dateLike ?? "");
-    return d.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    return formatAPDate(d);
   }
 
   export function isParagraphDataStale(

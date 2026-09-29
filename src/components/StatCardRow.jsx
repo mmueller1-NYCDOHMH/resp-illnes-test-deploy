@@ -3,7 +3,6 @@ import Link from "next/link";
 import { getThemeByTitle } from "../utils/themeUtils";
 import { getAbsoluteTrend } from "../utils/trendUtils";
 import StatCardSparkline from "./charts/StatCardSparkline";
-import { useAnimatedNumber } from "./hooks/useAnimatedNumber";
 import ChartModal from "./popups/ChartModal";
 import TrendChip, { TrendArrowBadge } from "./TrendChip";
 import { getText } from "../utils/contentUtils";
@@ -62,8 +61,9 @@ const StatCardRow = ({
 
   const dir = trend?.direction ?? "same";
 
-  const animPrev    = useAnimatedNumber(trend?.previous ?? 0);
-  const animCurrent = useAnimatedNumber(trend?.current  ?? 0);
+  // Numbers render statically (no count-up animation); TrendArrowBadge keeps its rotate animation.
+  const prevValue    = trend?.previous ?? 0;
+  const currentValue = trend?.current  ?? 0;
   const fmt = (n) => (Number.isFinite(n) ? n.toFixed(2) : "");
 
   const unitLabel = view === "hospitalizations"
@@ -78,41 +78,56 @@ const StatCardRow = ({
 
   return (
     <>
+      {/* Whole row stays clickable for mouse/touch, but it is no longer a
+          role="button": it contains the "More {title} data" link, and an
+          interactive element inside a button is unreachable/ambiguous for
+          screen readers (axe nested-interactive) — Enter on the link also
+          bubbled up and opened the modal. The keyboard/SR control is now the
+          real <button> on the expand icon below. */}
       <div
-        role="button"
-        tabIndex={0}
-        aria-label={`${title} stat row — click to enlarge chart`}
-        aria-describedby={trend ? trendDescId : undefined}
         onClick={() => setModalOpen(true)}
-        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setModalOpen(true)}
         className={[
           "group relative grid",
           ROW_GRID_COLS,
           "gap-y-1 gap-x-sm items-center cursor-pointer",
           "transition-colors duration-150 hover:bg-gray-100/60",
-          "focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500",
+          "focus-within:bg-gray-100/60",
           isPrimary ? "py-sm" : "py-xs",
           rowBorder,
         ].join(" ")}
       >
-        {/* Expand hint — subtle by default, clearer on hover/focus */}
-        <svg
-          aria-hidden="true"
-          width={isPrimary ? 14 : 12}
-          height={isPrimary ? 14 : 12}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="absolute top-2 right-2 text-gray-300 opacity-70 group-hover:text-gray-500 group-hover:opacity-100 group-focus-visible:text-gray-500 group-focus-visible:opacity-100 transition-colors duration-150"
+        {/* Expand control — subtle by default, clearer on hover/focus */}
+        <button
+          type="button"
+          aria-label={`Enlarge ${title} chart`}
+          aria-describedby={trend ? trendDescId : undefined}
+          onClick={(e) => { e.stopPropagation(); setModalOpen(true); }}
+          className={[
+            "absolute top-1 right-1 z-[1] p-1 leading-none rounded-sm bg-transparent border-0 cursor-pointer",
+            "text-gray-300 opacity-70 group-hover:text-gray-500 group-hover:opacity-100",
+            "focus-visible:text-gray-600 focus-visible:opacity-100",
+            "focus:outline-none focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-1 focus-visible:outline-blue-500",
+            "transition-colors duration-150",
+          ].join(" ")}
         >
-          <polyline points="15 3 21 3 21 9" />
-          <polyline points="9 21 3 21 3 15" />
-          <line x1="21" y1="3" x2="14" y2="10" />
-          <line x1="3" y1="21" x2="10" y2="14" />
-        </svg>
+          <svg
+            aria-hidden="true"
+            width={isPrimary ? 14 : 12}
+            height={isPrimary ? 14 : 12}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="block"
+          >
+            <polyline points="15 3 21 3 21 9" />
+            <polyline points="9 21 3 21 3 15" />
+            <line x1="21" y1="3" x2="14" y2="10" />
+            <line x1="3" y1="21" x2="10" y2="14" />
+          </svg>
+        </button>
 
         {/* ── Label column ──
             No icon artwork — the virus identity is carried by color instead,
@@ -147,14 +162,16 @@ const StatCardRow = ({
                 style={{ "--link-hover-color": theme.chartColor || theme.color }}
                 className={[
                   "group/link inline-flex items-center gap-1 font-medium whitespace-nowrap w-fit rounded-sm",
-                  "text-[var(--blue-primary,#1E40AF)] underline-offset-2 decoration-transparent",
-                  "hover:underline hover:decoration-current hover:text-[var(--link-hover-color)]",
-                  "focus-visible:underline focus-visible:decoration-current focus-visible:text-[var(--link-hover-color)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
+                  "text-[color:var(--blue-primary,#1E40AF)]",
+                  "hover:text-[color:var(--link-hover-color)] focus-visible:text-[color:var(--link-hover-color)]",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
                   "transition-colors duration-150",
                   isPrimary ? "text-sm mt-1.5" : "text-xs mt-1",
                 ].join(" ")}
               >
-                <span>More {title} data</span>
+                <span className="no-underline underline-offset-2 group-hover/link:underline group-focus-visible/link:underline">
+                  More {title} data
+                </span>
                 <span aria-hidden="true" className="inline-block transition-transform duration-150 group-hover/link:translate-x-0.5">→</span>
               </Link>
             )}
@@ -205,9 +222,9 @@ const StatCardRow = ({
                   isPrimary ? "text-lg" : "text-md",
                 ].join(" ")}
               >
-                <span>{fmt(animPrev)}%</span>
+                <span>{fmt(prevValue)}%</span>
                 <TrendArrowBadge dir={dir} size={isPrimary ? "base" : "sm"} />
-                <span>{fmt(animCurrent)}%</span>
+                <span>{fmt(currentValue)}%</span>
               </div>
               <TrendChip dir={dir} size={isPrimary ? "base" : "sm"} showArrow={false} />
             </>

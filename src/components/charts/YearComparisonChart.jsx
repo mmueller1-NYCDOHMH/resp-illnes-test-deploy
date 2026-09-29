@@ -331,7 +331,7 @@ const YearComparisonChart = ({
                   type="button"
                   onClick={() => setFluView(value)}
                   aria-pressed={active}
-                  className={`appearance-none border-0 py-[0.45rem] px-[0.8rem] cursor-pointer text-sm font-semibold leading-tight outline-none transition-[background-color,color] duration-150 focus:outline-none focus-visible:relative focus-visible:z-[1] focus-visible:outline-2 focus-visible:[outline-offset:-2px] focus-visible:outline-[var(--chart-toggle-active-color,#2563eb)] ${active ? "bg-[var(--chart-toggle-active-color,#387781)] text-white" : "bg-transparent text-[var(--gray-700)] hover:bg-[var(--gray-100)]"}`}
+                  className={`appearance-none border-0 py-[0.45rem] px-[0.8rem] cursor-pointer text-sm font-semibold leading-tight outline-none transition-[background-color,color] duration-150 focus:outline-none focus-visible:relative focus-visible:z-[1] focus-visible:outline-2 focus-visible:outline-solid focus-visible:[outline-offset:-2px] focus-visible:outline-[var(--chart-toggle-active-color,#2563eb)] ${active ? "bg-[var(--chart-toggle-active-color,#387781)] text-white" : "bg-transparent text-[var(--gray-700)] hover:bg-[var(--gray-100)]"}`}
                 >
                   {label}
                 </button>

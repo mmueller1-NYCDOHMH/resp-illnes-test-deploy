@@ -21,8 +21,8 @@ const VIRUS_SLUGS = {
 
 // ── Shared sub-components ─────────────────────────────────────────────────────
 
-const SectionLabel = ({ children }) => (
-  <div className="text-xs font-semibold tracking-[0.06em] uppercase text-gray-600 px-1 mb-1">
+const SectionLabel = ({ id, children }) => (
+  <div id={id} className="text-xs font-semibold tracking-[0.06em] text-gray-600 px-1 mb-1">
     {children}
   </div>
 );
@@ -46,6 +46,8 @@ const SectionLabel = ({ children }) => (
 // without squishing its width.
 const PillButton = ({ isActive, onClick, accentColor, children }) => (
   <button
+    type="button"
+    aria-pressed={isActive}
     onClick={onClick}
     className={[
       "relative w-full pl-5 pr-3 py-[9px] rounded-full overflow-hidden cursor-pointer text-[15px] text-left whitespace-nowrap",
@@ -79,6 +81,8 @@ const PillButton = ({ isActive, onClick, accentColor, children }) => (
 
 const SubNavButton = ({ isActive, onClick, children }) => (
   <button
+    type="button"
+    aria-pressed={isActive}
     onClick={onClick}
     className={[
       "w-full px-[10px] py-[6px] border-0 cursor-pointer text-sm text-left",
@@ -94,6 +98,8 @@ const SubNavButton = ({ isActive, onClick, children }) => (
 
 const DataTypeButton = ({ isActive, isFirst, onClick, children }) => (
   <button
+    type="button"
+    aria-pressed={isActive}
     onClick={onClick}
     className={[
       "w-full px-3 py-2 border-0 cursor-pointer text-sm text-left font-body",
@@ -177,7 +183,8 @@ const ChangeBadge = ({ direction, pctDisplay }) => {
         CHANGE_TEXT_COLOR[direction] ?? "text-gray-500",
       ].join(" ")}
     >
-      {CHANGE_ARROW[direction]}
+      <span aria-hidden="true">{CHANGE_ARROW[direction]}</span>
+      <span className="sr-only">{`, ${CHANGE_WORD[direction].toLowerCase()} ${pctDisplay}`}</span>
     </span>
   );
 };
@@ -309,8 +316,8 @@ const PageSidebar = ({
         {virusToggle && (
           <>
             <div className="border-t border-gray-200 mb-4" />
-            <div className="flex flex-col gap-[2px] mb-4">
-              <SectionLabel>Virus</SectionLabel>
+            <div role="group" aria-labelledby="sidebar-virus-label" className="flex flex-col gap-[2px] mb-4">
+              <SectionLabel id="sidebar-virus-label">Virus</SectionLabel>
               {virusOptions.map(({ label }) => {
                 const theme    = getThemeByTitle(label);
                 const isActive = activeVirus === label;
@@ -344,8 +351,8 @@ const PageSidebar = ({
 
         {/* ── Data type segmented control — data pages only ── */}
         {dataTypeToggle && (
-          <div className="flex flex-col gap-2">
-            <SectionLabel>Data type</SectionLabel>
+          <div role="group" aria-labelledby="sidebar-datatype-label" className="flex flex-col gap-2">
+            <SectionLabel id="sidebar-datatype-label">Data type</SectionLabel>
 
             {/* Segmented tabs */}
             <div className="flex flex-col border border-gray-300 rounded-[10px] overflow-hidden">
@@ -392,8 +399,8 @@ const PageSidebar = ({
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-2.5 mb-4">
             <div className="flex items-center gap-1.5 px-1 mb-1.5 text-gray-600">
               <TrendingIcon />
-              <span className="text-xs font-semibold tracking-[0.06em] uppercase">
-                Quick Links
+              <span className="text-xs font-semibold tracking-[0.06em]">
+                Recent trends
               </span>
             </div>
             <div className="flex flex-col divide-y divide-gray-200/80">
@@ -458,7 +465,8 @@ const PageSidebar = ({
         )}
 
         {/* ── Language ── */}
-        <div className="border-t border-gray-200 mt-4 pt-[14px] pl-1">
+        {/* Hidden below sm — on mobile the picker is in the top NavBar */}
+        <div className="hidden sm:block border-t border-gray-200 mt-4 pt-[14px] pl-1">
           <SectionLabel>Language</SectionLabel>
           <LanguageToggle className="sidebar-lang-select" showIcon={false} />
         </div>

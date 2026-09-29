@@ -48,6 +48,11 @@ import { buildUhfDataByGeocode, averageAcrossNeighborhoods, groupedWithNote } fr
 import PinIcon from "./PinIcon";
 import CompareRows from "./CompareRows";
 import { featureStyle, SnapshotRows } from "./MapSnapshot";
+import useMapSelectionMemory from "./useMapSelectionMemory";
+import MyAreaChip from "./MyAreaChip";
+import useGeoWeeks from "./useGeoWeeks";
+import TimelapseControl from "./TimelapseControl";
+import { formatShortDate } from "../../utils/trendUtils";
 
 // ── Field specs for this map's two ED "by neighborhood" metrics ──────────────
 const FIELD_SPECS = [
@@ -133,21 +138,30 @@ const NeighborhoodMap = () => {
   // lookup, splitting the 7 combined-UHF34 submetrics into their component
   // UHF42 codes along the way (see neighborhoodGeoData.js).
   const { edRows } = useNeighborhoodGeoCsv();
+
+  // Season time-lapse (2026-09-29) — see useGeoWeeks. With today's single
+  // staged week this is a pass-through (rowsForWeek === edRows) and the
+  // play control stays hidden.
+  const timeline = useGeoWeeks(edRows, FIELD_SPECS.map((f) => f.metric));
+  const weekEnding = timeline.currentDate ? formatShortDate(timeline.currentDate) : WEEK_ENDING;
+
   const dataByGeocode = useMemo(
-    () => buildUhfDataByGeocode(edRows, FIELD_SPECS),
-    [edRows]
+    () => buildUhfDataByGeocode(timeline.rowsForWeek, FIELD_SPECS),
+    [timeline.rowsForWeek]
   );
 
   // Domain/color scale depend on the loaded data, so — unlike the old
   // hardcoded CD_DATA version — these can no longer be module-level
   // constants. Falls back to a [0, 1] domain before any data has loaded so
-  // makeColorScale never divides by an Infinity/-Infinity range.
+  // makeColorScale never divides by an Infinity/-Infinity range. Built
+  // from every week's values (not just the displayed week's) so the color
+  // scale holds still during the time-lapse — identical to the old
+  // behavior while the file only has one week.
   const pctDomain = useMemo(() => {
-    const values = Object.values(dataByGeocode)
-      .map((d) => d.pct)
-      .filter((v) => v != null);
+    const values = timeline.allValuesFor(FIELD_SPECS[0].metric);
     return values.length ? domainFromValues(values) : [0, 1];
-  }, [dataByGeocode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [edRows]);
   const getColor = useMemo(() => makeColorScale(COLORS, pctDomain), [pctDomain]);
   const gradientCss = useMemo(() => stopsToCssGradient(COLORS), []);
 
@@ -194,6 +208,17 @@ const NeighborhoodMap = () => {
     initialChartHeight: 388,
     pinnedGeocode,
     logPrefix: "[NeighborhoodMap]",
+    animateBars: !timeline.playing,
+  });
+
+  // Shareable ?uhf= link state + "Your area" memory (2026-09-29).
+  const { myArea, rememberArea, forgetArea, goToMyArea } = useMapSelectionMemory({
+    dataByGeocode,
+    selectedGeocode,
+    setSelectedGeocode,
+    setSearch,
+    pinnedGeocode,
+    setPinnedGeocode,
   });
 
   // ── Arrow-key neighborhood navigation ──────────────────────────────────────
@@ -297,7 +322,7 @@ const NeighborhoodMap = () => {
           <p>
             In <strong>{selectedData.name}</strong>, respiratory illnesses
             were <strong>{selectedData.pct}%</strong> of ED
-            visits for the week ending <strong>{WEEK_ENDING}</strong>.
+            visits for the week ending <strong>{weekEnding}</strong>.
 
             This is{" "}
             <strong
@@ -333,16 +358,16 @@ const NeighborhoodMap = () => {
       {/* Header row — title left, search inline top-right */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-md mb-md">
         <div>
-          <h3 className="text-[var(--content-title-size)] font-heading font-semibold tracking-tight text-[var(--content-title-color,var(--gray-900))]">
+          <h2 className="text-[var(--content-title-size)] font-heading font-semibold tracking-tight text-[var(--content-title-color,var(--gray-900))]">
             What&rsquo;s happening in your neighborhood
-          </h3>
+          </h2>
           <p className="text-md font-body text-[var(--gray-700)] mt-xs">
             Overall respiratory illness ED visits in the past week
           </p>
         </div>
 
         <div className="w-full sm:w-96 flex-shrink-0">
-          <div className="flex justify-end mb-1">
+          <div className="flex justify-end mb-3">
             <button
               type="button"
               className="appearance-none bg-transparent border-0 p-0 cursor-pointer flex-shrink-0 text-gray-900 hover:text-gray-600 transition-colors duration-150"
@@ -367,17 +392,30 @@ const NeighborhoodMap = () => {
               if (val.trim() === "") setSelectedGeocode(null);
             }}
             onSelect={([geocode, data]) => {
-              setSelectedGeocode(parseInt(geocode, 10));
+              const g = parseInt(geocode, 10);
+              setSelectedGeocode(g);
               setSearch(data.name);
+              rememberArea(g);
             }}
             selectedGeocode={selectedGeocode}
             suggestions={suggestions}
           />
-          {/* Keyboard nav hint — shown only after a CD is selected */}
-          {selectedGeocode != null && (
-            <p className="mt-xs text-2xs font-body text-[var(--gray-600)] leading-tight text-right">
-              ↑ ↓ to navigate neighborhoods
-            </p>
+          {/* "Your area" chip (left) + keyboard nav hint (right, only after
+              a neighborhood is selected) share one row. */}
+          {(myArea || selectedGeocode != null) && (
+            <div className="mt-xs flex items-center justify-between gap-2 min-h-[20px]">
+              <MyAreaChip
+                myArea={myArea}
+                selectedGeocode={selectedGeocode}
+                onGo={goToMyArea}
+                onForget={forgetArea}
+              />
+              {selectedGeocode != null && (
+                <p className="ml-auto text-2xs font-body text-[var(--gray-600)] leading-tight text-right whitespace-nowrap">
+                  ↑ ↓ to navigate neighborhoods
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -436,10 +474,12 @@ const NeighborhoodMap = () => {
                 {pctDomain[1].toFixed(1)}%
               </span>
             </div>
-            <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide mb-1">
+            <p className="text-2xs font-semibold font-body text-[var(--gray-600)]  tracking-wide mb-1">
               of ED visits
             </p>
           </div>
+
+          <TimelapseControl timeline={timeline} accent={HIGHLIGHT_STROKE} idPrefix="home-map" />
         </div>
 
         {/* ── Right: At-a-Glance card, dynamic caption, then the bar chart —
@@ -508,7 +548,7 @@ const NeighborhoodMap = () => {
             aria-hidden={!showHoverLayer}
           >
             <div className="px-3 py-2.5 border-b border-blue-100 bg-blue-50">
-              <p className="text-2xs font-semibold font-body text-blue-600 uppercase tracking-widest mb-0.5">
+              <p className="text-2xs font-semibold font-body text-blue-600  tracking-widest mb-0.5">
                 Preview
               </p>
               <p className="text-sm font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
@@ -536,7 +576,7 @@ const NeighborhoodMap = () => {
               <>
                 <div className="px-3 py-2.5 border-b border-[var(--gray-200)] bg-[var(--gray-100)] flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-widest mb-0.5">
+                    <p className="text-2xs font-semibold font-body text-[var(--gray-600)]  tracking-widest mb-0.5">
                       {inCompareMode ? "Comparing" : "At a Glance"}
                     </p>
                     <p className="text-sm font-semibold font-body text-[var(--gray-900)] leading-snug truncate">
@@ -591,6 +631,7 @@ const NeighborhoodMap = () => {
                       >✕</button>
                     </div>
                     <CompareRows
+                      weekEnding={weekEnding}
                       pinned={compareData}
                       current={previewData ?? selectedData}
                       fields={[
@@ -623,11 +664,11 @@ const NeighborhoodMap = () => {
               </>
             ) : (
               <div className="px-3 py-4 bg-[var(--gray-100)]">
-                <p className="text-2xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-widest mb-1.5">
+                <p className="text-2xs font-semibold font-body text-[var(--gray-600)]  tracking-widest mb-1.5">
                   At a Glance
                 </p>
                 <p className="text-xs font-body text-[var(--gray-600)] leading-relaxed">
-                  Click a neighborhood on the map or search above.
+                  <span className="sm:hidden">Search for a neighborhood or ZIP code above.</span><span className="hidden sm:inline">Click a neighborhood on the map or search above.</span>
                 </p>
               </div>
             )}
@@ -660,8 +701,8 @@ const NeighborhoodMap = () => {
               choroplethBarSpec.js). */}
           <div className="bg-white border-b border-[var(--gray-200)] px-sm pt-sm pb-xs rounded-t-md flex-shrink-0 flex items-center justify-between gap-2">
             <div>
-              <p className="text-xs font-semibold font-body text-[var(--gray-600)] uppercase tracking-wide leading-tight">
-                Percent of ED visits
+              <p className="text-xs font-semibold font-body text-[var(--gray-600)]  tracking-wide leading-tight">
+                Percent of ED visits (by patients' residence)
               </p>
             </div>
           </div>

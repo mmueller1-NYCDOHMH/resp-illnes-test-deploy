@@ -88,7 +88,7 @@
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .card-grid { gap: var(--spacing-md); }
-  .info-card { padding: var(--spacing-md); }
+  .info-card { padding: var(--spacing-md); margin-bottom: 0; }
 }
 
 @media (max-width: 640px) {
@@ -97,12 +97,22 @@
     gap: var(--spacing-md);
     justify-items: center;
   }
+  /* Compact cards on phones — keep all cards the same width and trim
+     vertical padding so the stacked list doesn't eat the screen. */
+  .info-card-link {
+    width: 100%;
+    max-width: 340px;
+  }
   .info-card {
     margin: 0;
     width: 100%;
     max-width: 340px;
-    padding: var(--spacing-md) var(--spacing-lg) var(--spacing-3xl);
+    padding: var(--spacing-sm) var(--spacing-md);
   }
+  .info-card-header { margin-bottom: 2px; }
+  .info-card-icon { height: 22px; }
+  .info-card-title { font-size: var(--font-size-base, 1rem); }
+  .info-card-description { margin: 2px 0 0; line-height: 1.4; }
 }
 
 /* ── Guide prose — "Using This Site" accordion bodies ────────────────── */

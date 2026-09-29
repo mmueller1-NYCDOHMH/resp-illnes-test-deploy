@@ -1,5 +1,5 @@
 import React from "react";
-import { VegaLite } from "react-vega";
+import VegaLite from "./LazyVegaLite";
 import { tokens } from "../../styles/tokens";
 import { getVirusMeta } from "../../utils/virusRegistry";
 
