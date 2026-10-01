@@ -9,7 +9,7 @@
  * - Flu      → two panels side-by-side (Flu A / Flu B small multiples)
  *
  * Receives `virus` prop interpolated from section config via textVars.
- * Data: public/data/wastewaterData.csv — RPU's standard long-format schema
+ * Data: DATA_PATHS.wastewater (live nychealth/respiratory-illness-data) — RPU's standard long-format schema
  * (date, metric, submetric, display, value), same shape as caseData.csv /
  * emergencyDeptData.csv. Filters on metric (e.g. "SARS-CoV-2 viral load")
  * and submetric === "Citywide average".
@@ -34,7 +34,7 @@ import VegaLiteWrapper from "./VegaLiteWrapper";
 import ChartFooter from "./ChartFooter";
 import ToggleGroup from "../controls/ToggleGroup";
 import { tokens } from "../../styles/tokens";
-import { resolveAsset } from "../../utils/pathUtils";
+import { DATA_PATHS, DATA_PATHS_BLOB } from "../../views/config/Data.config";
 import { buildTooltipLineCalc, tooltipLineEntry, hideZeroLabelExpr, escapeForVegaString } from "../../utils/tooltipUtils";
 import {
   BASE_AXIS_LABEL_CONFIG,
@@ -65,18 +65,12 @@ const VIRUS_METRICS = {
 
 const CITYWIDE_SUBMETRIC = "Citywide average";
 
-// wastewaterData.csv is served locally from this app's own repo
-// (public/data/wastewaterData.csv), not the external nychealth/
-// respiratory-illness-data repo the other CSVs come from — so it isn't
-// covered by loadConfigWithData's DATA_PATHS_BLOB uploadDate fetch (that
-// dataType has no entry there, and dataType: "wastewater" also has no
-// dataPath in the virus page configs, so hydratedConfig.uploadDate is
-// always null on this tab). This is a best-effort standalone fetch of the
-// same "last commit" date for this repo/file; if the repo or branch below
-// is ever renamed, getGitHubFileUploadDate just resolves to null and the
-// component falls back to the local max-date-in-data value.
-const WASTEWATER_CSV_BLOB_URL =
-  "https://github.com/nychealth/respiratory-virus-data-pages/blob/main/public/data/wastewaterData.csv";
+// wastewaterData.csv now lives in the live nychealth/respiratory-illness-data
+// repo alongside the other CSVs (2026-10-01). The virus page configs still
+// don't pass a dataPath through loadConfigWithData for this tab, so this
+// component fetches the file's "last commit" date itself. If the fetch
+// fails, the footer falls back to the max-date-in-data value.
+const WASTEWATER_CSV_BLOB_URL = DATA_PATHS_BLOB.wastewater;
 
 // ── Vega-Lite spec builder ────────────────────────────────────────────────────
 // Shared axis/view boilerplate lives in vegaTheme.js (BASE_AXIS_LABEL_CONFIG
@@ -114,7 +108,7 @@ const standardTooltipLineCalc = buildTooltipLineCalc({
 
 const tooltipLineCalc = `
   datum.valueRaw === '< LOD'
-    ? 'Normalized viral load below level of detection'
+    ? 'Normalized viral load below limit of detection'
     : (!isValid(datum.valueNum)
         ? 'No data reported'
         : ${standardTooltipLineCalc})
@@ -273,7 +267,7 @@ function buildExportGridSpec(pathogens, allData, yDomain = null) {
     const filtered = allData.filter(
       (d) => d.metric === metric && d.submetric === CITYWIDE_SUBMETRIC
     );
-    const { config, autosize, width, ...rest } = buildLineSpec(color, label, label, yDomain);
+    const { config: _config, autosize: _autosize, width: _width, ...rest } = buildLineSpec(color, label, label, yDomain);
     return {
       ...rest,
       width: EXPORT_PANEL_WIDTH,
@@ -314,7 +308,7 @@ const WastewaterChart = ({ virus = "COVID-19", uploadDate, onNewView, onExportSp
   // variant).
   const [scaleMode, setScaleMode] = useState("same");
 
-  const dataUrl = resolveAsset('data/wastewaterData.csv');
+  const dataUrl = DATA_PATHS.wastewater;
 
   useEffect(() => {
     setLoading(true);

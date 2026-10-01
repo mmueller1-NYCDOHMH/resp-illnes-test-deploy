@@ -80,7 +80,7 @@ const overviewConfig = {
         dataPath: DATA_PATHS.ed,
         order: [
           "Adenovirus",
-          "Human Coronavirus",
+          "Human Coronavirus (non-SARS-CoV-2)",
           "SARS-CoV-2",
           "Enterovirus/Rhinovirus",
           "Human Metapneumovirus",

@@ -19,9 +19,6 @@
 export const escapeForVegaString = (str = "") =>
   String(str).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 
-const lowerFirst = (str = "") =>
-  str ? str.charAt(0).toLowerCase() + str.slice(1) : str;
-
 /**
  * Builds a Vega-Lite `calculate` expression that concatenates a series
  * label, a pre-formatted value, and (optionally) a metric label into one

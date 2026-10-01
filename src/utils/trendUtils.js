@@ -604,6 +604,53 @@ export function isFirstWeekFromData(data = []) {
 }
 
 const round = (num) => Math.round(num * 100) / 100;
+
+/**
+ * Absolute percentage-point thresholds for ED "% of visits / hospitalizations"
+ * trends. This is the ONE rule for calling an ED week-over-week change
+ * increased / decreased / stable — shared by the home page stat grid
+ * (getAbsoluteTrend) and the ED data page (useSectionData), so the same two
+ * numbers can't read "stable" on one page and "increased" on the other
+ * (e.g. Flu 0.13% → 0.16% was stable on home, +23% "increased" on the Flu
+ * ED page).
+ */
+export const ED_ABSOLUTE_TREND_THRESHOLDS = {
+  rsv: 0.01,
+  flu: 0.05,
+  covid: 0.01,
+  ari: 0.02,
+};
+
+/** Map a virus name / card title ("Flu", "COVID-19", "Influenza visits"…) to a threshold key. */
+export function resolveTrendVirusKey(text = "") {
+  const lower = String(text ?? "").toLowerCase();
+  if (lower.includes("covid")) return "covid";
+  if (lower.includes("flu") || lower.includes("influenza")) return "flu";
+  if (lower.includes("rsv")) return "rsv";
+  return "ari";
+}
+
+/**
+ * Classify a current/previous pair of ED percentages using the absolute
+ * thresholds above. Values are rounded to 2 decimals (as displayed) and the
+ * difference is rounded too, so float noise like 0.18 - 0.13 = 0.04999…
+ * doesn't flip a threshold-sized change to "stable".
+ */
+export function classifyAbsoluteChange(current, previous, virusText = "") {
+  const c = round(current);
+  const p = round(previous);
+  if (!Number.isFinite(c) || !Number.isFinite(p)) return null;
+
+  const threshold =
+    ED_ABSOLUTE_TREND_THRESHOLDS[resolveTrendVirusKey(virusText)] ??
+    ED_ABSOLUTE_TREND_THRESHOLDS.ari;
+  const diff = round(c - p);
+
+  if (diff >= threshold) return { direction: "up", label: "increased", current: c, previous: p };
+  if (diff <= -threshold) return { direction: "down", label: "decreased", current: c, previous: p };
+  return { direction: "same", label: "stable", current: c, previous: p };
+}
+
 /**
  * Compute trend direction using absolute difference thresholds.
  * Returns { direction: "up" | "down" | "same", label, current, previous }
@@ -611,7 +658,7 @@ const round = (num) => Math.round(num * 100) / 100;
 export function getAbsoluteTrend(series, key = "value", title = "") {
   if (!Array.isArray(series)) return null;
 
-  // 1) Extract real numeric values only, preserving order
+  // Extract real numeric values only, preserving order
   const numeric = series
     .map((d) => toNum(d?.[key]))
     .filter((v) => Number.isFinite(v));
@@ -619,38 +666,7 @@ export function getAbsoluteTrend(series, key = "value", title = "") {
   // Need at least two real numeric points
   if (numeric.length < 2) return null;
 
-  const previous = round(numeric.at(-2));
-  const current = round(numeric.at(-1));
-
-  if (!Number.isFinite(previous) || !Number.isFinite(current)) return null;
-
-  // 2) Determine virus-specific threshold
-  const lower = title.toLowerCase();
-
-  let virusKey = "ari";
-  if (lower.includes("covid")) virusKey = "covid";
-  else if (lower.includes("flu") || lower.includes("influenza")) virusKey = "flu";
-  else if (lower.includes("rsv")) virusKey = "rsv";
-  else if (lower.includes("respiratory")) virusKey = "ari";
-
-  const thresholds = {
-    rsv: 0.01,
-    flu: 0.05,
-    covid: 0.01,
-    ari: 0.02,
-  };
-
-  const threshold = thresholds[virusKey] ?? 0.02;
-  const diff = current - previous;
-
-  if (diff >= threshold) {
-    return { direction: "up", label: "increased", current, previous };
-  }
-  if (diff <= -threshold) {
-    return { direction: "down", label: "decreased", current, previous };
-  }
-
-  return { direction: "same", label: "stable", current, previous };
+  return classifyAbsoluteChange(numeric.at(-1), numeric.at(-2), title);
 }
 
 

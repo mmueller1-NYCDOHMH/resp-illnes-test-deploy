@@ -22,7 +22,9 @@
  * uses for age/borough breakdowns elsewhere on this site), so there's no
  * legend to fit or categorical palette to validate.
  *
- * Data: public/data/wastewaterData.csv, metric === "SARS-CoV-2 variants".
+ * Data: DATA_PATHS.wastewater (live GitHub), metric === "SARS-CoV-2 variants".
+ * NOTE (2026-10-01): the live file doesn't include variant rows yet, so this
+ * chart will render empty until RPU adds them.
  * Two submetric values aren't real variant lineages:
  *  - "Other" — RPU's catch-all for variants each present at a low
  *    individual share that week. Still gets its own panel (a real,
@@ -64,7 +66,7 @@ import { loadCSVData } from "../../utils/loadCSVData";
 import VegaLiteWrapper from "./VegaLiteWrapper";
 import ChartFooter from "./ChartFooter";
 import { tokens } from "../../styles/tokens";
-import { resolveAsset } from "../../utils/pathUtils";
+import { DATA_PATHS } from "../../views/config/Data.config";
 import { buildTooltipLineCalc, tooltipLineEntry, hideZeroLabelExpr } from "../../utils/tooltipUtils";
 import {
   BASE_AXIS_LABEL_CONFIG,
@@ -323,7 +325,7 @@ function buildExportGridSpec(panels, scaleMode, sharedMax, gapBands) {
 
   const childSpecs = panels.map(({ category, series, ownMax }) => {
     const maxValue = scaleMode === "shared" ? sharedMax : ownMax;
-    const { config, autosize, width, ...rest } = buildPanelSpec(category, maxValue, gapBands);
+    const { config: _config, autosize: _autosize, width: _width, ...rest } = buildPanelSpec(category, maxValue, gapBands);
     return {
       ...rest,
       width: EXPORT_PANEL_WIDTH,
@@ -355,7 +357,7 @@ const WastewaterVariantChart = ({ onExportSpec }) => {
   // per-panel scaling so a rare variant's own trend is still legible.
   const [scaleMode, setScaleMode] = useState("independent");
 
-  const dataUrl = resolveAsset("data/wastewaterData.csv");
+  const dataUrl = DATA_PATHS.wastewater;
 
   useEffect(() => {
     setLoading(true);

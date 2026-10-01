@@ -9,14 +9,14 @@
  * component does NOT render its own title.
  *
  * Data: real (as of 2026-08-19) — UHF42 neighborhood case rates built from
- * RPU's staged caseData.csv via useNeighborhoodGeoCsv + buildUhfDataByGeocode
+ * the live caseData.csv via useNeighborhoodGeoCsv + buildUhfDataByGeocode
  * (src/utils/neighborhoodGeoData.js), one metric per virus ("COVID-19 case
  * rate per 100,000 by neighborhood" / "Flu case rate..." / "RSV case
  * rate..."). RPU's file has no by-neighborhood case *count* (only the
  * per-100k rate), so the old placeholder's `count` field ("Est. weekly
  * cases") is gone — there's nothing real to source it from yet. COVID has
  * no masked neighborhoods in RPU's current file; Flu and (heavily) RSV do
- * — see isSuppressed/StatValue below for how a masked neighborhood renders.
+ * — see isSuppressed below and StatValue in MapSnapshot.jsx for how a masked neighborhood renders.
  * Map: GeoJSON from NYC Health EHDP (UHF42 neighborhoods).
  * Tiles: CartoDB Positron no-labels.
  *
@@ -32,7 +32,7 @@
 import React, { useCallback, useEffect, useMemo } from "react";
 import NeighborhoodSearchInput from "./NeighborhoodSearchInput";
 import VegaLiteWrapper from "../charts/VegaLiteWrapper";
-import DataAsOf from "../charts/DataAsOf";
+import { SnapshotRows } from "./MapSnapshot";
 import InfoModal from "../popups/InfoModal";
 import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
 import { tokens } from "../../styles/tokens";
@@ -92,6 +92,16 @@ const VIRUS_COLORS = {
     tokens.colorScales.rsv[0],
   ],
 };
+
+// Per-virus tint for the At-a-Glance "Preview" header (hover layer) —
+// background/border are light mixes of the virus accent, label uses the
+// darkest stop for contrast. Fallback matches the old blue-50/600 styling.
+const PREVIEW_THEME = {
+  "Flu": { accent: tokens.colorScales.flu[2], text: tokens.colorScales.flu[0] },
+  "COVID-19": { accent: tokens.colorScales.covid[2], text: tokens.colorScales.covid[0] },
+  "RSV": { accent: tokens.colorScales.rsv[2], text: tokens.colorScales.rsv[0] },
+};
+const FALLBACK_PREVIEW_THEME = { accent: "#2563eb", text: "#2563eb" };
 
 const FALLBACK_COLORS = [
   "#c6dbef",
@@ -164,65 +174,9 @@ const buildHistoSpec = (virus) =>
   ]);
 
 // ── At-a-Glance snapshot rows ─────────────────────────────────────────────────
-
-// Renders a rate, or "Suppressed" (with a title tooltip explaining why) when
-// RPU has masked it for a small numerator — real and common for Flu/RSV in
-// the current file, rare for COVID-19.
-function StatValue({ value, suffix = "" }) {
-  if (value == null) {
-    return (
-      <span
-        className="text-xs font-semibold font-body text-[var(--gray-500)] italic"
-        title="Rate suppressed — case count too small to report"
-      >
-        Suppressed
-      </span>
-    );
-  }
-
-  return (
-    <span className="text-xs font-semibold font-body text-[var(--gray-900)] tabular-nums">
-      {value}
-      {suffix}
-    </span>
-  );
-}
-
-function SnapshotRows({ data, groupNote, weekEnding = WEEK_ENDING }) {
-  return (
-    <>
-      <div className="px-3 py-2.5 flex flex-col gap-2">
-        <div className="flex items-baseline justify-between gap-2">
-          <StatValue value={data.rate} />
-          <span className="text-xs font-body text-[var(--gray-600)] leading-snug">
-            cases per 100,000 people
-          </span>
-        </div>
-
-        {/* RPU reports 15 of the 42 UHF42 neighborhoods as part of a
-            combined UHF34 group (see neighborhoodGeoData.js's
-            groupedWithNote) — this rate isn't independent of its
-            group-mates', so say so rather than let identical numbers
-            across 2-3 neighborhoods look like a coincidence. */}
-        {groupNote && (
-          <p className="text-2xs font-body text-[var(--gray-600)] italic leading-snug">
-            {groupNote}
-          </p>
-        )}
-      </div>
-
-      <div
-        className="px-3 pb-2.5 flex justify-between gap-2"
-        style={{ color: "var(--footnote-gray)" }}
-      >
-        <div className="flex-1" />
-        <p className="text-2xs font-body whitespace-nowrap">
-          <DataAsOf date={weekEnding} />
-        </p>
-      </div>
-    </>
-  );
-}
+// Uses the shared MapSnapshot SnapshotRows with the same treatment as the
+// home-page ED-visit NeighborhoodMap: large primary number, no data-as-of
+// footer, no grouped-neighborhood note (that lives only in the caption).
 
 // ── Component ─────────────────────────────────────────────────────────────────
 // Comparison rows (side-by-side with delta) now live in the shared
@@ -245,9 +199,8 @@ const LabCasesNeighborhoodMap = ({
   );
 
   // ── Real UHF neighborhood data ────────────────────────────────────────────
-  // Loads RPU's staged caseData.csv (see useNeighborhoodGeoCsv for why this
-  // reads from public/data instead of the live DATA_PATHS.lab feed for
-  // now) and pulls this virus's "case rate per 100,000 by neighborhood"
+  // Loads the live caseData.csv (DATA_PATHS.lab, via useNeighborhoodGeoCsv)
+  // and pulls this virus's "case rate per 100,000 by neighborhood"
   // metric — the `virus` prop ("COVID-19" / "Flu" / "RSV") matches RPU's
   // metric-name prefix exactly, so no separate mapping table is needed.
   const { caseRows } = useNeighborhoodGeoCsv();
@@ -273,6 +226,7 @@ const LabCasesNeighborhoodMap = ({
     () => getColors(virus),
     [virus]
   );
+  const previewTheme = PREVIEW_THEME[virus] || FALLBACK_PREVIEW_THEME;
 
   // Domain/color scale depend on the loaded data, so — unlike the old
   // hardcoded LAB_CD_DATA version — these can no longer be module-level
@@ -402,20 +356,26 @@ const LabCasesNeighborhoodMap = ({
     previewGeocode !== selectedGeocode
   );
 
+  // The dynamic caption follows the preview: while hovering a different
+  // neighborhood it narrates the previewed one (tinted with the virus color
+  // to read as temporary), and returns to the selected area on mouse-out.
+  const captionIsPreview = showHoverLayer;
+  const captionData = captionIsPreview ? previewData : selectedData;
+
   const compareWord =
-    selectedData && selectedData.rate != null
-      ? selectedData.rate > citywideRate
+    captionData && captionData.rate != null
+      ? captionData.rate > citywideRate
         ? "more than"
-        : selectedData.rate < citywideRate
+        : captionData.rate < citywideRate
         ? "less than"
         : "equal to"
       : null;
 
   const compareColor =
-    selectedData && selectedData.rate != null
-      ? selectedData.rate > citywideRate
+    captionData && captionData.rate != null
+      ? captionData.rate > citywideRate
         ? "#b91c1c"
-        : selectedData.rate < citywideRate
+        : captionData.rate < citywideRate
         ? "#065f46"
         : "inherit"
       : "inherit";
@@ -675,7 +635,7 @@ const LabCasesNeighborhoodMap = ({
               border: inCompareMode
                 ? "1.5px solid #f59e0b"
                 : showHoverLayer
-                ? "1.5px solid #93c5fd"
+                ? `1.5px solid color-mix(in srgb, ${previewTheme.accent} 45%, white)`
                 : "1px solid var(--gray-300)",
               boxShadow: inCompareMode
                 ? "0 0 0 3px #fef3c766"
@@ -700,8 +660,17 @@ const LabCasesNeighborhoodMap = ({
                 }}
                 aria-hidden={!showHoverLayer}
               >
-                <div className="px-3 py-2.5 border-b border-blue-100 bg-blue-50">
-                  <p className="text-2xs font-semibold font-body text-blue-600  tracking-widest mb-0.5">
+                <div
+                  className="px-3 py-2.5 border-b"
+                  style={{
+                    backgroundColor: `color-mix(in srgb, ${previewTheme.accent} 8%, white)`,
+                    borderColor: `color-mix(in srgb, ${previewTheme.accent} 25%, white)`,
+                  }}
+                >
+                  <p
+                    className="text-2xs font-semibold font-body tracking-widest mb-0.5"
+                    style={{ color: previewTheme.text }}
+                  >
                     Preview
                   </p>
 
@@ -712,12 +681,11 @@ const LabCasesNeighborhoodMap = ({
 
                 {previewData && (
                   <SnapshotRows
-                    weekEnding={weekEnding}
                     data={previewData}
-                    groupNote={groupedWithNote(
-                      previewData,
-                      dataByGeocode
-                    )}
+                    valueField="rate"
+                    size="lg"
+                    label="cases per 100,000 people"
+                    interactive
                   />
                 )}
               </div>
@@ -866,12 +834,11 @@ const LabCasesNeighborhoodMap = ({
                       </>
                     ) : (
                       <SnapshotRows
-                        weekEnding={weekEnding}
                         data={selectedData}
-                        groupNote={groupedWithNote(
-                          selectedData,
-                          dataByGeocode
-                        )}
+                        valueField="rate"
+                        size="lg"
+                        label="cases per 100,000 people"
+                        interactive
                       />
                     )}
                   </>
@@ -890,14 +857,27 @@ const LabCasesNeighborhoodMap = ({
             </div>
 
             {/* Dynamic caption */}
-            {selectedData && (
-              <div className="border-t border-[var(--gray-200)] bg-[var(--gray-100)] px-md py-md text-sm font-body text-[var(--gray-700)] leading-relaxed">
-                {selectedData.rate == null ? (
+            {selectedData && captionData && (
+              <div
+                className="border-t px-md py-md text-sm font-body text-[var(--gray-700)] leading-relaxed transition-colors duration-200"
+                style={
+                  captionIsPreview
+                    ? {
+                        backgroundColor: `color-mix(in srgb, ${previewTheme.accent} 8%, white)`,
+                        borderColor: `color-mix(in srgb, ${previewTheme.accent} 25%, white)`,
+                      }
+                    : {
+                        backgroundColor: "var(--gray-100)",
+                        borderColor: "var(--gray-200)",
+                      }
+                }
+              >
+                {captionData.rate == null ? (
                   <p>
                     The case rate for {virus} this week{" "}
                      in {" "}
                     <strong>
-                      {selectedData.name}
+                      {captionData.name}
                     </strong>{" "}
                     is suppressed — the underlying case count is too
                     small to report reliably.
@@ -906,11 +886,11 @@ const LabCasesNeighborhoodMap = ({
                   <>
                     <p>
                       <strong>
-                        {selectedData.rate}
+                        {captionData.rate}
                       </strong>{" "}
                       cases per 100,000 people in{" "}
                       <strong>
-                        {selectedData.name}
+                        {captionData.name}
                       </strong>{" "}
                       for the week ending{" "}
                       <strong>{weekEnding}</strong>.
@@ -933,12 +913,12 @@ const LabCasesNeighborhoodMap = ({
                 )}
 
                 {groupedWithNote(
-                  selectedData,
+                  captionData,
                   dataByGeocode
                 ) && (
                   <p className="mt-sm text-xs italic">
                     {groupedWithNote(
-                      selectedData,
+                      captionData,
                       dataByGeocode
                     )}
                   </p>
@@ -979,7 +959,7 @@ const LabCasesNeighborhoodMap = ({
                   selectedColor: colors[4],
                   hoverColor: colors[2],
                   benchmarkValue: citywideRate,
-                  benchmarkLabel: `Citywide: ${citywideRate} / 100,000`,
+                  benchmarkLabel: `NYC: ${citywideRate} / 100,000`,
                 }}
                 rendererMode="svg"
                 onNewView={handleChartNewView}

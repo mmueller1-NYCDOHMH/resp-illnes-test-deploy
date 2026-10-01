@@ -2,26 +2,17 @@
 //
 // Loads the case/ED CSVs for the neighborhood choropleth maps.
 //
-// Every other chart on this site reads DATA_PATHS.lab / DATA_PATHS.ed —
-// the *live* caseData.csv / emergencyDeptData.csv on the production
-// nychealth/respiratory-illness-data GitHub repo (see Data.config.js). As
-// of 2026-08-19 that live feed does not yet include the "by neighborhood"
-// rows this hook needs — RPU's new geo-enabled files are staging-only for
-// now (Hilary Parton's "RPU webpage - new long files for staging" email,
-// 2026-08-18). So for just this UHF geo data, load from the local
-// public/data copies instead, which have been updated with RPU's staged
-// files (see public/data/caseData.csv, emergencyDeptData.csv).
-//
-// TODO: once RPU merges "by neighborhood" rows into the live feed, point
-// this hook at DATA_PATHS.lab / DATA_PATHS.ed like the rest of the site
-// (see project memory: the trending-sidebar fix already made that switch
-// for its own data) and delete the local public/data copies.
+// Reads the live caseData.csv / emergencyDeptData.csv from the
+// nychealth/respiratory-illness-data GitHub repo (DATA_PATHS), same URLs as
+// the rest of the site, so loadCSVData's cache is shared. The "by
+// neighborhood" rows were merged into the live feed by 2026-10-01; the
+// local public/data copies are no longer read.
 import { useEffect, useState } from "react";
 import { loadCSVData } from "../../utils/loadCSVData";
-import { resolvePublicPath } from "../../utils/pathUtils";
+import { DATA_PATHS } from "../../views/config/Data.config";
 
-const CASE_DATA_URL = resolvePublicPath("data/caseData.csv");
-const ED_DATA_URL = resolvePublicPath("data/emergencyDeptData.csv");
+const CASE_DATA_URL = DATA_PATHS.lab;
+const ED_DATA_URL = DATA_PATHS.ed;
 
 /**
  * @returns {{ caseRows: object[], edRows: object[], loading: boolean, error: boolean, snapshotDate: Date|null }}

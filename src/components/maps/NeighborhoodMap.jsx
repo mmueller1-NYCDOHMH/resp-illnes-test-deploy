@@ -11,7 +11,7 @@
  * sentence, and the ranked bar chart stacked underneath it.
  *
  * Data: real (as of 2026-08-19) — UHF42 neighborhood values built from
- * RPU's staged emergencyDeptData.csv via useNeighborhoodGeoCsv +
+ * the live emergencyDeptData.csv via useNeighborhoodGeoCsv +
  * buildUhfDataByGeocode (src/utils/neighborhoodGeoData.js). Two fields per
  * neighborhood: `pct` ("Respiratory illness visits by neighborhood") drives
  * both the map color scale and the primary displayed stat; `hospPct`
@@ -132,9 +132,8 @@ const NeighborhoodMap = () => {
   );
 
   // ── Real UHF neighborhood data ────────────────────────────────────────────
-  // Loads RPU's staged emergencyDeptData.csv (see useNeighborhoodGeoCsv for
-  // why this reads from public/data instead of the live DATA_PATHS.ed feed
-  // for now) and turns its "by neighborhood" rows into a geocode-keyed
+  // Loads the live emergencyDeptData.csv (DATA_PATHS.ed, via
+  // useNeighborhoodGeoCsv) and turns its "by neighborhood" rows into a geocode-keyed
   // lookup, splitting the 7 combined-UHF34 submetrics into their component
   // UHF42 codes along the way (see neighborhoodGeoData.js).
   const { edRows } = useNeighborhoodGeoCsv();
@@ -309,41 +308,52 @@ const NeighborhoodMap = () => {
   // so it fills the space the Hospitalizations row used to occupy instead
   // of leaving the (now shorter) compare table stranded inside the card's
   // min-h-[170px] floor. See the two render sites below.
-  const dynamicCaption = selectedData && (
-    <div className="border-t border-[var(--gray-200)] bg-[var(--gray-100)] px-md py-md text-sm font-body text-[var(--gray-700)] leading-relaxed">
-      {selectedData.pct == null ? (
+  // The caption follows the preview: while hovering a different neighborhood
+  // it narrates the previewed one (blue-tinted like the Preview header, so it
+  // reads as temporary) and returns to the selection on mouse-out.
+  const captionIsPreview = showHoverLayer;
+  const captionData = captionIsPreview ? previewData : selectedData;
+  const dynamicCaption = selectedData && captionData && (
+    <div
+      className={`border-t px-md py-md text-sm font-body text-[var(--gray-700)] leading-relaxed transition-colors duration-200 ${
+        captionIsPreview
+          ? "border-blue-100 bg-blue-50"
+          : "border-[var(--gray-200)] bg-[var(--gray-100)]"
+      }`}
+    >
+      {captionData.pct == null ? (
         <p>
           RPU has suppressed this week's ED-visit rate for{" "}
-          <strong>{selectedData.name}</strong> — the underlying case
+          <strong>{captionData.name}</strong> — the underlying case
           count is too small to report reliably.
         </p>
       ) : (
         <>
           <p>
-            In <strong>{selectedData.name}</strong>, respiratory illnesses
-            were <strong>{selectedData.pct}%</strong> of ED
+            In <strong>{captionData.name}</strong>, respiratory illnesses
+            were <strong>{captionData.pct}%</strong> of ED
             visits for the week ending <strong>{weekEnding}</strong>.
 
             This is{" "}
             <strong
               style={{
                 color:
-                  selectedData.pct > citywidePct ? "#b91c1c"
-                    : selectedData.pct < citywidePct ? "#065f46"
+                  captionData.pct > citywidePct ? "#b91c1c"
+                    : captionData.pct < citywidePct ? "#065f46"
                     : "inherit",
               }}
             >
-              {selectedData.pct > citywidePct ? "more than"
-                : selectedData.pct < citywidePct ? "less than"
+              {captionData.pct > citywidePct ? "more than"
+                : captionData.pct < citywidePct ? "less than"
                 : "equal to"}
             </strong>{" "}
             the Citywide value of <strong>{citywidePct}%</strong>.
           </p>
         </>
       )}
-      {groupedWithNote(selectedData, dataByGeocode) && (
+      {groupedWithNote(captionData, dataByGeocode) && (
         <p className="mt-sm text-xs italic">
-          {groupedWithNote(selectedData, dataByGeocode)}
+          {groupedWithNote(captionData, dataByGeocode)}
         </p>
       )}
     </div>
@@ -523,9 +533,9 @@ const NeighborhoodMap = () => {
               The dynamic caption paragraph used to be its own separate
               bordered box below this card; it's now a second section inside
               the same outer border so the stats + narrative read as one
-              card. It stays outside the hover/base grid swap above (i.e. it
-              doesn't flicker to a "preview" version on hover) since it's
-              describing the selection, not whatever's being hovered. */}
+              card. It stays outside the hover/base grid swap above, but its
+              text follows the preview (see captionData) so it always
+              matches the card above it. */}
           <div
             className="rounded-lg overflow-hidden transition-all duration-200 flex-shrink-0"
             style={{
@@ -740,7 +750,6 @@ const NeighborhoodMap = () => {
             columns={[
               { key: "name", header: "Neighborhood", format: "text" },
               { key: "pct", header: "Percent of ED visits", format: "percent" },
-              { key: "hospPct", header: "percent of hospitalizations from the ED that are for ORI", format: "percent" },
             ]}
             caption="Neighborhood respiratory illness, percent of ED visits, ranked highest to lowest"
             srOnly

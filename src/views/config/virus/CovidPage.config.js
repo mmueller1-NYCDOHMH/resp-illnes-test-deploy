@@ -1,7 +1,7 @@
 import edPageConfig from "../EmergencyDeptPage.config";
 import caseDataPageConfig from "../CaseDataPage.config";
 import covidDeathPageConfig from "../CovidDeathPage.config";
-import { resolveAsset } from "../../../utils/pathUtils";
+import { DATA_PATHS } from "../Data.config";
 
 // TEMP (Morgan, 2026-09-14): COVID wastewater Variants tab pulled while
 // stakeholders discuss it. Flip this back to true to restore the section —
@@ -63,7 +63,7 @@ const covidPageConfig = {
         // WastewaterChart self-fetches from this same file, so there's no
         // filtered row set for the CSV button to export — this path feeds
         // the "raw file" fallback in buildDownloadHandler instead.
-        dataPath: resolveAsset("data/wastewaterData.csv"),
+        dataPath: DATA_PATHS.wastewater,
         downloadDescription:
           "Downloads the full wastewater dataset (all viruses and metrics).",
       },
@@ -91,7 +91,7 @@ const covidPageConfig = {
             componentProps: {
               // Same self-fetching situation as WastewaterChart — this feeds
               // buildDownloadHandler's "raw file" fallback for the CSV button.
-              dataPath: resolveAsset("data/wastewaterData.csv"),
+              dataPath: DATA_PATHS.wastewater,
               downloadDescription:
                 "Downloads the full wastewater dataset (all viruses and metrics).",
             },

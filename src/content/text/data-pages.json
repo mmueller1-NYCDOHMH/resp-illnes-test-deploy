@@ -66,9 +66,8 @@
       "reportsByRE": {
         "title": "{virus} <span class='dynamic-label'>Laboratory-Reported Cases</span> by Race and Ethnicity",
         "footer": {
-          "independent": "<p>Y-axis scales are different to clearly show trends for a given race and ethnicity.</p><p>During this period, <span class='bg-highlight'>{unknownPct}%</span> of {virus} cases had missing race/ethnicity information.</p>",
-          "shared": "<p>Y-axis scales are the same across groups to support comparison between race and ethnicity groups.</p><p>During this period, <span class='bg-highlight'>{unknownPct}%</span> of {virus} cases had missing race/ethnicity information.</p>"
-        }
+          "independent": "<p>Y-axis scales are different to clearly show trends for a given race and ethnicity.</p><p>During this period, <span class='bg-highlight'>{unknownPct}%</span> of cases had missing data for race and ethnicity.</p>",
+          "shared": "<p>Y-axis scales are the same across groups to support comparison between race and ethnicity groups.</p><p>During this period, <span class='bg-highlight'>{unknownPct}%</span> of cases had missing data for race and ethnicity.</p>"        }
       }
     }
   },
