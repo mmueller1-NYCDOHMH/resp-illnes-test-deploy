@@ -10,11 +10,13 @@ export const DATA_PATHS = {
   ed: `${DATA_BASE_URL_RAW}emergencyDeptData.csv`,
   lab: `${DATA_BASE_URL_RAW}caseData.csv`,
   deathT: `${DATA_BASE_URL_RAW}deathData.csv`,
-  death: `${DATA_BASE_URL_RAW}deathData.csv`
+  death: `${DATA_BASE_URL_RAW}deathData.csv`,
+  wastewater: `${DATA_BASE_URL_RAW}wastewaterData.csv`,
 };
 
 export const DATA_PATHS_BLOB = {
   ed: `${DATA_BASE_URL_BLOB}emergencyDeptData.csv`,
   lab: `${DATA_BASE_URL_BLOB}caseData.csv`,
   death: `${DATA_BASE_URL_BLOB}deathData.csv`,
+  wastewater: `${DATA_BASE_URL_BLOB}wastewaterData.csv`,
 };

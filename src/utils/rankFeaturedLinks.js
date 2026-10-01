@@ -11,8 +11,13 @@
 // ranking is consistent with the trend arrows/chips shown elsewhere.
 
 import { loadCSVData } from "./loadCSVData";
-import { resolveAsset } from "./pathUtils";
-import { getWoWPercentChange, getTrendDirection, formatPercentChange } from "./trendUtils";
+import {
+  getWoWPercentChange,
+  getTrendDirection,
+  formatPercentChange,
+  getLastTwoValuesSameSeries,
+  classifyAbsoluteChange,
+} from "./trendUtils";
 import trackableMetrics from "../views/config/trackableMetrics.json";
 import { DATA_PATHS } from "../views/config/Data.config";
 
@@ -20,17 +25,8 @@ import { DATA_PATHS } from "../views/config/Data.config";
 // loadConfigWithData → DATA_PATHS (see Data.config.js). Using the identical
 // URL here means this ranking shares loadCSVData's in-memory cache with the
 // rest of the app — one fetch, not a second copy of the data.
-//
-// NOTE: there is no live/published source for wastewater data in this repo
-// (nychealth/respiratory-illness-data doesn't include a wastewater CSV —
-// WastewaterChart.jsx also falls back to the bundled snapshot for the same
-// reason). Until that's published, wastewater entries keep reading the local
-// fixture and should be treated as potentially stale.
-const WASTEWATER_LOCAL_PATH = "data/wastewaterData.csv";
-
 export function resolveDataUrl(entry) {
   if (!entry.dataType) return null;
-  if (entry.dataType === "wastewater") return resolveAsset(WASTEWATER_LOCAL_PATH);
   return DATA_PATHS[entry.dataType] || null;
 }
 
@@ -105,8 +101,18 @@ function scoreEntry(entry, rowsByUrl) {
       : getWoWPercentChange(series);
   if (pctChange === null) return null;
 
-  const direction = getTrendDirection(pctChange);
-  if (direction === "same") return null; // not a "mover"
+  // ED rows are already percentages — call direction with the same absolute
+  // percentage-point thresholds as the home stat grid and the ED data pages
+  // (classifyAbsoluteChange), so a Quick Link can't show ▲ for a change the
+  // rest of the site calls "stable". Magnitude/ranking still uses pctChange.
+  let direction;
+  if (entry.dataType === "ed") {
+    const pair = getLastTwoValuesSameSeries(series, "value");
+    direction = pair ? classifyAbsoluteChange(pair[0], pair[1], entry.metric)?.direction : null;
+  } else {
+    direction = getTrendDirection(pctChange);
+  }
+  if (!direction || direction === "same") return null; // not a "mover"
 
   if (isLowVolume(series)) return null;
 
@@ -123,9 +129,9 @@ function scoreEntry(entry, rowsByUrl) {
  * change (biggest movers first, regardless of direction). Entries with no
  * data file (e.g. the neighborhood map link), too little data, no real
  * change, or too little volume to be meaningful are excluded. Wastewater
- * entries are excluded outright — there's no live/published wastewater
- * source yet (see WASTEWATER_LOCAL_PATH above), so they shouldn't surface
- * in the home page's data-driven Quick Links list.
+ * entries are excluded outright from the home page's Quick Links list (an
+ * editorial choice — the data itself now comes from the live GitHub feed
+ * via DATA_PATHS.wastewater like everything else).
  */
 // PERF: share one in-flight ranking so an early warm-up call (see
 // ConfigDrivenPage) and the sidebar's own call don't each score the data.

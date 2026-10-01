@@ -1,6 +1,6 @@
 import edPageConfig from "../EmergencyDeptPage.config";
 import caseDataPageConfig from "../CaseDataPage.config";
-import { resolveAsset } from "../../../utils/pathUtils";
+import { DATA_PATHS } from "../Data.config";
 
 const fluPageConfig = {
   id: "fluPage",
@@ -53,7 +53,7 @@ const fluPageConfig = {
         // WastewaterChart self-fetches from this same file, so there's no
         // filtered row set for the CSV button to export — this path feeds
         // the "raw file" fallback in buildDownloadHandler instead.
-        dataPath: resolveAsset("data/wastewaterData.csv"),
+        dataPath: DATA_PATHS.wastewater,
         downloadDescription:
           "Downloads the full wastewater dataset (all viruses and metrics).",
       },
