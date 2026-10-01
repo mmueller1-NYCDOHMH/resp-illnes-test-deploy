@@ -57,7 +57,6 @@ const StatCardSparkline = ({
 
   const values = data.map((d) => d.value);
   const maxVal = Math.max(...values);
-  const minVal = Math.min(...values);
 
 // Explicit tick values (rather than tickCount) so Vega-Lite's "nice"
 // rounding never snaps a tick to 0 when the real data doesn't include it.

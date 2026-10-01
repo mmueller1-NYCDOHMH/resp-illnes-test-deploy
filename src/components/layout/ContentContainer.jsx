@@ -44,8 +44,18 @@ const toSentenceCase = (text) => {
     nyc: "NYC",
     ari: "ARI",
   };
-  const sentenceCase = text.toLowerCase().replace(/(^\s*[a-z])/, (letter) => letter.toUpperCase());
-  return sentenceCase.replace(/\b(?:sars-cov-2|covid-19|rsv|ed|nyc|ari)\b/gi, (term) => acronyms[term.toLowerCase()]);
+  let firstLetterSeen = false;
+  const sentenceCase = text.replace(/(<[^>]*>)|([^<]+)/g, (_, tag, textNode) => {
+    if (tag) return tag;
+
+    const lower = textNode.toLowerCase();
+    return lower.replace(/[a-z]/, (letter) => {
+      if (firstLetterSeen) return letter;
+      firstLetterSeen = true;
+      return letter.toUpperCase();
+    });
+  });
+    return sentenceCase.replace(/\b(?:sars-cov-2|covid-19|rsv|ed|nyc|ari)\b/gi, (term) => acronyms[term.toLowerCase()]);
 };
 
 const MONTHS =

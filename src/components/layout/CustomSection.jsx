@@ -16,6 +16,7 @@ import React from "react";
 import ContentContainer from "./ContentContainer";
 import ChartContainer from "./ChartContainer";
 import TrendSubtitle from "../controls/TrendSubtitle";
+import { classifyAbsoluteChange } from "../../utils/trendUtils";
 import ToggleGroup from "../controls/ToggleGroup";
 import MarkdownRenderer from "../contentUtils/MarkdownRenderer";
 import { getText, interpolateObject, resolveText } from "../../utils/contentUtils";
@@ -93,11 +94,10 @@ export const buildCombinedVirusSubtitle = ({ data, view, dataSourceKey }) => {
     const diff = currVal - prevVal;
     const pctChange = prevVal === 0 ? null : (diff / prevVal) * 100;
 
-    let direction = "same";
-    if (pctChange !== null) {
-      if (pctChange > 0) direction = "up";
-      if (pctChange < 0) direction = "down";
-    }
+    // Same absolute percentage-point rule as the home stat grid / ED pages
+    // (classifyAbsoluteChange) — overall respiratory illness uses the "ari"
+    // threshold — instead of calling any nonzero relative change up/down.
+    const direction = classifyAbsoluteChange(currVal, prevVal, "respiratory illness")?.direction ?? "same";
 
     const label =
       direction === "up"

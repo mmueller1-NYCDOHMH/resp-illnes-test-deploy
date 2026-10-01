@@ -16,6 +16,9 @@ import {
 
 import { toDisplayVirus, coerceRowVirus } from "../../utils/virusMap";
 
+// Series shown in the three mini charts (module-level so useMemo deps stay stable).
+const miniSeries = ["COVID", "Flu", "RSV"];
+
 
 /** Robust date coercion: supports date, week, end_date, etc. */
 function coerceDate(row) {
@@ -122,7 +125,6 @@ const CombinedVirusChart = ({
 
 
   const seriesDomain = ["COVID", "Flu", "RSV"];
-  const miniSeries = ["COVID", "Flu", "RSV"];
   const baseRange = [
     tokens?.colorScales?.covid?.[1] ?? "#0A84FF",
     tokens?.colorScales?.flu?.[1] ?? "#F43F5E",

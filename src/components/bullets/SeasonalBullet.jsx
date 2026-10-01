@@ -105,8 +105,10 @@ export default function SeasonalBullet({
     };
   }, [dataSource, dataPath]);
 
-  const sourceRows =
-    Array.isArray(dataSource) && dataSource.length ? dataSource : fallbackRows || [];
+  const sourceRows = useMemo(
+    () => (Array.isArray(dataSource) && dataSource.length ? dataSource : fallbackRows || []),
+    [dataSource, fallbackRows]
+  );
 
   const derivedMeta = useMemo(() => resolveDerivedMeta(pageState), [pageState]);
 

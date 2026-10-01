@@ -66,12 +66,15 @@ useEffect(() => {
 
   const sourceVirus = toSourceVirus(virus);
 
-  const filteredData =
-    virus && Array.isArray(data) && data.some((d) => d.virus === sourceVirus)
-      ? data.filter((d) => d.virus === sourceVirus)
-      : Array.isArray(data)
-      ? data
-      : [];
+  const filteredData = useMemo(
+    () =>
+      virus && Array.isArray(data) && data.some((d) => d.virus === sourceVirus)
+        ? data.filter((d) => d.virus === sourceVirus)
+        : Array.isArray(data)
+        ? data
+        : [],
+    [virus, data, sourceVirus]
+  );
 
   const explicitTokenColor =
     color && tokens.colors?.[color] ? tokens.colors[color] : null;

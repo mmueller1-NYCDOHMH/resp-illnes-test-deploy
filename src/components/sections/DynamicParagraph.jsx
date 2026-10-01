@@ -68,7 +68,9 @@ const slug = (s) =>
 // Default alias map to reconcile config "order" labels with CSV "submetric" values.
 // Extend/override by passing `aliasMap` in props if needed.
 const DEFAULT_ALIAS_MAP = {
-  "Human Coronavirus": "Human Coronaviruses",
+  // CSV label was renamed to "Human Coronavirus (non-SARS-CoV-2)" (2026-10);
+  // keep the old short label mapped to it in case any config still uses it.
+  "Human Coronavirus": "Human Coronavirus (non-SARS-CoV-2)",
   RSV: "Respiratory Syncytial Virus",
   Flu: "Influenza",
 };
@@ -108,7 +110,7 @@ export default function DynamicParagraph({
   // i18n text + labels from text.json
   const intro = getText(`${textKeyBase}.intro`);
   const listIntroTpl = getText(`${textKeyBase}.listIntro`); // "Percent of positive test results for the week of {date}:"
-  const labels = getText(`${textKeyBase}.labels`) || {};
+  const labels = useMemo(() => getText(`${textKeyBase}.labels`) || {}, [textKeyBase]);
   // Let i18n provide a valueKey map if you’d like (order label -> CSV submetric)
   const valueKeyMap = labels.valueKeyMap || null;
 
@@ -130,7 +132,10 @@ export default function DynamicParagraph({
     };
   }, [data, dataPath]);
 
-  const sourceRows = data && data.length ? data : fallbackRows || [];
+  const sourceRows = useMemo(
+    () => (data && data.length ? data : fallbackRows || []),
+    [data, fallbackRows]
+  );
 
   // Defaults tailored for the ED panel section
   const effectiveMetric = metricName || "Respiratory panel results";

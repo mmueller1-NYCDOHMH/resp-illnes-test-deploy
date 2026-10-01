@@ -96,7 +96,6 @@ const YearComparisonChart = ({
   display,
   showFluViewToggle = false,
   columnLabels = {},
-  virus,
   onNewView,
 }) => {
   // Default to proportion view

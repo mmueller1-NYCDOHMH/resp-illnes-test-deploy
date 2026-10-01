@@ -20,7 +20,6 @@ import {
 import {
   getLastTwoValuesSameSeries,
   formatDate,
-  formatTrendPhrase,
   formatTrendPhraseHTML,
   coerceNoChange,
   getTrendInfo,
@@ -28,6 +27,7 @@ import {
   isFirstWeekFromData,
   parseLocalISO,
   EPSILON_NO_CHANGE,
+  classifyAbsoluteChange,
 } from "../../utils/trendUtils";
 import {
   viewDisplayLabels,
@@ -305,6 +305,25 @@ const useSectionData = (section, sectionKey, pageContext) => {
         // buildStyledTrendSentence still shows "1-4 (suppressed for
         // privacy)" for that side instead of a literal 0.
         trendObjRaw = { label: "not changed", value: "0%", direction: "same" };
+      } else if (dataType === "ed") {
+        // ED values are already percentages (% of visits/hospitalizations),
+        // so direction uses the same absolute percentage-point thresholds as
+        // the home page stat grid (classifyAbsoluteChange) — not a relative
+        // % change, which made small bases look like big swings (Flu 0.13% →
+        // 0.16% = +23% "increased" here vs "stable" on the home page). The
+        // relative % is still shown as the magnitude when the change clears
+        // the threshold.
+        const abs = classifyAbsoluteChange(curr, prev, activeVirus);
+        if (!abs || abs.direction === "same") {
+          trendObjRaw = { label: "not changed", value: "0%", direction: "same" };
+        } else {
+          const rel = prev === 0 ? null : Math.round(Math.abs(((curr - prev) / prev) * 100));
+          trendObjRaw = {
+            label: abs.label,
+            value: rel ? `${rel}%` : "",
+            direction: abs.direction,
+          };
+        }
       } else if (prev === 0) {
         trendObjRaw =
           curr === 0
